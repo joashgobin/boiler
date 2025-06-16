@@ -11,3 +11,4 @@
 - Trim 'static/' prefix from files being fingerprinted or optimized
 - Fixed shelf migration not working
 - Remove template middleware
+- Testing 
