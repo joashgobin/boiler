@@ -226,9 +226,9 @@ func ReplaceSpecial(text string) string {
 	return strings.ToLower(re.ReplaceAllString(text, "-"))
 }
 
-func ConvertToWebp(srcPath string, fileListPtr *map[string]string) error {
+func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDir string) error {
 	outputPath := fmt.Sprintf("%s.webp",
-		strings.TrimSuffix(strings.Replace(srcPath, "static/img/", "static/gen/img/", -1),
+		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)))
 	if FileExists(outputPath) {
 		(*fileListPtr)[srcPath] = outputPath
@@ -274,7 +274,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string) error {
 func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, fileListPtr *map[string]string) {
 	err := os.MkdirAll(targetFolder, 0755)
 	if err != nil {
-		log.Infof("failed to create directory", "static/gen/img")
+		log.Infof("failed to create directory", targetFolder)
 	}
 	entries, err := os.ReadDir(folderPath)
 	if err != nil {
@@ -283,7 +283,7 @@ func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, f
 	}
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ext {
-			err := ConvertToWebp(filepath.Join(folderPath, entry.Name()), fileListPtr)
+			err := ConvertToWebp(filepath.Join(folderPath, entry.Name()), fileListPtr, folderPath, targetFolder)
 			if err != nil {
 				log.Errorf("could not convert file (%s) to webp: err\n", entry.Name(), err)
 			}
