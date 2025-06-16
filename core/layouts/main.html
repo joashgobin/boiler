@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{Get "AppName"}}</title>
+    <link rel="stylesheet" href="{{Minify "static/style.css"}}">
+</head>
+
+<body>
+    <header>
+        <a href="/" class="title">
+            <img src="{{Optimize "static/img/logo.jpeg"}}" alt="">
+            <h1>{{Get "AppName"}}</h1>
+        </a>
+        <nav>
+{{template "internal/core/partials/nav" .}}
+</nav>
+    </header>
+    <main>
+{{embed}}
+</main>
+    <footer>
+        <div class="bg"></div>
+        <div class="bg-2"></div>
+        <div>
+            <p>STEM Education for the Modern Student</p>
+        </div>
+        <div>
+            <p>Call: <a href="tel:{{Get "AppPhone"}}">{{Get "AppPhone"}}</a></p>
+        </div>
+        <div>
+            <p>&copy; {{Get "AppName"}}, 2025<br>Made and maintained by <a href="https://chickenfrybytes.com">CFB Studios</a></p>
+        </div>
+    </footer>
+</body>
+
+</html>
