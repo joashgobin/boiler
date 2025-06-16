@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/template/html/v2"
 	"github.com/joashgobin/boiler/helpers"
+	"github.com/joashgobin/boiler/payments"
 
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
@@ -182,11 +183,14 @@ SHOW GRANTS FOR 'fiber_user'@'localhost';
 	}
 
 	// open database corresponding to app name
-	db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true")
+	db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true&multiStatements=true")
 	if err != nil {
 		log.Fatal(err)
 		return app, nil, store
 	}
+
+	payments.UseMMG(db, appName)
+	helpers.UseShelf(db, appName)
 
 	// return configured fiber app and database connection pool
 	return app, db, store

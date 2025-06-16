@@ -108,55 +108,6 @@ type TokenParams struct {
 	MerchantName          string `json:"merchantName"`
 }
 
-func setShelf(db *sql.DB, key string, value string) {
-	log.Infof("setting in shelf: %s", key)
-	query := `
-		INSERT INTO shelf (name, value)
-		VALUES (?, ?)
-		ON DUPLICATE KEY UPDATE
-			value = VALUES(value)
-		`
-	result, err := db.Exec(query, key, value)
-	if err != nil {
-		log.Errorf("failed to insert/update key", key)
-		return
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		log.Errorf("failed to check the affected rows: %v", err)
-		return
-	}
-	if rowsAffected == 0 {
-		log.Errorf("%v", sql.ErrNoRows)
-		return
-	}
-	log.Infof("updated key-value pair: (%s, %s)", key, value)
-}
-
-func getShelf(db *sql.DB, key string) string {
-	log.Infof("retrieving from shelf: %s", key)
-	query := "SELECT id, name, value FROM shelf WHERE name = ?"
-	rows, err := db.Query(query, key)
-	if err != nil {
-		return ""
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			id    int
-			name  string
-			value string
-		)
-		err = rows.Scan(&id, &name, &value)
-		if err != nil {
-			return ""
-		}
-		log.Infof("shelf value: %s", value)
-		return value
-	}
-	return ""
-}
-
 func getTransactionMeta(data []byte) (string, error) {
 	r := regexp.MustCompile(`"key":\s*"(product_desc|description)",\s*"value":\s*"(.+?)"`)
 	matches := r.FindStringSubmatch(string(data))
@@ -353,7 +304,7 @@ func getEnvironmentData(merchantNumber int) (map[string]string, error) {
 }
 
 func getResourceToken(db *sql.DB, merchantNumber int) string {
-	return getShelf(db, "resource-token-"+strconv.Itoa(merchantNumber))
+	return helpers.GetShelf(db, "resource-token-"+strconv.Itoa(merchantNumber))
 }
 
 func IsMMGSubscribed(db *sql.DB, thresholdAmount float64, userEmail string) bool {
@@ -504,7 +455,7 @@ func LoadNewResourceToken(db *sql.DB, merchantNumber int) {
 		LoadNewResourceToken(db, merchantNumber)
 	}
 	log.Infof("new resource token: %s", token)
-	setShelf(db, "resource-token-"+strconv.Itoa(merchantNumber), token)
+	helpers.SetShelf(db, "resource-token-"+strconv.Itoa(merchantNumber), token)
 }
 
 func GetMMGBalance(merchantNumber int) {
@@ -783,4 +734,25 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string) 
 	}
 
 	return generateURL(token, config.MerchantMsisdn, config.ClientID)
+}
+
+func UseMMG(db *sql.DB, appName string) {
+	helpers.RunMigration(strings.ReplaceAll(`
+-- Select database
+USE <appName>;
+
+-- Create transactions table
+CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    timestamp DATETIME NOT NULL,
+        reference VARCHAR(20) NOT NULL UNIQUE,
+        source      VARCHAR(20) NOT NULL,
+        destination        VARCHAR(20) NOT NULL,
+        amount    DECIMAL(10,2) NOT NULL,
+        currency  VARCHAR(5) NOT NULL,
+        category  VARCHAR(30) NOT NULL,
+        status    VARCHAR(20) NOT NULL,
+    metadata VARCHAR(100)
+);
+	`, "<appName>", appName), db)
 }

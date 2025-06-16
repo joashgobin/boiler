@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -328,6 +329,20 @@ func SaveTextToDirectory(text string, filePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to write text to file: %v", err)
 	}
-	log.Infof("saved text to directory: %s", text)
+	log.Infof("saved text to file: %s", filePath)
 	return nil
+}
+
+func RunMigration(migrationQuery string, db *sql.DB) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	result, err := db.ExecContext(ctx, migrationQuery)
+	if err != nil {
+		log.Fatalf("failed to run migration: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Fatalf("failed to run migration: %v", err)
+	}
+	log.Infof("migration executed, rows affected: %d", rowsAffected)
 }
