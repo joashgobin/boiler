@@ -58,8 +58,13 @@ merchants/
 	// create template engine
 	engine := html.NewFileSystem(http.FS(*templates), ".html")
 
+	formPresets := helpers.FormPresets()
+
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
+		"input": func(key string) ht.HTML {
+			return ht.HTML(formPresets[key])
+		},
 		"Minify": func(s string) string {
 			return "/" + fingerprints[s]
 		},
