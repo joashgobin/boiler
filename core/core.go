@@ -22,7 +22,7 @@ import (
 )
 
 // GetApp returns a configured fiber app with session, csrf and other middleware
-func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string) (*fiber.App, *sql.DB, *session.Store) {
+func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string, appName string) (*fiber.App, *sql.DB, *session.Store) {
 	fingerprints := make(map[string]string, 3)
 	optimizations := make(map[string]string, 3)
 
@@ -73,7 +73,6 @@ func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 
 	// declare database URIs
 	var dbURI string = os.Getenv("FIBER_USER_URI")
-	var dbName string = "fiber"
 	var storageURI string = dbURI + dbName + "?multiStatements=true"
 
 	// initialize fiber storage middleware
