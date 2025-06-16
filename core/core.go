@@ -46,6 +46,15 @@ FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", appName), "remote/create_app_database.sql")
 
+	helpers.SaveTextToDirectory(`
+tmp/
+bin/
+fiber.sqlite3
+static/gen/
+merchants/
+	`,
+		".gitignore")
+
 	// create template engine
 	engine := html.NewFileSystem(http.FS(*templates), ".html")
 
@@ -54,7 +63,13 @@ SHOW GRANTS FOR 'fiber_user'@'localhost';
 		"Minify": func(s string) string {
 			return "/" + fingerprints[s]
 		},
+		"Min": func(s string) string {
+			return "/" + fingerprints[s]
+		},
 		"Optimize": func(s string) string {
+			return "/" + optimizations[s]
+		},
+		"Opt": func(s string) string {
 			return "/" + optimizations[s]
 		},
 		"ToUpper": func(s string) string {

@@ -6,3 +6,4 @@
 - Automatically create migration fscript for creating database for app
 - Use layouts file from current project and trim whitespace from file
 - Automatic migrations using payments.UseMMG and helpers.UseShelf
+- Fixed image optimization by extension and .gitignore generation

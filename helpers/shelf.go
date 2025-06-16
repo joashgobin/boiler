@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2/log"
+	"strings"
 )
 
 func SetShelf(db *sql.DB, key string, value string) {

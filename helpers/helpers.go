@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"image"
 	"image/jpeg"
 	"image/png"
 	"io/ioutil"
@@ -238,13 +239,16 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string) error {
 		return err
 	}
 
-	img, err := jpeg.Decode(file)
-	if err != nil {
-		return err
-	}
+	var img image.Image
+
 	switch filepath.Ext(srcPath) {
 	case ".png":
 		img, err = png.Decode(file)
+		if err != nil {
+			return err
+		}
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(file)
 		if err != nil {
 			return err
 		}
@@ -281,7 +285,7 @@ func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, f
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ext {
 			err := ConvertToWebp(filepath.Join(folderPath, entry.Name()), fileListPtr)
 			if err != nil {
-				fmt.Printf("could not convert file (%s) to webp\n", entry.Name())
+				log.Errorf("could not convert file (%s) to webp: err\n", entry.Name(), err)
 			}
 		}
 	}
@@ -340,9 +344,9 @@ func RunMigration(migrationQuery string, db *sql.DB) {
 	if err != nil {
 		log.Fatalf("failed to run migration: %v", err)
 	}
-	rowsAffected, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		log.Fatalf("failed to run migration: %v", err)
 	}
-	log.Infof("migration executed, rows affected: %d", rowsAffected)
+	// log.Infof("migration executed, rows affected: %d", rowsAffected)
 }
