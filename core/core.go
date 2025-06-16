@@ -34,6 +34,17 @@ func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".png", &optimizations)
 
+	// create remote directory for adding migration scripts
+	helpers.CreateDirectory("remote/")
+	helpers.SaveTextToDirectory(strings.ReplaceAll(`
+CREATE DATABASE IF NOT EXISTS <appName>;
+GRANT ALL PRIVILEGES ON <appName>.* TO 'fiber_user'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Verify permissions
+SHOW GRANTS FOR 'fiber_user'@'localhost';
+	`, "<appName>", appName), "remote/create_app_database.sql")
+
 	// create template engine
 	engine := html.NewFileSystem(http.FS(*templates), ".html")
 
@@ -170,11 +181,8 @@ func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 		}))
 	}
 
-	// log in as fiber user and create database
-	db, err := helpers.CreateDatabaseAsUser(dbURI, appName)
-
 	// open database corresponding to app name
-	// db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true")
+	db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 		return app, nil, store

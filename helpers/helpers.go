@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"image/png"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -310,40 +311,22 @@ func OpenDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-// helper to create a database for the corresponding app and return the connection pool
-func CreateDatabaseAsUser(dsn string, appName string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dsn)
+func CreateDirectory(path string) error {
+	err := os.MkdirAll(path, 0755)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-	_, err = db.Exec(`CREATE DATABASE IF NOT EXISTS ?`, appName)
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("database for app successfully created: %s", appName)
-	err = db.Close()
-	if err != nil {
-		return nil, err
-	}
-	log.Info("database connection closed")
+	return nil
+}
 
-	// opening newly created database
-	newDsn := dsn + appName + "?parseTime=true"
-	db, err = sql.Open("mysql", newDsn)
-	if err != nil {
-		return nil, err
+func SaveTextToDirectory(text string, filePath string) error {
+	if text == "" || filePath == "" {
+		return fmt.Errorf("text content and filePath must not be empty")
 	}
-
-	err = db.Ping()
+	err := ioutil.WriteFile(filePath, []byte(text), 0644)
 	if err != nil {
-		db.Close()
-		return nil, err
+		return fmt.Errorf("failed to write text to file: %v", err)
 	}
-
-	return db, nil
+	log.Infof("saved text to directory: %s", text)
+	return nil
 }
