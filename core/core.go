@@ -3,9 +3,12 @@ package core
 import (
 	"database/sql"
 	"embed"
+	"fmt"
 	ht "html/template"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -54,6 +57,24 @@ static/gen/
 merchants/
 	`,
 		".gitignore")
+
+	helpers.CreateDirectory("views/layouts")
+	helpers.CreateDirectory("views/partials")
+	helpers.CreateDirectory("static/img")
+
+	// get core directory
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		fmt.Println("could not get filename")
+	}
+	coreDir, err := filepath.Abs(filename)
+	if err != nil {
+		fmt.Println("could not get filename")
+	}
+
+	// copy partials from core
+	helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
+	helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 
 	// create template engine
 	engine := html.NewFileSystem(http.FS(*templates), ".html")

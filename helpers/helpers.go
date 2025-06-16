@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -322,6 +323,45 @@ func CreateDirectory(path string) error {
 		return err
 	}
 	return nil
+}
+
+func CopyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Calculate relative path
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		// Create destination directory
+		destPath := filepath.Join(dst, relPath)
+		if info.IsDir() {
+			return os.MkdirAll(destPath, info.Mode())
+		}
+
+		// Copy file
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+
+		if _, err := io.Copy(destFile, srcFile); err != nil {
+			return err
+		}
+
+		return destFile.Chmod(info.Mode())
+	})
 }
 
 func SaveTextToDirectory(text string, filePath string) error {
