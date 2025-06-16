@@ -207,6 +207,8 @@ merchants/
 	payments.UseMMG(db, appName)
 	helpers.UseShelf(db, appName)
 
+	// app.Use(helpers.HTMLMiddleware())
+
 	// return configured fiber app and database connection pool
 	return app, db, store
 }
