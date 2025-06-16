@@ -73,7 +73,7 @@ func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 
 	// declare database URIs
 	var dbURI string = os.Getenv("FIBER_USER_URI")
-	var storageURI string = dbURI + dbName + "?multiStatements=true"
+	var storageURI string = dbURI + appName + "?multiStatements=true"
 
 	// initialize fiber storage middleware
 	storage := mysql.New(mysql.Config{
@@ -169,7 +169,12 @@ func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 			Browse:     true,
 		}))
 	}
-	db, err := helpers.OpenDB(dbURI + dbName + "?parseTime=true")
+
+	// log in as fiber user and create database
+	db, err := helpers.CreateDatabaseAsUser(dbURI, appName)
+
+	// open database corresponding to app name
+	// db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 		return app, nil, store

@@ -294,8 +294,47 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// helper to create a database connection pool
 func OpenDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
+}
+
+// helper to create a database for the corresponding app and return the connection pool
+func CreateDatabaseAsUser(dsn string, appName string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Exec(`CREATE DATABASE IF NOT EXISTS ?`, appName)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("database for app successfully created: %s", appName)
+	err = db.Close()
+	if err != nil {
+		return nil, err
+	}
+	log.Info("database connection closed")
+
+	// opening newly created database
+	newDsn := dsn + appName + "?parseTime=true"
+	db, err = sql.Open("mysql", newDsn)
 	if err != nil {
 		return nil, err
 	}

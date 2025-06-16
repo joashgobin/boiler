@@ -2,3 +2,4 @@
 
 - Added vendor files
 - User must pass app name into core app function
+- Created new function to add database for app
