@@ -59,7 +59,7 @@ func GetShelf(db *sql.DB, key string) string {
 func UseShelf(db *sql.DB, appName string) {
 	RunMigration(strings.ReplaceAll(`
 	-- Select database
-USE fiber;
+USE <appName>;
 
 -- Create table
 CREATE TABLE IF NOT EXISTS shelf (

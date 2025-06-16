@@ -9,3 +9,4 @@
 - Fixed image optimization by extension and .gitignore generation
 - Updated helper to include target paths for image optimization
 - Trim 'static/' prefix from files being fingerprinted or optimized
+- Fixed shelf migration not working
