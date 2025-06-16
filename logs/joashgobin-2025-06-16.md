@@ -4,3 +4,4 @@
 - User must pass app name into core app function
 - Created new function to add database for app
 - Automatically create migration fscript for creating database for app
+- Use layouts file from current project and trim whitespace from file

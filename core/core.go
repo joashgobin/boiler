@@ -96,7 +96,7 @@ SHOW GRANTS FOR 'fiber_user'@'localhost';
 	// create new fiber app with prefork enabled
 	app := fiber.New(fiber.Config{
 		Views:             engine,
-		ViewsLayout:       "internal/core/layouts/main",
+		ViewsLayout:       "views/layouts/main",
 		PassLocalsToViews: true,
 		Prefork:           true,
 	})

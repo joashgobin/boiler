@@ -323,6 +323,7 @@ func SaveTextToDirectory(text string, filePath string) error {
 	if text == "" || filePath == "" {
 		return fmt.Errorf("text content and filePath must not be empty")
 	}
+	text = strings.TrimSpace(text)
 	err := ioutil.WriteFile(filePath, []byte(text), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write text to file: %v", err)
