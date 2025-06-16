@@ -123,7 +123,7 @@ func GenerateFingerprint(srcPath string, fileListPtr *map[string]string) (string
 		filepath.Ext(srcPath))
 
 	if FileExists(dstPath) {
-		(*fileListPtr)[srcPath] = dstPath
+		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = dstPath
 		return dstPath, nil
 	}
 
@@ -133,7 +133,7 @@ func GenerateFingerprint(srcPath string, fileListPtr *map[string]string) (string
 
 	log.Infof("minified file (%s) to new file: %s", minPath, dstPath)
 	// map src path to dest path
-	(*fileListPtr)[srcPath] = dstPath
+	(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = dstPath
 
 	return dstPath, nil
 }
@@ -231,7 +231,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)))
 	if FileExists(outputPath) {
-		(*fileListPtr)[srcPath] = outputPath
+		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
 		return nil
 	}
 	file, err := os.Open(srcPath)
@@ -267,7 +267,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 		return err
 	}
 	log.Infof("converted image (%s) to webp: %s", srcPath, outputPath)
-	(*fileListPtr)[srcPath] = outputPath
+	(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
 	return nil
 }
 
