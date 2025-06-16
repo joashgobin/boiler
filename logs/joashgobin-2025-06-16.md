@@ -12,3 +12,4 @@
 - Fixed shelf migration not working
 - Remove template middleware
 - Testing 
+- Revert

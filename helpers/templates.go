@@ -6,6 +6,6 @@ import (
 
 func HTMLMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		return nil
+		return c.Next()
 	}
 }
