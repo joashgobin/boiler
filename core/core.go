@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/template/html/v2"
+	"github.com/joashgobin/boiler/core/models"
 	"github.com/joashgobin/boiler/helpers"
 	"github.com/joashgobin/boiler/payments"
 
@@ -25,8 +26,15 @@ import (
 	mysql "github.com/gofiber/storage/mysql/v2"
 )
 
+type Base struct {
+	Users models.UserModelInterface
+	DB    *sql.DB
+	Store *session.Store
+	Shelf helpers.ShelfModelInterface
+}
+
 // GetApp returns a configured fiber app with session, csrf and other middleware
-func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string, appName string) (*fiber.App, *sql.DB, *session.Store) {
+func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string, appName string) (*fiber.App, Base) {
 	fingerprints := make(map[string]string, 3)
 	optimizations := make(map[string]string, 3)
 
@@ -231,14 +239,21 @@ merchants/
 	db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true&multiStatements=true")
 	if err != nil {
 		log.Fatal(err)
-		return app, nil, store
+		return app, Base{}
+	}
+	// attaching users to base
+	base := Base{
+		Users: &models.UserModel{DB: db},
+		DB:    db,
+		Store: store,
+		Shelf: &helpers.ShelfModel{DB: db},
 	}
 
+	//
 	payments.UseMMG(db, appName)
 	helpers.UseShelf(db, appName)
-
-	// app.Use(helpers.HTMLMiddleware())
+	models.UseDefaultUsers(db, appName)
 
 	// return configured fiber app and database connection pool
-	return app, db, store
+	return app, base
 }

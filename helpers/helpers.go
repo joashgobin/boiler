@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -19,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/google/uuid"
@@ -382,11 +383,24 @@ func RunMigration(migrationQuery string, db *sql.DB) {
 	defer cancel()
 	result, err := db.ExecContext(ctx, migrationQuery)
 	if err != nil {
-		log.Fatalf("failed to run migration: %v", err)
+		var mySQLError *mysql.MySQLError
+		if errors.As(err, &mySQLError) {
+			if mySQLError.Number == 1064 {
+				log.Errorf("error in migration: $v", err)
+				return
+			}
+		}
+		return
 	}
+
+	/*
+		if err != nil {
+			log.Errorf("failed to run migration: %v", err)
+		}
+	*/
 	_, err = result.RowsAffected()
 	if err != nil {
-		log.Fatalf("failed to run migration: %v", err)
+		log.Errorf("failed to run migration: %v", err)
 	}
 	// log.Infof("migration executed, rows affected: %d", rowsAffected)
 }

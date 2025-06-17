@@ -1,10 +1,11 @@
 package helpers
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
+	"strings"
 
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -16,10 +17,11 @@ func FileSubstitute(templatePath string, savePath string, values map[string]stri
 		log.Infof("error reading template (%s): %v", templatePath, err)
 		return
 	}
-	pattern := "port"
-	reg, err := regexp.Compile(pattern)
+	saveContent := string(templateContent)
 
-	saveContent := reg.ReplaceAllString(string(templateContent), "Hello")
+	for key, value := range values {
+		saveContent = strings.ReplaceAll(saveContent, fmt.Sprintf("<%s>", key), value)
+	}
 	err = ioutil.WriteFile(savePath, []byte(saveContent), 0644)
 	if err != nil {
 		log.Infof("error saving new content to %s: %v", savePath, err)

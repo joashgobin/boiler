@@ -7,6 +7,23 @@ import (
 	"strings"
 )
 
+type ShelfModelInterface interface {
+	Set(key string, value string)
+	Get(key string) string
+}
+
+type ShelfModel struct {
+	DB *sql.DB
+}
+
+func (s *ShelfModel) Set(key string, value string) {
+	SetShelf(s.DB, key, value)
+}
+
+func (s *ShelfModel) Get(key string) string {
+	return GetShelf(s.DB, key)
+}
+
 func SetShelf(db *sql.DB, key string, value string) {
 	log.Infof("setting in shelf: %s", key)
 	query := `
