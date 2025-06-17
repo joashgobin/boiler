@@ -373,7 +373,7 @@ func SaveTextToDirectory(text string, filePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to write text to file: %v", err)
 	}
-	log.Infof("saved text to file: %s", filePath)
+	// log.Infof("saved text to file: %s", filePath)
 	return nil
 }
 

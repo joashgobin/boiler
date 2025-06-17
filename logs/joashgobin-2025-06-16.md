@@ -16,3 +16,4 @@
 - Added form presets
 - Import partials and .air.toml ifrom core
 - Added header partial
+- Added bootstrap as an external preset
