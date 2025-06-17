@@ -31,6 +31,7 @@ type Base struct {
 	DB    *sql.DB
 	Store *session.Store
 	Shelf helpers.ShelfModelInterface
+	Flash helpers.FlashInterface
 }
 
 // GetApp returns a configured fiber app with session, csrf and other middleware
@@ -92,6 +93,9 @@ merchants/
 
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
+		"ct": func() time.Time {
+			return time.Now()
+		},
 		"input": func(key string) ht.HTML {
 			return ht.HTML(formPresets[key])
 		},
@@ -247,12 +251,15 @@ merchants/
 		DB:    db,
 		Store: store,
 		Shelf: &helpers.ShelfModel{DB: db},
+		Flash: &helpers.FlashModel{Store: store},
 	}
 
 	//
 	payments.UseMMG(db, appName)
 	helpers.UseShelf(db, appName)
 	models.UseDefaultUsers(db, appName)
+
+	app.Use(helpers.SessionInfoMiddleware(store))
 
 	// return configured fiber app and database connection pool
 	return app, base

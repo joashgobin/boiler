@@ -1,0 +1,29 @@
+<script>
+    function displaySecondsElapsed(timeStr) {
+        document.getElementById('flash').style.display =
+            `none`;
+        // Parse the input time string
+        const startTime = new Date(timeStr.replace(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/,
+            '$1-$2-$3T$4:$5:$6Z'));
+
+        // Calculate seconds since start time
+        const now = new Date();
+        const seconds = Math.floor((now - startTime) / 1000);
+
+        // Format both times in UTC
+        const utcString = now.toUTCString();
+        const startString = startTime.toUTCString();
+
+        // Display both seconds and UTC times
+        // document.getElementById('seconds').textContent = `Seconds elapsed: ${seconds}`;
+        if (seconds < 5) {
+            document.getElementById('flash').style.display =
+                `block`;
+        }
+    }
+
+    // Call once on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        displaySecondsElapsed("{{.session.Get "flashTime"}}");
+    });
+</script>
