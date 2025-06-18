@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
@@ -17,7 +16,6 @@ type FlashModel struct {
 }
 
 func (flash *FlashModel) Push(c *fiber.Ctx, message string) error {
-	log.Infof("pushing to session: %s", message)
 	sess, err := flash.Store.Get(c)
 	if err != nil {
 		return err
