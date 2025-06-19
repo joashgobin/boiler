@@ -736,7 +736,7 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string) 
 	return generateURL(token, config.MerchantMsisdn, config.ClientID)
 }
 
-func UseMMG(db *sql.DB, appName string) {
+func InitMMG(db *sql.DB, appName string) {
 	helpers.RunMigration(strings.ReplaceAll(`
 -- Select database
 USE <appName>;

@@ -29,7 +29,7 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-func UseDefaultUsers(db *sql.DB, appName string) {
+func InitUsers(db *sql.DB, appName string) {
 	helpers.RunMigration(strings.ReplaceAll(`
 	USE <appName>;
 

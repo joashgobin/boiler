@@ -2,3 +2,4 @@
 
 - Added simple external preset
 - Reduced flash display time to 3 secoinds
+- Renamed the initialization functions for helper units

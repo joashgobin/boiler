@@ -255,9 +255,9 @@ merchants/
 	}
 
 	//
-	payments.UseMMG(db, appName)
-	helpers.UseShelf(db, appName)
-	models.UseDefaultUsers(db, appName)
+	payments.InitMMG(db, appName)
+	helpers.InitShelf(db, appName)
+	models.InitUsers(db, appName)
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 

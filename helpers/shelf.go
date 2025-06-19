@@ -73,7 +73,7 @@ func GetShelf(db *sql.DB, key string) string {
 	return ""
 }
 
-func UseShelf(db *sql.DB, appName string) {
+func InitShelf(db *sql.DB, appName string) {
 	RunMigration(strings.ReplaceAll(`
 	-- Select database
 USE <appName>;
