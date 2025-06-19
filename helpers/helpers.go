@@ -223,6 +223,15 @@ func CollectFiberFormData(c *fiber.Ctx, fields *[]string, multiples *[]string) s
 	return snippets
 }
 
+func EnsureFiberFormFields(c *fiber.Ctx, fields []string) (string, error) {
+	for _, v := range fields {
+		if c.FormValue(v) == "" {
+			return fmt.Sprintf("Please input a %s", v), errors.New("form: value missing")
+		}
+	}
+	return "", nil
+}
+
 func ReplaceSpecial(text string) string {
 	re := regexp.MustCompile(`[^a-zA-Z0-9]`)
 	return strings.ToLower(re.ReplaceAllString(text, "-"))
