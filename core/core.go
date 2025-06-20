@@ -96,6 +96,12 @@ merchants/
 
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
+		"default": func(def string, value interface{}) interface{} {
+			if value == nil {
+				return def
+			}
+			return value
+		},
 		"ct": func() time.Time {
 			return time.Now()
 		},
@@ -137,6 +143,13 @@ merchants/
 		},
 		"Get": func(key string) string {
 			return (*siteInfo)[key]
+		},
+		"Use": func(values map[string]string, key string) string {
+			value, exists := values[key]
+			if exists {
+				return value
+			}
+			return ""
 		},
 		"safeHTML": func(s string) ht.HTML {
 			return ht.HTML(s)
