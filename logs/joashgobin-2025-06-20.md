@@ -4,3 +4,4 @@
 - "Use" function to pull values from map
 - Renamed function
 - Testing a new method for redirects
+- Fixed flash ensure fields
