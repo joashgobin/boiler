@@ -3,6 +3,7 @@ package core
 import (
 	"database/sql"
 	"embed"
+	"encoding/gob"
 	"fmt"
 	ht "html/template"
 	"net/http"
@@ -36,6 +37,8 @@ type Base struct {
 
 // GetApp returns a configured fiber app with session, csrf and other middleware
 func GetApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string, appName string) (*fiber.App, Base) {
+	gob.Register(map[string]string{})
+
 	fingerprints := make(map[string]string, 3)
 	optimizations := make(map[string]string, 3)
 
