@@ -226,7 +226,7 @@ func CollectFiberFormData(c *fiber.Ctx, fields *[]string, multiples *[]string) s
 func EnsureFiberFormFields(c *fiber.Ctx, fields []string) (string, error) {
 	for _, v := range fields {
 		if c.FormValue(v) == "" {
-			return fmt.Sprintf("Please input a %s", v), errors.New("form: value missing")
+			return fmt.Sprintf("Please input %s", v), errors.New("form: value missing")
 		}
 	}
 	return "", nil
