@@ -144,7 +144,7 @@ merchants/
 		"Get": func(key string) string {
 			return (*siteInfo)[key]
 		},
-		"Use": func(values map[string]string, key string) string {
+		"use": func(values map[string]string, key string) string {
 			value, exists := values[key]
 			if exists {
 				return value
