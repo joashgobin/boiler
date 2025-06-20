@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,12 +10,18 @@ import (
 
 type FlashInterface interface {
 	Push(c *fiber.Ctx, message string) error
-	SetOld(c *fiber.Ctx, keys []string)
+	Retain(c *fiber.Ctx, keys []string)
 	ClearOld(c *fiber.Ctx)
+	Redirect(c *fiber.Ctx, route, message string) error
 }
 
 type FlashModel struct {
 	Store *session.Store
+}
+
+func (flash *FlashModel) Redirect(c *fiber.Ctx, route, message string) error {
+	flash.Push(c, message)
+	return c.Redirect(route + "?show=retained")
 }
 
 func (flash *FlashModel) Push(c *fiber.Ctx, message string) error {
@@ -32,7 +37,7 @@ func (flash *FlashModel) Push(c *fiber.Ctx, message string) error {
 	return nil
 }
 
-func (flash *FlashModel) SetOld(c *fiber.Ctx, keys []string) {
+func (flash *FlashModel) Retain(c *fiber.Ctx, keys []string) {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
 		log.Errorf("error getting session: %v", err)
@@ -40,7 +45,7 @@ func (flash *FlashModel) SetOld(c *fiber.Ctx, keys []string) {
 	}
 	oldValues := make(map[string]string, 1)
 	for _, key := range keys {
-		fmt.Printf("storing old: %s -> %s\n", key, c.FormValue(key))
+		// fmt.Printf("storing old: %s -> %s\n", key, c.FormValue(key))
 		oldValues[key] = c.FormValue(key)
 	}
 	sess.Set("old", oldValues)
@@ -68,8 +73,10 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 			return err
 		}
 		c.Locals("session", sess)
-		if c.Query("error") == "" {
+		if c.Query("show") == "retained" {
 			c.Locals("old", sess.Get("old"))
+		} else {
+			c.Locals("old", map[string]string{})
 		}
 		return c.Next()
 	}
