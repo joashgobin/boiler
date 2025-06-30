@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -223,6 +224,37 @@ func CollectFiberFormData(c *fiber.Ctx, fields *[]string, multiples *[]string) s
 	return snippets
 }
 
+func MapFromFormBody(c *fiber.Ctx, excludeEmpty bool) map[string]string {
+	body := string(c.Body())
+
+	pairs := strings.Split(body, "&")
+
+	data := make(map[string]string, 1)
+
+	for _, pair := range pairs {
+		kv := strings.Split(pair, "=")
+
+		if len(kv) != 2 {
+			continue
+		}
+
+		if kv[0] == "csrf" {
+			continue
+		}
+
+		if kv[1] == "" && excludeEmpty {
+			continue
+		}
+
+		value, err := url.QueryUnescape(kv[1])
+		if err == nil {
+			data[kv[0]] = value
+			fmt.Println("form value: ", data[kv[0]])
+		}
+	}
+	return data
+}
+
 func EnsureFiberFormFields(c *fiber.Ctx, fields []string) (string, error) {
 	for _, v := range fields {
 		if c.FormValue(v) == "" {
@@ -372,6 +404,15 @@ func CopyDir(src, dst string) error {
 
 		return destFile.Chmod(info.Mode())
 	})
+}
+
+func TouchFile(filePath string) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
 }
 
 func SaveTextToDirectory(text string, filePath string) error {
