@@ -113,16 +113,31 @@ merchants/
 		"preset": func(key string) ht.HTML {
 			return ht.HTML(externalPresets[key])
 		},
+		"extern": func(key string) ht.HTML {
+			return ht.HTML(externalPresets[key])
+		},
 		"Minify": func(s string) string {
 			return "/" + fingerprints[s]
 		},
 		"Min": func(s string) string {
 			return "/" + fingerprints[s]
 		},
+		"minify": func(s string) string {
+			return "/" + fingerprints[s]
+		},
+		"min": func(s string) string {
+			return "/" + fingerprints[s]
+		},
 		"Optimize": func(s string) string {
 			return "/" + optimizations[s]
 		},
 		"Opt": func(s string) string {
+			return "/" + optimizations[s]
+		},
+		"optimize": func(s string) string {
+			return "/" + optimizations[s]
+		},
+		"opt": func(s string) string {
 			return "/" + optimizations[s]
 		},
 		"ToUpper": func(s string) string {
@@ -143,8 +158,21 @@ merchants/
 		"Condense": func(str string) string {
 			return helpers.ReplaceSpecial(str)
 		},
+		"condense": func(str string) string {
+			return helpers.ReplaceSpecial(str)
+		},
 		"Get": func(key string) string {
 			return (*siteInfo)[key]
+		},
+		"get": func(key string) string {
+			return (*siteInfo)[key]
+		},
+		"Use": func(values map[string]string, key string) string {
+			value, exists := values[key]
+			if exists {
+				return value
+			}
+			return ""
 		},
 		"use": func(values map[string]string, key string) string {
 			value, exists := values[key]
