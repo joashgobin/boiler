@@ -110,7 +110,7 @@ merchants/
 		"input": func(key string) ht.HTML {
 			return ht.HTML(formPresets[key])
 		},
-		"extern": func(key string) ht.HTML {
+		"preset": func(key string) ht.HTML {
 			return ht.HTML(externalPresets[key])
 		},
 		"Minify": func(s string) string {

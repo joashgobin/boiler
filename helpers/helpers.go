@@ -249,7 +249,6 @@ func MapFromFormBody(c *fiber.Ctx, excludeEmpty bool) map[string]string {
 		value, err := url.QueryUnescape(kv[1])
 		if err == nil {
 			data[kv[0]] = value
-			fmt.Println("form value: ", data[kv[0]])
 		}
 	}
 	return data
