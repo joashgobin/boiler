@@ -19,5 +19,10 @@ func ExternalPresets() map[string]string {
 	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
 	`
 
+	presets["htmx"] = `<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>`
+
+	presets["htmx-preload"] = `<script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/htmx-ext-preload@2.1.0/preload.js" integrity="sha384-fkzubQiTB69M7XTToqW6tplvxAOJkqPl5JmLAbumV2EacmuJb8xEP9KnJafk/rg8" crossorigin="anonymous"></script>`
+
 	return presets
 }
