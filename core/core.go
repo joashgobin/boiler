@@ -73,6 +73,7 @@ merchants/
 	helpers.CreateDirectory("views/layouts")
 	helpers.CreateDirectory("views/partials")
 	helpers.CreateDirectory("static/img")
+	helpers.CreateDirectory("static/script")
 
 	// get core directory
 	_, filename, _, ok := runtime.Caller(0)
@@ -86,6 +87,7 @@ merchants/
 
 	// copy partials from core
 	helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
+	helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
 	helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 
 	// create template engine
