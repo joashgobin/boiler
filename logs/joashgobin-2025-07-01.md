@@ -2,3 +2,4 @@
 
 - Added htmx external files
 - Create folder for scripts
+- Fixed htmx
