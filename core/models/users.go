@@ -176,14 +176,25 @@ func RequireRoleMiddleware(store *session.Store, flash helpers.FlashInterface, r
 		if err != nil {
 			return c.SendStatus(fiber.StatusInternalServerError)
 		}
+		user := sess.Get("user")
 		roles := sess.Get("userRoles")
+
+		// redirect if user value is not set in session
+		if user == nil {
+			flash.Push(c, "You need to be logged in")
+			return c.Redirect("/login")
+		}
+
+		// redirect if user roles are not defined in session
 		if roles == nil {
 			flash.Push(c, "You need to be logged in")
-			return c.Redirect("/login?show=retained")
+			return c.Redirect("/login")
 		}
+
+		// redirect if user session does not specify the required role
 		if !strings.Contains(roles.(string), "|"+role+"|") {
 			flash.Push(c, fmt.Sprintf("You need to be logged in as %s", role))
-			return c.Redirect("/?show=retained")
+			return c.Redirect("/")
 		}
 		return c.Next()
 	}

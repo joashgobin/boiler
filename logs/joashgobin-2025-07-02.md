@@ -2,3 +2,4 @@
 
 - Switched fiber storage to redis
 - Added vendor files for gofiber redis
+- Require role middleware now checks for user value as well
