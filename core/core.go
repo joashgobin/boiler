@@ -99,6 +99,9 @@ merchants/
 
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
+		"role": func(roles, role string) bool {
+			return strings.Contains(roles, "|"+role+"|")
+		},
 		"default": func(def string, value interface{}) interface{} {
 			if value == nil {
 				return def
