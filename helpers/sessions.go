@@ -83,6 +83,7 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 		if err != nil {
 			return err
 		}
+		c.Locals("roles", sess.Get("userRoles"))
 		c.Locals("session", sess)
 		if c.Query("show") == "retained" {
 			c.Locals("old", sess.Get("old"))
