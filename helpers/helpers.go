@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -452,4 +453,37 @@ func RunMigration(migrationQuery string, db *sql.DB) {
 		log.Errorf("failed to run migration: %v", err)
 	}
 	// log.Infof("migration executed, rows affected: %d", rowsAffected)
+}
+
+func StructsToMaps(structs interface{}) []map[string]interface{} {
+	// Convert input to slice
+	rv := reflect.ValueOf(structs)
+	if rv.Kind() != reflect.Slice {
+		return []map[string]interface{}{}
+	}
+
+	result := make([]map[string]interface{}, rv.Len())
+
+	// Process each struct in the slice
+	for i := 0; i < rv.Len(); i++ {
+		elem := rv.Index(i)
+		if elem.Kind() != reflect.Struct {
+			continue
+		}
+
+		// Create map for this struct
+		m := make(map[string]interface{})
+
+		// Add all exported fields to map
+		for j := 0; j < elem.NumField(); j++ {
+			field := elem.Field(j)
+			if field.CanInterface() {
+				m[elem.Type().Field(j).Name] = field.Interface()
+			}
+		}
+
+		result[i] = m
+	}
+
+	return result
 }
