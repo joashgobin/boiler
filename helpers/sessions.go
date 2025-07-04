@@ -13,11 +13,17 @@ type FlashInterface interface {
 	Retain(c *fiber.Ctx, keys []string)
 	ClearOld(c *fiber.Ctx)
 	Redirect(c *fiber.Ctx, route, message string) error
-	EnsureFields(c *fiber.Ctx, route string, fields []string) (string, error)
+	RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
 }
 
 type FlashModel struct {
 	Store *session.Store
+}
+
+func (flash *FlashModel) RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error) {
+	warning, err := EnsureFiberFormFields(c, fields)
+	flash.Push(c, warning)
+	return redirectRoute + "?show=retained", err
 }
 
 func (flash *FlashModel) Redirect(c *fiber.Ctx, route, message string) error {
@@ -65,16 +71,6 @@ func (flash *FlashModel) ClearOld(c *fiber.Ctx) {
 	if err := sess.Save(); err != nil {
 		return
 	}
-}
-
-// EnsureFields returns redirect route
-func (flash *FlashModel) EnsureFields(c *fiber.Ctx, route string, fields []string) (string, error) {
-	warning, err := EnsureFiberFormFields(c, fields)
-	if err != nil {
-		flash.Push(c, warning)
-		return route + "?show=retained", err
-	}
-	return "", nil
 }
 
 func SessionInfoMiddleware(store *session.Store) fiber.Handler {
