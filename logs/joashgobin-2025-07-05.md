@@ -5,3 +5,4 @@
 - Renamed GetApp to NewApp
 - Added app startup time
 - Removed zone identifiers
+- File copying operations done only by parent process now

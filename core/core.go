@@ -52,9 +52,11 @@ func NewApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".png", &optimizations)
 
-	// create remote directory for adding migration scripts
-	helpers.CreateDirectory("remote/")
-	helpers.SaveTextToDirectory(strings.ReplaceAll(`
+	// only use parent process to do file operations
+	if !fiber.IsChild() {
+		// create remote directory for adding migration scripts
+		helpers.CreateDirectory("remote/")
+		helpers.SaveTextToDirectory(strings.ReplaceAll(`
 CREATE DATABASE IF NOT EXISTS <appName>;
 GRANT ALL PRIVILEGES ON <appName>.* TO 'fiber_user'@'localhost';
 FLUSH PRIVILEGES;
@@ -63,35 +65,36 @@ FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", appName), "remote/create_app_database.sql")
 
-	helpers.SaveTextToDirectory(`
+		helpers.SaveTextToDirectory(`
 tmp/
 bin/
 fiber.sqlite3
 static/gen/
 merchants/
 	`,
-		".gitignore")
+			".gitignore")
 
-	helpers.CreateDirectory("views/layouts")
-	helpers.CreateDirectory("views/partials")
-	helpers.CreateDirectory("static/img")
-	helpers.CreateDirectory("static/script")
+		helpers.CreateDirectory("views/layouts")
+		helpers.CreateDirectory("views/partials")
+		helpers.CreateDirectory("static/img")
+		helpers.CreateDirectory("static/script")
 
-	// get core directory
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		fmt.Println("could not get filename")
+		// get core directory
+		_, filename, _, ok := runtime.Caller(0)
+		if !ok {
+			fmt.Println("could not get filename")
+		}
+		coreDir, err := filepath.Abs(filename)
+		if err != nil {
+			fmt.Println("could not get filename")
+		}
+
+		// copy partials from core
+		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
+		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
+		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
+		helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 	}
-	coreDir, err := filepath.Abs(filename)
-	if err != nil {
-		fmt.Println("could not get filename")
-	}
-
-	// copy partials from core
-	helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
-	helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
-	helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
-	helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 
 	// create template engine
 	engine := html.NewFileSystem(http.FS(*templates), ".html")
@@ -342,8 +345,10 @@ merchants/
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 
-	elapsed := time.Since(start)
-	log.Infof("app startup time: %v\n", elapsed)
+	if !fiber.IsChild() {
+		elapsed := time.Since(start)
+		log.Infof("app startup time: %v\n", elapsed)
+	}
 	// return configured fiber app and database connection pool
 	return app, base
 }
