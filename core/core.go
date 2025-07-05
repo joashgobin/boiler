@@ -89,6 +89,7 @@ merchants/
 	// copy partials from core
 	helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
 	helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
+	helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
 	helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 
 	// create template engine
@@ -110,6 +111,22 @@ merchants/
 				return def
 			}
 			return value
+		},
+		"svg": func(iconName string) string {
+			return "/static/img/bootstrap-icons/" + iconName + ".svg"
+		},
+		"icon": func(iconName string) ht.HTML {
+			return ht.HTML(`
+			<div style="min-width:20px;min-height:20px">
+			<script
+    class="script-tag"
+    data-svg-src="/static/img/bootstrap-icons/`+iconName+`.svg"
+    hx-get="/static/img/bootstrap-icons/`+iconName+`.svg"
+    hx-swap="outerHTML"
+    hx-trigger="load">
+</script>
+</div>
+			`)
 		},
 		"ct": func() time.Time {
 			return time.Now()
