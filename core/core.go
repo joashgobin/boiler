@@ -38,6 +38,7 @@ type Base struct {
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
 func NewApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string, appName string) (*fiber.App, Base) {
+	start := time.Now()
 	gob.Register(map[string]string{})
 
 	fingerprints := make(map[string]string, 3)
@@ -120,8 +121,8 @@ merchants/
 			<div style="min-width:20px;min-height:20px;display:flex;align-items:center;justify-content:center;">
 			<script
     class="script-tag"
-    data-svg-src="/static/img/bootstrap-icons/`+iconName+`.svg"
-    hx-get="/static/img/bootstrap-icons/`+iconName+`.svg"
+    data-svg-src="/static/img/bootstrap-icons/` + iconName + `.svg"
+    hx-get="/static/img/bootstrap-icons/` + iconName + `.svg"
     hx-swap="outerHTML"
     hx-trigger="load">
 </script>
@@ -341,6 +342,8 @@ merchants/
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 
+	elapsed := time.Since(start)
+	log.Infof("app startup time: %v\n", elapsed)
 	// return configured fiber app and database connection pool
 	return app, base
 }
