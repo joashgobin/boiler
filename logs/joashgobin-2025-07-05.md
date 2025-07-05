@@ -4,3 +4,4 @@
 - Updated icon template engine function
 - Renamed GetApp to NewApp
 - Added app startup time
+- Removed zone identifiers
