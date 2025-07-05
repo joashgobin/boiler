@@ -2,3 +2,4 @@
 
 - Added bootstrap icons and template engine function for easy inserts
 - Updated icon template engine function
+- Renamed GetApp to NewApp
