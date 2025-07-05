@@ -117,7 +117,7 @@ merchants/
 		},
 		"icon": func(iconName string) ht.HTML {
 			return ht.HTML(`
-			<div style="min-width:20px;min-height:20px">
+			<div style="min-width:20px;min-height:20px;display:flex;align-items:center;justify-content:center;">
 			<script
     class="script-tag"
     data-svg-src="/static/img/bootstrap-icons/`+iconName+`.svg"
