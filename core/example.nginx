@@ -30,4 +30,8 @@ server {
         add_header Cache-Control "public, must-revalidate";
     }
 
+    location ~ \.map$ {
+        return 404;
+    }
+
 }
