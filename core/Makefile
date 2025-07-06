@@ -14,7 +14,7 @@ deploy: build
 	@echo "deploying to VPS"
 	@echo "transferring static files"
 	rm -rf static/gen
-	ssh ${username}@${production_host_ip} "mkdir ~/${project_name}"
+	ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
 	rsync -rP ./static ${username}@${production_host_ip}:~/${project_name}/
 	rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
 	rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/

@@ -5,3 +5,4 @@
 - Fix
 - Modified svg engine template function
 - Refactored config for app creation
+- Fix error with folder creation
