@@ -23,6 +23,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/valkey"
 )
@@ -393,6 +394,8 @@ exec bash
 	payments.InitMMG(db, config.AppName)
 	helpers.InitShelf(db, config.AppName)
 	models.InitUsers(db, config.AppName)
+
+	app.Use(pprof.New(pprof.Config{Prefix: "/profile"}))
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 

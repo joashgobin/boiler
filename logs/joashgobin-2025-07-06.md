@@ -10,3 +10,4 @@
 - Added nginx config example for future 
 - Replace with value when absent
 - Added to example nginx file
+- Added pprof

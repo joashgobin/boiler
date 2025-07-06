@@ -19,6 +19,7 @@ github.com/gofiber/fiber/v2/log
 github.com/gofiber/fiber/v2/middleware/csrf
 github.com/gofiber/fiber/v2/middleware/filesystem
 github.com/gofiber/fiber/v2/middleware/logger
+github.com/gofiber/fiber/v2/middleware/pprof
 github.com/gofiber/fiber/v2/middleware/session
 github.com/gofiber/fiber/v2/utils
 # github.com/gofiber/storage/valkey v0.1.1
@@ -96,6 +97,7 @@ github.com/valyala/bytebufferpool
 # github.com/valyala/fasthttp v1.51.0
 ## explicit; go 1.20
 github.com/valyala/fasthttp
+github.com/valyala/fasthttp/fasthttpadaptor
 github.com/valyala/fasthttp/fasthttputil
 github.com/valyala/fasthttp/reuseport
 github.com/valyala/fasthttp/stackless
