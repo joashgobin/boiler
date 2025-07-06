@@ -24,8 +24,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/session"
-	// mysql "github.com/gofiber/storage/mysql/v2"
-	"github.com/gofiber/storage/redis/v3"
+	"github.com/gofiber/storage/valkey"
 )
 
 type Base struct {
@@ -219,21 +218,14 @@ merchants/
 	// var storageURI string = dbURI + appName + "?multiStatements=true"
 
 	// initialize fiber storage middleware
-	storage := redis.New(redis.Config{
-		Host:      "127.0.0.1",
-		Port:      6379,
-		Username:  "",
-		Password:  "",
-		Database:  0,
-		Reset:     false,
-		TLSConfig: nil,
-		PoolSize:  10 * runtime.GOMAXPROCS(0),
+	storage := valkey.New(valkey.Config{
+		InitAddress: []string{"localhost:6379"},
+		Username:    "",
+		Password:    "",
+		Database:    0,
+		Reset:       false,
+		TLSConfig:   nil,
 	})
-	/*storage := mysql.New(mysql.Config{
-		ConnectionURI: storageURI,
-		Reset:         false,
-		GCInterval:    10 * time.Second,
-	})*/
 
 	// create new fiber app with prefork enabled
 	app := fiber.New(fiber.Config{
