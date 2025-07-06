@@ -35,8 +35,17 @@ type Base struct {
 	Flash helpers.FlashInterface
 }
 
+type AppConfig struct {
+	User        string
+	IP          string
+	AppName     string
+	Templates   *embed.FS
+	StaticFiles *embed.FS
+	SiteInfo    *map[string]string
+}
+
 // NewApp returns a configured fiber app with session, csrf and other middleware
-func NewApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]string, appName string) (*fiber.App, Base) {
+func NewApp(config AppConfig) (*fiber.App, Base) {
 	start := time.Now()
 	gob.Register(map[string]string{})
 
@@ -53,8 +62,30 @@ func NewApp(templates *embed.FS, staticFiles *embed.FS, siteInfo *map[string]str
 
 	// only use parent process to do file operations
 	if !fiber.IsChild() {
+		// get core directory
+		_, filename, _, ok := runtime.Caller(0)
+		if !ok {
+			fmt.Println("could not get filename")
+		}
+		coreDir, err := filepath.Abs(filename)
+		if err != nil {
+			fmt.Println("could not get filename")
+		}
+
 		// create remote directory for adding migration scripts
 		helpers.CreateDirectory("remote/")
+
+		// create Makefile and service file for deployment on remote machine
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/Makefile", "Makefile", map[string]string{
+			"user":    config.User,
+			"appName": config.AppName,
+			"ip":      config.IP,
+		})
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/example.service", fmt.Sprintf("remote/%s.service", config.AppName), map[string]string{
+			"user":    config.User,
+			"appName": config.AppName,
+			"ip":      config.IP,
+		})
 		helpers.SaveTextToDirectory(strings.ReplaceAll(`
 CREATE DATABASE IF NOT EXISTS <appName>;
 GRANT ALL PRIVILEGES ON <appName>.* TO 'fiber_user'@'localhost';
@@ -62,7 +93,7 @@ FLUSH PRIVILEGES;
 
 -- Verify permissions
 SHOW GRANTS FOR 'fiber_user'@'localhost';
-	`, "<appName>", appName), "remote/create_app_database.sql")
+	`, "<appName>", config.AppName), "remote/create_app_database.sql")
 
 		helpers.SaveTextToDirectory(`
 tmp/
@@ -78,16 +109,6 @@ merchants/
 		helpers.CreateDirectory("static/img")
 		helpers.CreateDirectory("static/script")
 
-		// get core directory
-		_, filename, _, ok := runtime.Caller(0)
-		if !ok {
-			fmt.Println("could not get filename")
-		}
-		coreDir, err := filepath.Abs(filename)
-		if err != nil {
-			fmt.Println("could not get filename")
-		}
-
 		// copy partials from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
 		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
@@ -96,7 +117,7 @@ merchants/
 	}
 
 	// create template engine
-	engine := html.NewFileSystem(http.FS(*templates), ".html")
+	engine := html.NewFileSystem(http.FS(*config.Templates), ".html")
 
 	formPresets := helpers.FormPresets()
 	externalPresets := helpers.ExternalPresets()
@@ -197,10 +218,10 @@ merchants/
 			return helpers.ReplaceSpecial(str)
 		},
 		"Get": func(key string) string {
-			return (*siteInfo)[key]
+			return (*config.SiteInfo)[key]
 		},
 		"get": func(key string) string {
-			return (*siteInfo)[key]
+			return (*config.SiteInfo)[key]
 		},
 		"Use": func(values map[string]string, key string) string {
 			value, exists := values[key]
@@ -315,16 +336,16 @@ merchants/
 	})
 
 	// embed static files if provided
-	if staticFiles != nil {
+	if config.StaticFiles != nil {
 		app.Use("/static", filesystem.New(filesystem.Config{
-			Root:       http.FS(*staticFiles),
+			Root:       http.FS(*config.StaticFiles),
 			PathPrefix: "static",
 			Browse:     true,
 		}))
 	}
 
 	// open database corresponding to app name
-	db, err := helpers.OpenDB(dbURI + appName + "?parseTime=true&multiStatements=true")
+	db, err := helpers.OpenDB(dbURI + config.AppName + "?parseTime=true&multiStatements=true")
 	if err != nil {
 		log.Fatal(err)
 		return app, Base{}
@@ -339,9 +360,9 @@ merchants/
 	}
 
 	//
-	payments.InitMMG(db, appName)
-	helpers.InitShelf(db, appName)
-	models.InitUsers(db, appName)
+	payments.InitMMG(db, config.AppName)
+	helpers.InitShelf(db, config.AppName)
+	models.InitUsers(db, config.AppName)
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 

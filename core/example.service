@@ -1,0 +1,23 @@
+[Unit]
+Description=<appName> service
+
+After=mysql.service
+After=network-online.target
+Wants=network-online.target
+
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=<user>
+Group=<user>
+EnvironmentFile=/etc/environment
+WorkingDirectory=/home/<user>/<appName>
+ExecStart=/home/<user>/<appName>/web
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
