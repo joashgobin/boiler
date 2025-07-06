@@ -8,3 +8,4 @@
 - Fix error with folder creation
 - Added more remote config generation
 - Added nginx config example for future 
+- Replace with value when absent

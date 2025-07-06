@@ -94,7 +94,7 @@ FLUSH PRIVILEGES;
 -- Verify permissions
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", config.AppName), "remote/create_app_database.sql")
-	helpers.SaveTextToDirectory(`
+		helpers.SaveTextToDirectory(`
 	-- Create fiber user
 CREATE USER IF NOT EXISTS 'fiber_user'@'localhost' IDENTIFIED BY 'USER_PWD';
 
@@ -106,7 +106,7 @@ USE fiber;
 GRANT ALL PRIVILEGES ON fiber.* TO 'fiber_user'@'localhost';
 FLUSH PRIVILEGES;
 
-	`,"remote/create_fiber_user.sql")
+	`, "remote/create_fiber_user.sql")
 
 		helpers.SaveTextToDirectory(`
 tmp/
@@ -240,10 +240,18 @@ exec bash
 			return helpers.ReplaceSpecial(str)
 		},
 		"Get": func(key string) string {
-			return (*config.SiteInfo)[key]
+			val, exists := (*config.SiteInfo)[key]
+			if exists {
+				return val
+			}
+			return "<" + key + ">"
 		},
 		"get": func(key string) string {
-			return (*config.SiteInfo)[key]
+			val, exists := (*config.SiteInfo)[key]
+			if exists {
+				return val
+			}
+			return "<" + key + ">"
 		},
 		"Use": func(values map[string]string, key string) string {
 			value, exists := values[key]
