@@ -7,3 +7,4 @@
 - Refactored config for app creation
 - Fix error with folder creation
 - Added more remote config generation
+- Added nginx config example for future 
