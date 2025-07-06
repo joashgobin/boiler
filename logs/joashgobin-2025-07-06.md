@@ -3,3 +3,4 @@
 - Switched from redis to valkey
 - Cleaned modules
 - Fix
+- Modified svg engine template function

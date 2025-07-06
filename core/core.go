@@ -115,8 +115,16 @@ merchants/
 			}
 			return value
 		},
-		"svg": func(iconName string) string {
-			return "/static/img/bootstrap-icons/" + iconName + ".svg"
+		"svg": func(iconName string) ht.HTML {
+			return ht.HTML(`
+			<script
+    class="script-tag"
+    data-svg-src="/static/img/bootstrap-icons/` + iconName + `.svg"
+    hx-get="/static/img/bootstrap-icons/` + iconName + `.svg"
+    hx-swap="outerHTML"
+    hx-trigger="load">
+</script>
+			`)
 		},
 		"icon": func(iconName string) ht.HTML {
 			return ht.HTML(`
