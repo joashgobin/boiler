@@ -52,6 +52,12 @@ audit:
 	@echo 'Running tests...'
 	go test -race -vet=off ./...
 
+## user: create fiber user
+.PHONY: user
+user:
+	sh ./remote/create_fiber_user.sh
+
+## up: create app database
 .PHONY: up
 up:
-	cat remote/create_app_database.sql | sudo mysql
+	cat remote/create_app_database.sql | mysql

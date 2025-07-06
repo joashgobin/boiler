@@ -94,6 +94,19 @@ FLUSH PRIVILEGES;
 -- Verify permissions
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", config.AppName), "remote/create_app_database.sql")
+	helpers.SaveTextToDirectory(`
+	-- Create fiber user
+CREATE USER IF NOT EXISTS 'fiber_user'@'localhost' IDENTIFIED BY 'USER_PWD';
+
+-- Create fiber database
+CREATE DATABASE IF NOT EXISTS fiber;
+USE fiber;
+
+-- Grant privileges to the fiber user
+GRANT ALL PRIVILEGES ON fiber.* TO 'fiber_user'@'localhost';
+FLUSH PRIVILEGES;
+
+	`,"remote/create_fiber_user.sql")
 
 		helpers.SaveTextToDirectory(`
 tmp/
@@ -104,6 +117,15 @@ merchants/
 	`,
 			".gitignore")
 
+		helpers.SaveTextToDirectory(`
+			read -p "Enter password for user: " DB_PASSWORD
+echo "Setting environment variable FIBER_USER_URI"
+grep -q FIBER_USER_URI /etc/environment || echo "FIBER_USER_URI='fiber_user:${DB_PASSWORD}@tcp(localhost:3306)/'" | sudo tee -a /etc/environment
+grep -q FIBER_USER_URI ~/.bashrc || echo "export FIBER_USER_URI='fiber_user:${DB_PASSWORD}@tcp(localhost:3306)/'" | sudo tee -a ~/.bashrc
+cat ./remote/create_fiber_user.sql | sed "s/USER_PWD/$DB_PASSWORD/g" | sudo mysql
+exec bash
+
+			`, "remote/create_fiber_user.sh")
 		helpers.CreateDirectory("views/layouts")
 		helpers.CreateDirectory("views/partials")
 		helpers.CreateDirectory("static/img")
