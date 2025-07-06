@@ -222,7 +222,7 @@ merchants/
 		InitAddress: []string{"localhost:6379"},
 		Username:    "",
 		Password:    "",
-		Database:    0,
+		SelectDB:    0,
 		Reset:       false,
 		TLSConfig:   nil,
 	})
