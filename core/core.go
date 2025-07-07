@@ -395,7 +395,7 @@ exec bash
 	helpers.InitShelf(db, config.AppName)
 	models.InitUsers(db, config.AppName)
 
-	app.Use(pprof.New(pprof.Config{Prefix: "/profile"}))
+	app.Use(pprof.New(pprof.Config{Prefix: "/profiler"}))
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 
