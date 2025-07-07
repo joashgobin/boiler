@@ -12,3 +12,4 @@
 - Added to example nginx file
 - Added pprof
 - Fix
+- Added monitor middleware to core
