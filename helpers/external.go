@@ -19,7 +19,7 @@ func ExternalPresets() map[string]string {
 	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
 	`
 
-	presets["htmx"] = `<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>`
+	presets["htmx"] = `<script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>`
 
 	presets["htmx-preload"] = `<script defer src="/static/script/htmx.min.js"></script>
     <script defer src="/static/script/preload.min.js"></script>`
