@@ -2,3 +2,4 @@
 
 - Changed go version
 - Modified default .air.toml to allow app reloading
+- Updated .air.toml
