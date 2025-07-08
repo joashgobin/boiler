@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./tmp/main"
-  cmd = "go build -o ./tmp/main ."
+  cmd = "go build -ldflags '-s -w' -o ./tmp/main ."
   delay = 100
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "static/gen", "views/partials", "static/img", "static/script"]
   exclude_file = []
