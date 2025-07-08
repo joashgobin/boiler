@@ -10,17 +10,25 @@ help:
 
 ## deploy: upload updated version of app to VPS
 .PHONY: deploy
-deploy: build
-	@echo "deploying to VPS"
-	@echo "transferring static files"
+deploy: build deploy/static deploy/app
+
+## deploy/app: upload only app
+.PHONY: deploy/app
+deploy/app:
+	@echo "transferring binary to VPS"
+	rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
+	@echo "restarting app service via SSH"
+	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/"
+
+## deploy/static: upload only static files
+.PHONY: deploy/static
+deploy/static:
+	@echo "transferring static files to VPS"
 	rm -rf static/gen
 	ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
 	rsync -rP ./static ${username}@${production_host_ip}:~/${project_name}/
 	rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
 	rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/
-	@echo "transferring binary"
-	rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
-	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/"
 
 ## build: build local copy
 .PHONY: build
