@@ -10,11 +10,11 @@ help:
 
 ## deploy: upload updated version of app to VPS
 .PHONY: deploy
-deploy: build deploy/static deploy/app
+deploy: deploy/static deploy/app
 
 ## deploy/app: upload only app
 .PHONY: deploy/app
-deploy/app:
+deploy/app: build
 	@echo "transferring binary to VPS"
 	rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
 	@echo "restarting app service via SSH"
@@ -33,7 +33,7 @@ deploy/static:
 ## build: build local copy
 .PHONY: build
 build:
-	@echo "building app locally"
+	@echo "building binary locally"
 	@go build -ldflags='-s' -o=./bin/web .
 	@GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/web .
 
