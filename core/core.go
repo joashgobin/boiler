@@ -40,6 +40,7 @@ type Base struct {
 type AppConfig struct {
 	User        string
 	IP          string
+	Port        string
 	AppName     string
 	Templates   *embed.FS
 	StaticFiles *embed.FS
@@ -87,6 +88,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 			"user":    config.User,
 			"appName": config.AppName,
 			"ip":      config.IP,
+		})
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/.air.toml", ".air.toml", map[string]string{
+			"port": config.Port,
 		})
 		helpers.SaveTextToDirectory(strings.ReplaceAll(`
 CREATE DATABASE IF NOT EXISTS <appName>;
@@ -137,7 +141,7 @@ exec bash
 		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
 		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
 		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
-		helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
+		// helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 	}
 
 	// create template engine
