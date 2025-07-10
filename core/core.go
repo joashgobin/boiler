@@ -152,6 +152,14 @@ exec bash
 
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
+		"gfont": func(fontName string, selector string) ht.HTML {
+			return ht.HTML(`<style>
+@import url('https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap');
+` + selector + `{
+	font-family: ` + fontName + `, sans-serif;
+}
+</style>`)
+		},
 		"role": func(roles interface{}, role string) bool {
 			if roles == nil {
 				return false
