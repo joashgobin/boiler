@@ -121,7 +121,7 @@ fiber.sqlite3
 static/gen/
 merchants/
 	`,
-			".gitignore")
+			".gitignore.example")
 
 		helpers.SaveTextToDirectory(`
 			read -p "Enter password for user: " DB_PASSWORD

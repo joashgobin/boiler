@@ -2,3 +2,4 @@
 
 - Create example files for Makefile and .air.toml
 - Removed some make targets
+- Rename file in copy command
