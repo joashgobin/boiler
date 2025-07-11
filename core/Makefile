@@ -69,13 +69,3 @@ user:
 .PHONY: up
 up:
 	cat remote/create_app_database.sql | mysql
-
-## air: rename .air.toml.example to .air.toml
-.PHONY: air
-air:
-	mv .air.toml.example .air.toml
-
-## make: rename Makefile.example to Makefile
-.PHONY: make
-make:
-	mv Makefile.example Makefile
