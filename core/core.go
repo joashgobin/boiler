@@ -79,7 +79,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		helpers.CreateDirectory("remote/")
 
 		// create Makefile and service file for deployment on remote machine
-		helpers.FileSubstitute(filepath.Dir(coreDir)+"/Makefile", "Makefile", map[string]string{
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/Makefile", "Makefile.example", map[string]string{
 			"user":    config.User,
 			"appName": config.AppName,
 			"ip":      config.IP,
@@ -89,7 +89,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 			"appName": config.AppName,
 			"ip":      config.IP,
 		})
-		helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/.air.toml", ".air.toml", map[string]string{
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/.air.toml", ".air.toml.example", map[string]string{
 			"port": config.Port,
 		})
 		helpers.SaveTextToDirectory(strings.ReplaceAll(`
