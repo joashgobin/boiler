@@ -312,7 +312,7 @@ exec bash
 	sessConfig := session.Config{
 		Expiration: 30 * time.Minute,
 		// KeyLookup:      "cookie:__Host-session", // Recommended to use the __Host- prefix when serving the app over TLS
-		KeyLookup:    "cookie:fiber_session",
+		KeyLookup:    "cookie:" + config.AppName + "_fiber_session",
 		CookieSecure: true,
 		// CookieHTTPOnly: true,
 		CookieHTTPOnly: false,
