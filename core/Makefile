@@ -69,3 +69,13 @@ user:
 .PHONY: up
 up:
 	cat remote/create_app_database.sql | mysql
+
+## prof: profile app using pprof tool
+.PHONY: prof
+prof:
+	go tool pprof http://localhost:<port>/profiler/debug/pprof/heap
+
+## prof/png: output png of pprof
+.PHONY: prof/png
+prof/png:
+	go tool pprof -png http://localhost:<port>/profiler/debug/pprof/heap > prof.png
