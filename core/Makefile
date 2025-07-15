@@ -18,7 +18,7 @@ deploy/app: build
 	@echo "transferring binary to VPS"
 	rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
 	@echo "restarting app service via SSH"
-	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/"
+	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo mkdir -p /usr/local/share/fiber/${project_name}/ && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/${project_name}/"
 
 ## deploy/static: upload only static files
 .PHONY: deploy/static

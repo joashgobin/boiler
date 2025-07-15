@@ -85,6 +85,12 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 			"ip":      config.IP,
 			"port":    config.Port,
 		})
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/example.nginx", fmt.Sprintf("remote/%s.nginx", config.IP), map[string]string{
+			"user":    config.User,
+			"appName": config.AppName,
+			"ip":      config.IP,
+			"port":    config.Port,
+		})
 		helpers.FileSubstitute(filepath.Dir(coreDir)+"/example.service", fmt.Sprintf("remote/%s.service", config.AppName), map[string]string{
 			"user":    config.User,
 			"appName": config.AppName,
