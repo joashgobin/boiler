@@ -79,3 +79,5 @@ prof:
 .PHONY: prof/png
 prof/png:
 	go tool pprof -png http://localhost:<port>/profiler/debug/pprof/heap > prof.png
+	sudo cp prof.png /usr/local/share/fiber/${project_name}/static/
+
