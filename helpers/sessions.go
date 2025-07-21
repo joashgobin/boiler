@@ -14,6 +14,8 @@ type FlashInterface interface {
 	ClearOld(c *fiber.Ctx)
 	Redirect(c *fiber.Ctx, route, message string) error
 	RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
+	RetainKeys(keys []string) fiber.Handler
+	RequireKeys(keys []string, redirectRoute string) fiber.Handler
 }
 
 type FlashModel struct {
@@ -85,6 +87,35 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 			c.Locals("old", sess.Get("old"))
 		} else {
 			c.Locals("old", map[string]string{})
+		}
+		return c.Next()
+	}
+}
+
+func (flash *FlashModel) RetainKeys(keys []string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		sess, err := flash.Store.Get(c)
+		if err != nil {
+			log.Errorf("error getting session: %v", err)
+		}
+		oldValues := make(map[string]string, 1)
+		for _, key := range keys {
+			oldValues[key] = c.FormValue(key)
+		}
+		sess.Set("old", oldValues)
+		if err := sess.Save(); err != nil {
+			log.Errorf("error saving session: %v", err)
+		}
+		return c.Next()
+	}
+}
+
+func (flash *FlashModel) RequireKeys(keys []string, redirectRoute string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		warning, err := EnsureFiberFormFields(c, keys)
+		if err != nil {
+			flash.Push(c, warning)
+			return c.Redirect(redirectRoute + "?show=retained")
 		}
 		return c.Next()
 	}
