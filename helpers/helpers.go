@@ -420,6 +420,7 @@ func SaveTextToDirectory(text string, filePath string) error {
 		return fmt.Errorf("text content and filePath must not be empty")
 	}
 	text = strings.TrimSpace(text)
+	text = strings.ReplaceAll(text, "\r\n", "\n")
 	err := ioutil.WriteFile(filePath, []byte(text), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write text to file: %v", err)
