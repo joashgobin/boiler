@@ -4,3 +4,4 @@
 - Fixed error with Storage interface
 - Added new functions to store and retrieve multiple values from shelf
 - Removed id column from shelf table
+- Updated an Errorf

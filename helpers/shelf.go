@@ -84,7 +84,7 @@ func SetShelf(db *sql.DB, key string, value string) {
 		`
 	result, err := db.Exec(query, key, value)
 	if err != nil {
-		log.Errorf("failed to insert/update key", key)
+		log.Errorf("failed to insert/update key: %v", key)
 		return
 	}
 	rowsAffected, err := result.RowsAffected()
