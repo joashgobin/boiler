@@ -35,7 +35,7 @@ type Base struct {
 	Store *session.Store
 	Shelf helpers.ShelfModelInterface
 	Flash helpers.FlashInterface
-	Bank  *fiber.Storage
+	Bank  *valkey.Storage
 }
 
 type AppConfig struct {
@@ -409,6 +409,7 @@ exec bash
 		Store: store,
 		Shelf: &helpers.ShelfModel{DB: db},
 		Flash: &helpers.FlashModel{Store: store},
+		Bank:  storage,
 	}
 
 	//
