@@ -16,10 +16,32 @@ type FlashInterface interface {
 	RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
 	RetainKeys(keys []string) fiber.Handler
 	RequireKeys(keys []string, redirectRoute string) fiber.Handler
+	Get(c *fiber.Ctx, key string) string
+	Set(c *fiber.Ctx, key string, value string)
 }
 
 type FlashModel struct {
 	Store *session.Store
+}
+
+func (flash *FlashModel) Get(c *fiber.Ctx, key string) string {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		panic(err)
+	}
+	value := sess.Get(key)
+	return value.(string)
+}
+
+func (flash *FlashModel) Set(c *fiber.Ctx, key string, value string) {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		panic(err)
+	}
+	sess.Set(key, value)
+	if err := sess.Save(); err != nil {
+		panic(err)
+	}
 }
 
 func (flash *FlashModel) RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error) {
