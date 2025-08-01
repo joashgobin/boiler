@@ -3,5 +3,14 @@
     const swup = new Swup({
         cache: false
     });
-    {{template "views/scripts".}}
+
+    swup.hooks.on('page:view', (visit) => {
+        {{template "views/scripts" .}}
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        {{template "views/scripts" .}}
+    });
+
+
 </script>
