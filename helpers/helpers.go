@@ -314,10 +314,30 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 	return nil
 }
 
+func GenerateFingerprintsForFolder(folderPath string, targetFolder string, ext string, fileListPtr *map[string]string) {
+	err := os.MkdirAll(targetFolder, 0755)
+	if err != nil {
+		log.Infof("failed to create directory %s", targetFolder)
+	}
+	entries, err := os.ReadDir(folderPath)
+	if err != nil {
+		fmt.Printf("error reading directory (%s): %v\n", folderPath, err)
+		return
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() && filepath.Ext(entry.Name()) == ext {
+			_, err = GenerateFingerprint(filepath.Join(folderPath, entry.Name()), fileListPtr)
+			if err != nil {
+				log.Errorf("could not generate fingerprint for file (%s): %v", entry.Name(), err)
+			}
+		}
+	}
+}
+
 func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, fileListPtr *map[string]string) {
 	err := os.MkdirAll(targetFolder, 0755)
 	if err != nil {
-		log.Infof("failed to create directory", targetFolder)
+		log.Infof("failed to create directory %s", targetFolder)
 	}
 	entries, err := os.ReadDir(folderPath)
 	if err != nil {

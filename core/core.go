@@ -57,7 +57,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	optimizations := make(map[string]string, 3)
 
 	// generate new minified style file with fingerprint in file name
-	helpers.GenerateFingerprint("static/style.css", &fingerprints)
+	helpers.GenerateFingerprintsForFolder("static", "static/gen", ".css", &fingerprints)
 
 	// convert all images to webp
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
