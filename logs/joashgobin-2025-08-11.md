@@ -7,3 +7,4 @@
 - Tweak
 - More instructions
 - Added command to create fiber user
+- More info

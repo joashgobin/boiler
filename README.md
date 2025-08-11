@@ -26,6 +26,13 @@ func main() {
 }
 
 ```
+Note the following:
+- User - the username of the linux user that will be used to log into the VPS the app is being deployed to
+- IP - the domain name at which the app will be accessed via the internet when deployed
+- Port - the port number the app will run on
+- AppName - the name of the app will be used to create the database for the base app
+- Templates - the set of view files to be embedded
+- SiteInfo - general site information to be accessed in the templates using the "Get" function
 
 We can then embed the view files into the app using go embed:
 
