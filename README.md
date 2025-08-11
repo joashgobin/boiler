@@ -28,6 +28,7 @@ func main() {
 ```
 
 We can then embed the view files into the app using go embed:
+
 ```go
 package main
 
@@ -54,4 +55,10 @@ func main() {
 	app.Listen(base.Anchor)
 }
 
+```
+
+The app will likely throw an error about the database not existing. Rename the Makefile and run the database migration:
+```sh
+mv Makefile.example Makefile
+sudo make up
 ```

@@ -5,3 +5,4 @@
 - Created project README.md
 - Specified app language as golang
 - Tweak
+- More instructions
