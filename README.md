@@ -4,7 +4,7 @@ This project is focused on providing boilerplate for a Gofiber app.
 ## Basic app
 Create a *main.go* file and paste the following code:
 
-```
+```go
 package main
 
 import (
@@ -29,7 +29,7 @@ func main() {
 ```
 
 We can then embed the view files using go embed:
-```
+```go
 package main
 
 import (
