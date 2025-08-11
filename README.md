@@ -8,7 +8,6 @@ Create a *main.go* file and paste the following code:
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"github.com/joashgobin/boiler/core"
 )
 
@@ -28,17 +27,14 @@ func main() {
 
 ```
 
-We can then embed the view files using go embed:
+We can then embed the view files into the app using go embed:
 ```go
 package main
 
 import (
 	"embed"
-	"fmt"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/joashgobin/boiler/core"
-	"github.com/joashgobin/boiler/helpers"
 )
 
 //go:embed views/*
