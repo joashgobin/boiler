@@ -62,3 +62,8 @@ The app will likely throw an error about the database not existing. Rename the M
 mv Makefile.example Makefile
 sudo make up
 ```
+
+If this is your first app using this project as your starter, run the command to create the fiber user:
+```sh
+sudo make user
+```

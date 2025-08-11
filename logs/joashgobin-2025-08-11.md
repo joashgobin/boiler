@@ -6,3 +6,4 @@
 - Specified app language as golang
 - Tweak
 - More instructions
+- Added command to create fiber user
