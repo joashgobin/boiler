@@ -153,7 +153,10 @@ exec bash
 	}
 
 	// create template engine
-	engine := html.NewFileSystem(http.FS(*config.Templates), ".html")
+	engine := html.New("views/", ".html")
+	if config.Templates != nil {
+		engine = html.NewFileSystem(http.FS(*config.Templates), ".html")
+	}
 
 	formPresets := helpers.FormPresets()
 	externalPresets := helpers.ExternalPresets()
@@ -394,6 +397,17 @@ exec bash
 			PathPrefix: "static",
 			Browse:     true,
 		}))
+	}
+
+	if config.Templates == nil {
+		if !helpers.FileExists("views/index.html") {
+			helpers.TouchFile("views/index.html")
+		}
+		if !helpers.FileExists("views/layouts/main.html") {
+			helpers.SaveTextToDirectory(`
+			{{embed}}
+			`, "views/layouts/main.html")
+		}
 	}
 
 	// open database corresponding to app name
