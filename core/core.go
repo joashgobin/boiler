@@ -30,12 +30,13 @@ import (
 )
 
 type Base struct {
-	Users models.UserModelInterface
-	DB    *sql.DB
-	Store *session.Store
-	Shelf helpers.ShelfModelInterface
-	Flash helpers.FlashInterface
-	Bank  *valkey.Storage
+	Users  models.UserModelInterface
+	DB     *sql.DB
+	Store  *session.Store
+	Shelf  helpers.ShelfModelInterface
+	Flash  helpers.FlashInterface
+	Bank   *valkey.Storage
+	Anchor string
 }
 
 type AppConfig struct {
@@ -50,6 +51,23 @@ type AppConfig struct {
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
 func NewApp(config AppConfig) (*fiber.App, Base) {
+	if config.User == "" {
+		fmt.Println("config error: user not specified e.g. john")
+		os.Exit(1)
+	}
+	if config.IP == "" {
+		fmt.Println("config error: IP not specified e.g. example.com")
+		os.Exit(1)
+	}
+	if config.Port == "" {
+		fmt.Println("config error: port not specified e.g. 9910")
+		os.Exit(1)
+	}
+	if config.AppName == "" {
+		fmt.Println("config error: app name not specified e.g. myapp")
+		os.Exit(1)
+	}
+
 	start := time.Now()
 	gob.Register(map[string]string{})
 
@@ -418,12 +436,13 @@ exec bash
 	}
 	// attaching users to base
 	base := Base{
-		Users: &models.UserModel{DB: db},
-		DB:    db,
-		Store: store,
-		Shelf: &helpers.ShelfModel{DB: db},
-		Flash: &helpers.FlashModel{Store: store},
-		Bank:  storage,
+		Users:  &models.UserModel{DB: db},
+		DB:     db,
+		Store:  store,
+		Shelf:  &helpers.ShelfModel{DB: db},
+		Flash:  &helpers.FlashModel{Store: store},
+		Bank:   storage,
+		Anchor: ":" + config.Port,
 	}
 
 	//
