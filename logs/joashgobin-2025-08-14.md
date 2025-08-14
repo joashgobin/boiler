@@ -2,3 +2,4 @@
 
 - Modified the initiate checkout function
 - Updated vendors
+- Updated vendors

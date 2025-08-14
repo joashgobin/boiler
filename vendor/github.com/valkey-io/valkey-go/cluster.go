@@ -14,7 +14,7 @@ import (
 	"github.com/valkey-io/valkey-go/internal/util"
 )
 
-// ErrNoSlot indicates that there is no valkey node owns the key slot.
+// ErrNoSlot indicates that there is no valkey node owning the key slot.
 var ErrNoSlot = errors.New("the slot has no valkey node")
 var ErrReplicaOnlyConflict = errors.New("ReplicaOnly conflicts with SendToReplicas option")
 var ErrInvalidShardsRefreshInterval = errors.New("ShardsRefreshInterval must be greater than or equal to 0")
@@ -23,18 +23,19 @@ var ErrSendToReplicasNotSet = errors.New("SendToReplicas must be set when Replic
 
 type clusterClient struct {
 	pslots       [16384]conn
-	rslots       []conn
-	sc           call
+	retryHandler retryHandler
+	opt          *ClientOption
 	rOpt         *ClientOption
 	conns        map[string]connrole
 	connFn       connFn
-	opt          *ClientOption
-	retryHandler retryHandler
 	stopCh       chan struct{}
-	cmd          Builder
+	sc           call
+	rslots       []conn
 	mu           sync.RWMutex
 	stop         uint32
+	cmd          Builder
 	retry        bool
+	hasLftm      bool
 }
 
 // NOTE: connrole and conn must be initialized at the same time
@@ -57,6 +58,7 @@ func newClusterClient(opt *ClientOption, connFn connFn, retryer retryHandler) (*
 		retry:        !opt.DisableRetry,
 		retryHandler: retryer,
 		stopCh:       make(chan struct{}),
+		hasLftm:      opt.ConnLifetime > 0,
 	}
 
 	if opt.ReplicaOnly && opt.SendToReplicas != nil {
@@ -115,7 +117,7 @@ func (c *clusterClient) init() error {
 			if err := cc.Dial(); err == nil {
 				c.mu.Lock()
 				if _, ok := c.conns[addr]; ok {
-					go cc.Close() // abort the new connection instead of closing the old one which may already been used
+					go cc.Close() // abort the new connection instead of closing the old one, which may already been used
 				} else {
 					c.conns[addr] = connrole{
 						conn: cc,
@@ -196,7 +198,7 @@ func (c *clusterClient) _refresh() (err error) {
 		}
 		result = <-results
 		err = result.reply.Error()
-		if len(result.reply.val.values) != 0 {
+		if len(result.reply.val.values()) != 0 {
 			break
 		}
 	}
@@ -259,6 +261,21 @@ func (c *clusterClient) _refresh() (err error) {
 			}
 			if len(g.nodes) > 1 {
 				n := len(g.nodes) - 1
+
+				if c.opt.EnableReplicaAZInfo {
+					var wg sync.WaitGroup
+					for i := 1; i <= n; i += 4 { // batch AZ() for every 4 connections
+						for j := i; j <= i+4 && j <= n; j++ {
+							wg.Add(1)
+							go func(wg *sync.WaitGroup, conn conn, info *ReplicaInfo) {
+								info.AZ = conn.AZ()
+								wg.Done()
+							}(&wg, conns[g.nodes[j].Addr].conn, &g.nodes[j])
+						}
+						wg.Wait()
+					}
+				}
+
 				for _, slot := range g.slots {
 					for i := slot[0]; i <= slot[1] && i >= 0 && i < 16384; i++ {
 						pslots[i] = conns[master].conn
@@ -339,23 +356,23 @@ func parseEndpoint(fallback, endpoint string, port int64) string {
 // parseSlots - map valkey slots for each valkey nodes/addresses
 // defaultAddr is needed in case the node does not know its own IP
 func parseSlots(slots ValkeyMessage, defaultAddr string) map[string]group {
-	groups := make(map[string]group, len(slots.values))
-	for _, v := range slots.values {
-		master := parseEndpoint(defaultAddr, v.values[2].values[0].string, v.values[2].values[1].integer)
+	groups := make(map[string]group, len(slots.values()))
+	for _, v := range slots.values() {
+		master := parseEndpoint(defaultAddr, v.values()[2].values()[0].string(), v.values()[2].values()[1].intlen)
 		if master == "" {
 			continue
 		}
 		g, ok := groups[master]
 		if !ok {
 			g.slots = make([][2]int64, 0)
-			g.nodes = make(nodes, 0, len(v.values)-2)
-			for i := 2; i < len(v.values); i++ {
-				if dst := parseEndpoint(defaultAddr, v.values[i].values[0].string, v.values[i].values[1].integer); dst != "" {
+			g.nodes = make(nodes, 0, len(v.values())-2)
+			for i := 2; i < len(v.values()); i++ {
+				if dst := parseEndpoint(defaultAddr, v.values()[i].values()[0].string(), v.values()[i].values()[1].intlen); dst != "" {
 					g.nodes = append(g.nodes, ReplicaInfo{Addr: dst})
 				}
 			}
 		}
-		g.slots = append(g.slots, [2]int64{v.values[0].integer, v.values[1].integer})
+		g.slots = append(g.slots, [2]int64{v.values()[0].intlen, v.values()[1].intlen})
 		groups[master] = g
 	}
 	return groups
@@ -364,12 +381,14 @@ func parseSlots(slots ValkeyMessage, defaultAddr string) map[string]group {
 // parseShards - map valkey shards for each valkey nodes/addresses
 // defaultAddr is needed in case the node does not know its own IP
 func parseShards(shards ValkeyMessage, defaultAddr string, tls bool) map[string]group {
-	groups := make(map[string]group, len(shards.values))
-	for _, v := range shards.values {
+	groups := make(map[string]group, len(shards.values()))
+	for _, v := range shards.values() {
 		m := -1
 		shard, _ := v.AsMap()
-		slots := shard["slots"].values
-		_nodes := shard["nodes"].values
+		shardSlots := shard["slots"]
+		shardNodes := shard["nodes"]
+		slots := shardSlots.values()
+		_nodes := shardNodes.values()
 		g := group{
 			nodes: make(nodes, 0, len(_nodes)),
 			slots: make([][2]int64, len(slots)/2),
@@ -380,15 +399,16 @@ func parseShards(shards ValkeyMessage, defaultAddr string, tls bool) map[string]
 		}
 		for _, n := range _nodes {
 			dict, _ := n.AsMap()
-			if dict["health"].string != "online" {
+			if dictHealth := dict["health"]; dictHealth.string() != "online" {
 				continue
 			}
-			port := dict["port"].integer
-			if tls && dict["tls-port"].integer > 0 {
-				port = dict["tls-port"].integer
+			port := dict["port"].intlen
+			if tls && dict["tls-port"].intlen > 0 {
+				port = dict["tls-port"].intlen
 			}
-			if dst := parseEndpoint(defaultAddr, dict["endpoint"].string, port); dst != "" {
-				if dict["role"].string == "master" {
+			dictEndpoint := dict["endpoint"]
+			if dst := parseEndpoint(defaultAddr, dictEndpoint.string(), port); dst != "" {
+				if dictRole := dict["role"]; dictRole.string() == "master" {
 					m = len(g.nodes)
 				}
 				g.nodes = append(g.nodes, ReplicaInfo{Addr: dst})
@@ -482,7 +502,7 @@ func (c *clusterClient) B() Builder {
 }
 
 func (c *clusterClient) Do(ctx context.Context, cmd Completed) (resp ValkeyResult) {
-	if resp = c.do(ctx, cmd); resp.NonValkeyError() == nil { // not recycle cmds if error, since cmds may be used later in pipe. consider recycle them by pipe
+	if resp = c.do(ctx, cmd); resp.NonValkeyError() == nil { // not recycle cmds if error, since cmds may be used later in the pipe.
 		cmds.PutCompleted(cmd)
 	}
 	return resp
@@ -496,14 +516,27 @@ retry:
 		return newErrResult(err)
 	}
 	resp = cc.Do(ctx, cmd)
+	if resp.NonValkeyError() == errConnExpired {
+		goto retry
+	}
 process:
 	switch addr, mode := c.shouldRefreshRetry(resp.Error(), ctx); mode {
 	case RedirectMove:
-		resp = c.redirectOrNew(addr, cc, cmd.Slot(), mode).Do(ctx, cmd)
+		ncc := c.redirectOrNew(addr, cc, cmd.Slot(), mode)
+	recover1:
+		resp = ncc.Do(ctx, cmd)
+		if resp.NonValkeyError() == errConnExpired {
+			goto recover1
+		}
 		goto process
 	case RedirectAsk:
-		results := c.redirectOrNew(addr, cc, cmd.Slot(), mode).DoMulti(ctx, cmds.AskingCmd, cmd)
+		ncc := c.redirectOrNew(addr, cc, cmd.Slot(), mode)
+	recover2:
+		results := ncc.DoMulti(ctx, cmds.AskingCmd, cmd)
 		resp = results.s[1]
+		if resp.NonValkeyError() == errConnExpired {
+			goto recover2
+		}
 		resultsp.Put(results)
 		goto process
 	case RedirectRetry:
@@ -541,9 +574,12 @@ func (c *clusterClient) _pickMulti(multi []Completed) (retries *connretry, init 
 	count := conncountp.Get(len(c.conns), len(c.conns))
 
 	if !init && c.rslots != nil && c.opt.SendToReplicas != nil {
-		for _, cmd := range multi {
+		var bm bitmap
+		bm.Init(len(multi))
+		for i, cmd := range multi {
 			var cc conn
 			if c.opt.SendToReplicas(cmd) {
+				bm.Set(i)
 				cc = c.rslots[cmd.Slot()]
 			} else {
 				cc = c.pslots[cmd.Slot()]
@@ -562,13 +598,10 @@ func (c *clusterClient) _pickMulti(multi []Completed) (retries *connretry, init 
 
 		for i, cmd := range multi {
 			var cc conn
-			if c.opt.SendToReplicas(cmd) {
+			if bm.Get(i) {
 				cc = c.rslots[cmd.Slot()]
 			} else {
 				cc = c.pslots[cmd.Slot()]
-			}
-			if cc == nil { // check cc == nil again in case of non-deterministic SendToReplicas.
-				return nil, false
 			}
 			re := retries.m[cc]
 			re.commands = append(re.commands, cmd)
@@ -680,7 +713,7 @@ func (c *clusterClient) doresultfn(
 				}
 				for ei = i; ei < len(commands) && !isMulti(commands[ei]) && !isExec(commands[ei]); ei++ {
 				}
-				if mi >= 0 && ei < len(commands) && isMulti(commands[mi]) && isExec(commands[ei]) && resps[mi].val.string == ok { // a transaction is found.
+				if mi >= 0 && ei < len(commands) && isMulti(commands[mi]) && isExec(commands[ei]) && resps[mi].val.string() == ok { // a transaction is found.
 					mu.Lock()
 					retries.Redirects++
 					nr := retries.m[nc]
@@ -737,11 +770,38 @@ func (c *clusterClient) doretry(
 	clean := true
 	if len(re.commands) != 0 {
 		resps := cc.DoMulti(ctx, re.commands...)
+		if c.hasLftm {
+			var ml []Completed
+		recover:
+			ml = ml[:0]
+			var txIdx int // check transaction block, if zero, then not in transaction
+			for i, resp := range resps.s {
+				if resp.NonValkeyError() == errConnExpired {
+					if txIdx > 0 {
+						ml = re.commands[txIdx:]
+					} else {
+						ml = re.commands[i:]
+					}
+					break
+				}
+				// if no error, then check if transaction block
+				if isMulti(re.commands[i]) {
+					txIdx = i
+				} else if isExec(re.commands[i]) {
+					txIdx = 0
+				}
+			}
+			if len(ml) > 0 {
+				rs := cc.DoMulti(ctx, ml...).s
+				resps.s = append(resps.s[:len(resps.s)-len(rs)], rs...)
+				goto recover
+			}
+		}
 		clean = c.doresultfn(ctx, results, retries, mu, cc, re.cIndexes, re.commands, resps.s, attempts, hasInit)
 		resultsp.Put(resps)
 	}
 	if len(re.cAskings) != 0 {
-		resps := askingMulti(cc, ctx, re.cAskings)
+		resps := c.askingMulti(cc, ctx, re.cAskings)
 		clean = c.doresultfn(ctx, results, retries, mu, cc, re.aIndexes, re.cAskings, resps.s, attempts, hasInit) && clean
 		resultsp.Put(resps)
 	}
@@ -770,7 +830,7 @@ func (c *clusterClient) DoMulti(ctx context.Context, multi ...Completed) []Valke
 	attempts := 1
 
 retry:
-	retries.RetryDelay = -1 // Assume no retry. Because client retry flag can be set to false.
+	retries.RetryDelay = -1 // Assume no retry. Because a client retry flag can be set to false.
 
 	var cc1 conn
 	var re1 *retry
@@ -827,13 +887,21 @@ retry:
 		return newErrResult(err)
 	}
 	resp = cc.DoCache(ctx, cmd, ttl)
+	if resp.NonValkeyError() == errConnExpired {
+		goto retry
+	}
 process:
 	switch addr, mode := c.shouldRefreshRetry(resp.Error(), ctx); mode {
 	case RedirectMove:
-		resp = c.redirectOrNew(addr, cc, cmd.Slot(), mode).DoCache(ctx, cmd, ttl)
+		ncc := c.redirectOrNew(addr, cc, cmd.Slot(), mode)
+	recover:
+		resp = ncc.DoCache(ctx, cmd, ttl)
+		if resp.NonValkeyError() == errConnExpired {
+			goto recover
+		}
 		goto process
 	case RedirectAsk:
-		results := askingMultiCache(c.redirectOrNew(addr, cc, cmd.Slot(), mode), ctx, []CacheableTTL{CT(cmd, ttl)})
+		results := c.askingMultiCache(c.redirectOrNew(addr, cc, cmd.Slot(), mode), ctx, []CacheableTTL{CT(cmd, ttl)})
 		resp = results.s[0]
 		resultsp.Put(results)
 		goto process
@@ -857,7 +925,7 @@ func (c *clusterClient) DoCache(ctx context.Context, cmd Cacheable, ttl time.Dur
 	return resp
 }
 
-func askingMulti(cc conn, ctx context.Context, multi []Completed) *valkeyresults {
+func (c *clusterClient) askingMulti(cc conn, ctx context.Context, multi []Completed) *valkeyresults {
 	var inTx bool
 	commands := make([]Completed, 0, len(multi)*2)
 	for _, cmd := range multi {
@@ -871,6 +939,26 @@ func askingMulti(cc conn, ctx context.Context, multi []Completed) *valkeyresults
 	}
 	results := resultsp.Get(0, len(multi))
 	resps := cc.DoMulti(ctx, commands...)
+	if c.hasLftm {
+		var ml []Completed
+	recover:
+		ml = ml[:0]
+		var askingIdx int
+		for i, resp := range resps.s {
+			if commands[i] == cmds.AskingCmd {
+				askingIdx = i
+			}
+			if resp.NonValkeyError() == errConnExpired {
+				ml = commands[askingIdx:]
+				break
+			}
+		}
+		if len(ml) > 0 {
+			rs := cc.DoMulti(ctx, ml...).s
+			resps.s = append(resps.s[:len(resps.s)-len(rs)], rs...)
+			goto recover
+		}
+	}
 	for i, resp := range resps.s {
 		if commands[i] != cmds.AskingCmd {
 			results.s = append(results.s, resp)
@@ -880,14 +968,30 @@ func askingMulti(cc conn, ctx context.Context, multi []Completed) *valkeyresults
 	return results
 }
 
-func askingMultiCache(cc conn, ctx context.Context, multi []CacheableTTL) *valkeyresults {
+func (c *clusterClient) askingMultiCache(cc conn, ctx context.Context, multi []CacheableTTL) *valkeyresults {
 	commands := make([]Completed, 0, len(multi)*6)
 	for _, cmd := range multi {
 		ck, _ := cmds.CacheKey(cmd.Cmd)
-		commands = append(commands, cmds.OptInCmd, cmds.AskingCmd, cmds.MultiCmd, cmds.NewCompleted([]string{"PTTL", ck}), Completed(cmd.Cmd), cmds.ExecCmd)
+		commands = append(commands, cc.OptInCmd(), cmds.AskingCmd, cmds.MultiCmd, cmds.NewCompleted([]string{"PTTL", ck}), Completed(cmd.Cmd), cmds.ExecCmd)
 	}
 	results := resultsp.Get(0, len(multi))
 	resps := cc.DoMulti(ctx, commands...)
+	if c.hasLftm {
+		var ml []Completed
+	recover:
+		ml = ml[:0]
+		for i := 5; i < len(resps.s); i += 6 { // check exec command error only
+			if resps.s[i].NonValkeyError() == errConnExpired {
+				ml = commands[i-5:]
+				break
+			}
+		}
+		if len(ml) > 0 {
+			rs := cc.DoMulti(ctx, ml...).s
+			resps.s = append(resps.s[:len(resps.s)-len(rs)], rs...)
+			goto recover
+		}
+	}
 	for i := 5; i < len(resps.s); i += 6 {
 		if arr, err := resps.s[i].ToArray(); err != nil {
 			if preErr := resps.s[i-1].Error(); preErr != nil { // if {Cmd} get a ValkeyError
@@ -931,7 +1035,14 @@ func (c *clusterClient) _pickMultiCache(multi []CacheableTTL) *connretrycache {
 
 		return retries
 	} else {
-		for _, cmd := range multi {
+		var destination []conn
+		var stackDestination [32]conn
+		if len(multi) <= len(stackDestination) {
+			destination = stackDestination[:len(multi)]
+		} else {
+			destination = make([]conn, len(multi))
+		}
+		for i, cmd := range multi {
 			var p conn
 			if c.opt.SendToReplicas(Completed(cmd.Cmd)) {
 				p = c.rslots[cmd.Cmd.Slot()]
@@ -941,6 +1052,7 @@ func (c *clusterClient) _pickMultiCache(multi []CacheableTTL) *connretrycache {
 			if p == nil {
 				return nil
 			}
+			destination[i] = p
 			count.m[p]++
 		}
 
@@ -951,12 +1063,7 @@ func (c *clusterClient) _pickMultiCache(multi []CacheableTTL) *connretrycache {
 		conncountp.Put(count)
 
 		for i, cmd := range multi {
-			var cc conn
-			if c.opt.SendToReplicas(Completed(cmd.Cmd)) {
-				cc = c.rslots[cmd.Cmd.Slot()]
-			} else {
-				cc = c.pslots[cmd.Cmd.Slot()]
-			}
+			cc := destination[i]
 			re := retries.m[cc]
 			re.commands = append(re.commands, cmd)
 			re.cIndexes = append(re.cIndexes, i)
@@ -1031,11 +1138,27 @@ func (c *clusterClient) doretrycache(
 	clean := true
 	if len(re.commands) != 0 {
 		resps := cc.DoMultiCache(ctx, re.commands...)
+		if c.hasLftm {
+			var ml []CacheableTTL
+		recover:
+			ml = ml[:0]
+			for i, resp := range resps.s {
+				if resp.NonValkeyError() == errConnExpired {
+					ml = re.commands[i:]
+					break
+				}
+			}
+			if len(ml) > 0 {
+				rs := cc.DoMultiCache(ctx, ml...).s
+				resps.s = append(resps.s[:len(resps.s)-len(rs)], rs...)
+				goto recover
+			}
+		}
 		clean = c.resultcachefn(ctx, results, retries, mu, cc, re.cIndexes, re.commands, resps.s, attempts)
 		resultsp.Put(resps)
 	}
 	if len(re.cAskings) != 0 {
-		resps := askingMultiCache(cc, ctx, re.cAskings)
+		resps := c.askingMultiCache(cc, ctx, re.cAskings)
 		clean = c.resultcachefn(ctx, results, retries, mu, cc, re.aIndexes, re.cAskings, resps.s, attempts) && clean
 		resultsp.Put(resps)
 	}
@@ -1064,7 +1187,7 @@ func (c *clusterClient) DoMultiCache(ctx context.Context, multi ...CacheableTTL)
 	attempts := 1
 
 retry:
-	retries.RetryDelay = -1 // Assume no retry. Because client retry flag can be set to false.
+	retries.RetryDelay = -1 // Assume no retry. Because a client retry flag can be set to false.
 
 	var cc1 conn
 	var re1 *retrycache
@@ -1112,6 +1235,9 @@ retry:
 		goto ret
 	}
 	err = cc.Receive(ctx, subscribe, fn)
+	if err == errConnExpired {
+		goto retry
+	}
 	if _, mode := c.shouldRefreshRetry(err, ctx); c.retry && mode != RedirectNone {
 		shouldRetry := c.retryHandler.WaitOrSkipRetry(ctx, attempts, subscribe, err)
 		if shouldRetry {
@@ -1181,11 +1307,15 @@ func (c *clusterClient) Nodes() map[string]Client {
 	disableCache := c.opt != nil && c.opt.DisableCache
 	for addr, cc := range c.conns {
 		if !cc.hidden {
-			_nodes[addr] = newSingleClientWithConn(cc.conn, c.cmd, c.retry, disableCache, c.retryHandler)
+			_nodes[addr] = newSingleClientWithConn(cc.conn, c.cmd, c.retry, disableCache, c.retryHandler, false)
 		}
 	}
 	c.mu.RUnlock()
 	return _nodes
+}
+
+func (c *clusterClient) Mode() ClientMode {
+	return ClientModeCluster
 }
 
 func (c *clusterClient) Close() {
@@ -1221,15 +1351,15 @@ func (c *clusterClient) shouldRefreshRetry(err error, ctx context.Context) (addr
 }
 
 type dedicatedClusterClient struct {
-	client       *clusterClient
 	conn         conn
 	wire         wire
+	retryHandler retryHandler
+	client       *clusterClient
 	pshks        *pshks
 	mu           sync.Mutex
 	cmd          Builder
-	retryHandler retryHandler
-	retry        bool
 	slot         uint16
+	retry        bool
 	mark         bool
 }
 
@@ -1255,7 +1385,7 @@ func (c *dedicatedClusterClient) acquire(ctx context.Context, slot uint16) (wire
 		}
 		return nil, err
 	}
-	c.wire = c.conn.Acquire()
+	c.wire = c.conn.Acquire(ctx)
 	if p := c.pshks; p != nil {
 		c.pshks = nil
 		ch := c.wire.SetPubSubHooks(p.hooks)

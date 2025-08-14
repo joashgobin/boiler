@@ -35,6 +35,10 @@ const (
 	DefaultWriteBuffer = 1 << 19
 	// MaxPipelineMultiplex is the maximum meaningful value for ClientOption.PipelineMultiplex
 	MaxPipelineMultiplex = 8
+	// https://github.com/valkey-io/valkey/blob/1a34a4ff7f101bb6b17a0b5e9aa3bf7d6bd29f68/src/networking.c#L4118-L4124
+	ClientModeCluster    ClientMode = "cluster"
+	ClientModeSentinel   ClientMode = "sentinel"
+	ClientModeStandalone ClientMode = "standalone"
 )
 
 var (
@@ -51,8 +55,10 @@ var (
 	// ErrDoCacheAborted means valkey abort EXEC request or connection closed
 	ErrDoCacheAborted = errors.New("failed to fetch the cache because EXEC was aborted by valkey or connection closed")
 	// ErrReplicaOnlyNotSupported means ReplicaOnly flag is not supported by
-	// current client
+	// the current client
 	ErrReplicaOnlyNotSupported = errors.New("ReplicaOnly is not supported for single client")
+	// ErrNoSendToReplicas means the SendToReplicas function must be provided for a standalone client with replicas.
+	ErrNoSendToReplicas = errors.New("no SendToReplicas provided for standalone client with replicas")
 	// ErrWrongPipelineMultiplex means wrong value for ClientOption.PipelineMultiplex
 	ErrWrongPipelineMultiplex = errors.New("ClientOption.PipelineMultiplex must not be bigger than MaxPipelineMultiplex")
 	// ErrDedicatedClientRecycled means the caller attempted to use the dedicated client which has been already recycled (after canceled/closed).
@@ -63,58 +69,82 @@ var (
 
 // ClientOption should be passed to NewClient to construct a Client
 type ClientOption struct {
-	// TCP & TLS
-	// Dialer can be used to customized how valkey connect to a valkey instance via TCP, including:
-	// - Timeout, the default is DefaultDialTimeout
-	// - KeepAlive, the default is DefaultTCPKeepAlive
-	// The Dialer.KeepAlive interval is used to detect an unresponsive idle tcp connection.
-	// OS takes at least (tcp_keepalive_probes+1)*Dialer.KeepAlive time to conclude an idle connection to be unresponsive.
-	// For example: DefaultTCPKeepAlive = 1s and the default of tcp_keepalive_probes on Linux is 9.
-	// Therefore, it takes at least 10s to kill an idle and unresponsive tcp connection on Linux by default.
-	Dialer    net.Dialer
 	TLSConfig *tls.Config
 
 	// DialFn allows for a custom function to be used to create net.Conn connections
+	// Deprecated: use DialCtxFn instead.
 	DialFn func(string, *net.Dialer, *tls.Config) (conn net.Conn, err error)
+
+	// DialCtxFn allows for a custom function to be used to create net.Conn connections
+	DialCtxFn func(context.Context, string, *net.Dialer, *tls.Config) (conn net.Conn, err error)
 
 	// NewCacheStoreFn allows a custom client side caching store for each connection
 	NewCacheStoreFn NewCacheStoreFn
 
 	// OnInvalidations is a callback function in case of client-side caching invalidation received.
-	// Note that this function must be fast, otherwise other valkey messages will be blocked.
+	// Note that this function must be fast; otherwise other valkey messages will be blocked.
 	OnInvalidations func([]ValkeyMessage)
 
 	// SendToReplicas is a function that returns true if the command should be sent to replicas.
-	// currently only used for cluster client.
-	// NOTE: This function can't be used with ReplicaOnly option.
+	// NOTE: This function can't be used with the ReplicaOnly option.
 	SendToReplicas func(cmd Completed) bool
+
+	// AuthCredentialsFn allows for setting the AUTH username and password dynamically on each connection attempt to
+	// support rotating credentials
+	AuthCredentialsFn func(AuthCredentialsContext) (AuthCredentials, error)
+
+	// RetryDelay is the function that returns the delay that should be used before retrying the attempt.
+	// The default is an exponential backoff with a maximum delay of 1 second.
+	// Only used when DisableRetry is false.
+	RetryDelay RetryDelayFn
+
+	// ReplicaSelector selects a replica node when `SendToReplicas` returns true.
+	// If the function is set, the client will send the selected command to the replica node.
+	// The Returned value is the index of the replica node in the replica slice.
+	// If the returned value is out of range, the primary node will be selected.
+	// If the primary node does not have any replica, the primary node will be selected
+	// and the function will not be called.
+	// Currently only used for a cluster client.
+	// Each ReplicaInfo must not be modified.
+	// NOTE: This function can't be used with ReplicaOnly option.
+	// NOTE: This function must be used with the SendToReplicas function.
+	ReplicaSelector func(slot uint16, replicas []ReplicaInfo) int
 
 	// Sentinel options, including MasterSet and Auth options
 	Sentinel SentinelOption
+
+	// TCP & TLS
+	// Dialer can be used to customize how valkey connect to a valkey instance via TCP, including
+	// - Timeout, the default is DefaultDialTimeout
+	// - KeepAlive, the default is DefaultTCPKeepAlive
+	// The Dialer.KeepAlive interval is used to detect an unresponsive idle tcp connection.
+	// OS takes at least (tcp_keepalive_probes+1)*Dialer.KeepAlive time to conclude an idle connection to be unresponsive.
+	// For example, DefaultTCPKeepAlive = 1s and the default of tcp_keepalive_probes on Linux is 9.
+	// Therefore, it takes at least 10s to kill an idle and unresponsive tcp connection on Linux by default.
+	Dialer net.Dialer
 
 	// Valkey AUTH parameters
 	Username   string
 	Password   string
 	ClientName string
 
-	// AuthCredentialsFn allows for setting the AUTH username and password dynamically on each connection attempt to
-	// support rotating credentials
-	AuthCredentialsFn func(AuthCredentialsContext) (AuthCredentials, error)
-
 	// ClientSetInfo will assign various info attributes to the current connection.
 	// Note that ClientSetInfo should have exactly 2 values, the lib name and the lib version respectively.
 	ClientSetInfo []string
 
 	// InitAddress point to valkey nodes.
-	// Valkey will connect to them one by one and issue CLUSTER SLOT command to initialize the cluster client until success.
+	// Valkey will connect to them one by one and issue a CLUSTER SLOT command to initialize the cluster client until success.
 	// If len(InitAddress) == 1 and the address is not running in cluster mode, valkey will fall back to the single client mode.
 	// If ClientOption.Sentinel.MasterSet is set, then InitAddress will be used to connect sentinels
-	// You can bypass this behaviour by using ClientOption.ForceSingleClient.
+	// You can bypass this behavior by using ClientOption.ForceSingleClient.
 	InitAddress []string
 
-	// ClientTrackingOptions will be appended to CLIENT TRACKING ON command when the connection is established.
+	// ClientTrackingOptions will be appended to the CLIENT TRACKING ON command when the connection is established.
 	// The default is []string{"OPTIN"}
 	ClientTrackingOptions []string
+
+	// Standalone is the option for the standalone client.
+	Standalone StandaloneOption
 
 	SelectDB int
 
@@ -123,9 +153,9 @@ type ClientOption struct {
 	CacheSizeEachConn int
 
 	// RingScaleEachConn sets the size of the ring buffer in each connection to (2 ^ RingScaleEachConn).
-	// The default is RingScaleEachConn, which results into having a ring of size 2^10 for each connection.
-	// Reduce this value can reduce the memory consumption of each connection at the cost of potential throughput degradation.
-	// Values smaller than 8 is typically not recommended.
+	// The default is RingScaleEachConn, which results in having a ring of size 2^10 for each connection.
+	// Reducing this value can reduce the memory consumption of each connection at the cost of potential throughput degradation.
+	// Values smaller than 8 are typically not recommended.
 	RingScaleEachConn int
 
 	// ReadBufferEachConn is the size of the bufio.NewReaderSize for each connection, default to DefaultReadBuffer (0.5 MiB).
@@ -153,22 +183,29 @@ type ClientOption struct {
 	// The default for cluster clients is 0, which means 1 connection (2^0).
 	PipelineMultiplex int
 
-	// ConnWriteTimeout is read/write timeout for each connection. If specified,
+	// ConnWriteTimeout is a read/write timeout for each connection. If specified,
 	// it is used to control the maximum duration waits for responses to pipeline commands.
-	// Also, ConnWriteTimeout is applied net.Conn.SetDeadline and periodic PING to valkey
-	// Since the Dialer.KeepAlive will not be triggered if there is data in the outgoing buffer,
-	// ConnWriteTimeout should be set in order to detect local congestion or unresponsive valkey server.
+	// Also, ConnWriteTimeout is applied net.Conn.SetDeadline and periodic PINGs,
+	// since the Dialer.KeepAlive will not be triggered if there is data in the outgoing buffer.
+	// ConnWriteTimeout should be set to detect local congestion or unresponsive valkey server.
 	// This default is ClientOption.Dialer.KeepAlive * (9+1), where 9 is the default of tcp_keepalive_probes on Linux.
 	ConnWriteTimeout time.Duration
 
+	// ConnLifetime is a lifetime for each connection. If specified,
+	// connections will close after passing lifetime. Note that the connection which a dedicated client and blocking use is not closed.
+	ConnLifetime time.Duration
+
 	// MaxFlushDelay when greater than zero pauses pipeline write loop for some time (not larger than MaxFlushDelay)
-	// after each flushing of data to the connection. This gives pipeline a chance to collect more commands to send
+	// after each flushing of data to the connection. This gives the pipeline a chance to collect more commands to send
 	// to Valkey. Adding this delay increases latency, reduces throughput – but in most cases may significantly reduce
 	// application and Valkey CPU utilization due to less executed system calls. By default, Valkey flushes data to the
-	// connection without extra delays. Depending on network latency and application-specific conditions the value
-	// of MaxFlushDelay may vary, sth like 20 microseconds should not affect latency/throughput a lot but still
+	// connection without extra delays. Depending on network latency and application-specific conditions, the value
+	// of MaxFlushDelay may vary, something like 20 microseconds should not affect latency/throughput a lot but still
 	// produce notable CPU usage reduction under load. Ref: https://github.com/redis/rueidis/issues/156
 	MaxFlushDelay time.Duration
+
+	// ClusterOption is the options for the valkey cluster client.
+	ClusterOption ClusterOption
 
 	// DisableTCPNoDelay turns on Nagle's algorithm in pipelining mode by using conn.SetNoDelay(false).
 	// Turning this on can result in lower p99 latencies and lower CPU usages if all your requests are small.
@@ -181,17 +218,13 @@ type ClientOption struct {
 	ClientNoTouch bool
 	// DisableRetry disables retrying read-only commands under network errors
 	DisableRetry bool
-	// RetryDelay is the function that returns the delay that should be used before retrying the attempt.
-	// The default is an exponential backoff with a maximum delay of 1 second.
-	// Only used when DisableRetry is false.
-	RetryDelay RetryDelayFn
 	// DisableCache falls back Client.DoCache/Client.DoMultiCache to Client.Do/Client.DoMulti
 	DisableCache bool
 	// DisableAutoPipelining makes valkey.Client always pick a connection from the BlockingPool to serve each request.
 	DisableAutoPipelining bool
 	// AlwaysPipelining makes valkey.Client always pipeline valkey commands even if they are not issued concurrently.
 	AlwaysPipelining bool
-	// AlwaysRESP2 makes valkey.Client always uses RESP2, otherwise it will try using RESP3 first.
+	// AlwaysRESP2 makes valkey.Client always uses RESP2; otherwise, it will try using RESP3 first.
 	AlwaysRESP2 bool
 	//  ForceSingleClient force the usage of a single client connection, without letting the lib guessing
 	//  if valkey instance is a cluster or a single valkey instance.
@@ -206,20 +239,9 @@ type ClientOption struct {
 	// even if we're above the configured client eviction threshold.
 	ClientNoEvict bool
 
-	// ClusterOption is the options for the valkey cluster client.
-	ClusterOption ClusterOption
-
-	// ReplicaSelector selects a replica node when `SendToReplicas` returns true.
-	// If the function is set, the client will send selected command to the replica node.
-	// Returned value is the index of the replica node in the replicas slice.
-	// If the returned value is out of range, the primary node will be selected.
-	// If primary node does not have any replica, the primary node will be selected
-	// and function will not be called.
-	// Currently only used for cluster client.
-	// Each ReplicaInfo must not be modified.
-	// NOTE: This function can't be used with ReplicaOnly option.
-	// NOTE: This function must be used with SendToReplicas function.
-	ReplicaSelector func(slot uint16, replicas []ReplicaInfo) int
+	// EnableReplicaAZInfo enables the client to load the replica node's availability zone.
+	// If true, the client will set the `AZ` field in `ReplicaInfo`.
+	EnableReplicaAZInfo bool
 }
 
 // SentinelOption contains MasterSet,
@@ -229,7 +251,7 @@ type SentinelOption struct {
 	TLSConfig *tls.Config
 
 	// MasterSet is the valkey master set name monitored by sentinel cluster.
-	// If this field is set, then ClientOption.InitAddress will be used to connect to sentinel cluster.
+	// If this field is set, then ClientOption.InitAddress will be used to connect to the sentinel cluster.
 	MasterSet string
 
 	// Valkey AUTH parameters for sentinel
@@ -242,14 +264,25 @@ type SentinelOption struct {
 type ClusterOption struct {
 	// ShardsRefreshInterval is the interval to scan the cluster topology.
 	// If the value is zero, refreshment will be disabled.
-	// Cluster topology cache refresh happens always in the background after successful scan.
+	// Cluster topology cache refresh happens always in the background after a successful scan.
 	ShardsRefreshInterval time.Duration
+}
+
+// StandaloneOption is the options for the standalone client.
+type StandaloneOption struct {
+	// ReplicaAddress is the list of replicas for the primary node.
+	// Note that these addresses must be online and cannot be promoted.
+	// An example use case is the reader endpoint provided by cloud vendors.
+	ReplicaAddress []string
 }
 
 // ReplicaInfo is the information of a replica node in a valkey cluster.
 type ReplicaInfo struct {
 	Addr string
+	AZ   string
 }
+
+type ClientMode string
 
 // Client is the valkey client interface for both single valkey instance and valkey cluster. It should be created from the NewClient()
 type Client interface {
@@ -259,7 +292,7 @@ type Client interface {
 	// The explicit client side TTL specifies the maximum TTL on the client side.
 	// If the key's TTL on the server is smaller than the client side TTL, the client side TTL will be capped.
 	//  client.Do(ctx, client.B().Get().Key("k").Cache(), time.Minute).ToString()
-	// The above example will send the following command to valkey if cache miss:
+	// The above example will send the following command to valkey if the cache misses:
 	//  CLIENT CACHING YES
 	//  PTTL k
 	//  GET k
@@ -267,7 +300,7 @@ type Client interface {
 	// The cmd parameter is recycled after passing into DoCache() and should not be reused.
 	DoCache(ctx context.Context, cmd Cacheable, ttl time.Duration) (resp ValkeyResult)
 
-	// DoMultiCache is similar to DoCache, but works with multiple cacheable commands across different slots.
+	// DoMultiCache is similar to DoCache but works with multiple cacheable commands across different slots.
 	// It will first group commands by slots and will send only cache missed commands to valkey.
 	DoMultiCache(ctx context.Context, multi ...CacheableTTL) (resp []ValkeyResult)
 
@@ -288,8 +321,8 @@ type Client interface {
 	DoMultiStream(ctx context.Context, multi ...Completed) MultiValkeyResultStream
 
 	// Dedicated acquire a connection from the blocking connection pool, no one else can use the connection
-	// during Dedicated. The main usage of Dedicated is CAS operation, which is WATCH + MULTI + EXEC.
-	// However, one should try to avoid CAS operation but use Lua script instead, because occupying a connection
+	// during Dedicated. The main usage of Dedicated is CAS operations, which is WATCH + MULTI + EXEC.
+	// However, one should try to avoid CAS operation but use a Lua script instead, because occupying a connection
 	// is not good for performance.
 	Dedicated(fn func(DedicatedClient) error) (err error)
 
@@ -300,11 +333,16 @@ type Client interface {
 	// Nodes returns each valkey node this client known as valkey.Client. This is useful if you want to
 	// send commands to some specific valkey nodes in the cluster.
 	Nodes() map[string]Client
+	// Mode returns the current mode of the client, which indicates whether the client is operating
+	// in standalone, sentinel, or cluster mode.
+	// This can be useful for determining the type of Valkey deployment the client is connected to
+	// and for making decisions based on the deployment type.
+	Mode() ClientMode
 }
 
-// DedicatedClient is obtained from Client.Dedicated() and it will be bound to single valkey connection and
-// no other commands can be pipelined in to this connection during Client.Dedicated().
-// If the DedicatedClient is obtained from cluster client, the first command to it must have a Key() to identify the valkey node.
+// DedicatedClient is obtained from Client.Dedicated() and it will be bound to a single valkey connection, and
+// no other commands can be pipelined into this connection during Client.Dedicated().
+// If the DedicatedClient is obtained from a cluster client, the first command to it must have a Key() to identify the valkey node.
 type DedicatedClient interface {
 	CoreClient
 
@@ -312,9 +350,9 @@ type DedicatedClient interface {
 	// SetPubSubHooks is non-blocking and allows users to subscribe/unsubscribe channels later.
 	// Note that the hooks will be called sequentially but in another goroutine.
 	// The return value will be either:
-	//   1. an error channel, if the hooks passed in is not zero, or
-	//   2. nil, if the hooks passed in is zero. (used for reset hooks)
-	// In the former case, the error channel is guaranteed to be close when the hooks will not be called anymore,
+	//   1. an error channel, if the hooks passed in are not zero, or
+	//   2. nil, if the hooks passed in are zero. (used for reset hooks)
+	// In the former case, the error channel is guaranteed to be close when the hooks will not be called anymore
 	// and has at most one error describing the reason why the hooks will not be called anymore.
 	// Users can use the error channel to detect disconnection.
 	SetPubSubHooks(hooks PubSubHooks) <-chan error
@@ -323,7 +361,7 @@ type DedicatedClient interface {
 // CoreClient is the minimum interface shared by the Client and the DedicatedClient.
 type CoreClient interface {
 	// B is the getter function to the command builder for the client
-	// If the client is a cluster client, the command builder also prohibits cross key slots in one command.
+	// If the client is a cluster client, the command builder also prohibits cross-key slots in one command.
 	B() Builder
 	// Do is the method sending user's valkey command building from the B() to a valkey node.
 	//  client.Do(ctx, client.B().Get().Key("k").Build()).ToString()
@@ -351,7 +389,7 @@ func CT(cmd Cacheable, ttl time.Duration) CacheableTTL {
 	return CacheableTTL{Cmd: cmd, TTL: ttl}
 }
 
-// CacheableTTL is parameter container of DoMultiCache
+// CacheableTTL is a parameter container of DoMultiCache
 type CacheableTTL struct {
 	Cmd Cacheable
 	TTL time.Duration
@@ -368,8 +406,8 @@ type AuthCredentials struct {
 	Password string
 }
 
-// NewClient uses ClientOption to initialize the Client for both cluster client and single client.
-// It will first try to connect as cluster client. If the len(ClientOption.InitAddress) == 1 and
+// NewClient uses ClientOption to initialize the Client for both a cluster client and a single client.
+// It will first try to connect as a cluster client. If the len(ClientOption.InitAddress) == 1 and
 // the address does not enable cluster mode, the NewClient() will use single client instead.
 func NewClient(option ClientOption) (client Client, err error) {
 	if option.ReadBufferEachConn < 32 { // the buffer should be able to hold an int64 string at least
@@ -411,6 +449,13 @@ func NewClient(option ClientOption) (client Client, err error) {
 		option.PipelineMultiplex = singleClientMultiplex(option.PipelineMultiplex)
 		return newSentinelClient(&option, makeConn, newRetryer(option.RetryDelay))
 	}
+	if len(option.Standalone.ReplicaAddress) > 0 {
+		if option.SendToReplicas == nil {
+			return nil, ErrNoSendToReplicas
+		}
+		option.PipelineMultiplex = singleClientMultiplex(option.PipelineMultiplex)
+		return newStandaloneClient(&option, makeConn, newRetryer(option.RetryDelay))
+	}
 	if option.ForceSingleClient {
 		option.PipelineMultiplex = singleClientMultiplex(option.PipelineMultiplex)
 		return newSingleClient(&option, nil, makeConn, newRetryer(option.RetryDelay))
@@ -446,16 +491,25 @@ func makeConn(dst string, opt *ClientOption) conn {
 	return makeMux(dst, opt, dial)
 }
 
-func dial(dst string, opt *ClientOption) (conn net.Conn, err error) {
+func dial(ctx context.Context, dst string, opt *ClientOption) (conn net.Conn, err error) {
+	if opt.DialCtxFn != nil {
+		return opt.DialCtxFn(ctx, dst, &opt.Dialer, opt.TLSConfig)
+	}
 	if opt.DialFn != nil {
 		return opt.DialFn(dst, &opt.Dialer, opt.TLSConfig)
 	}
 	if opt.TLSConfig != nil {
-		conn, err = tls.DialWithDialer(&opt.Dialer, "tcp", dst, opt.TLSConfig)
+		dialer := tls.Dialer{NetDialer: &opt.Dialer, Config: opt.TLSConfig}
+		conn, err = dialer.DialContext(ctx, "tcp", dst)
 	} else {
-		conn, err = opt.Dialer.Dial("tcp", dst)
+		conn, err = opt.Dialer.DialContext(ctx, "tcp", dst)
 	}
 	return conn, err
 }
 
 const valkeyErrMsgCommandNotAllow = "command is not allowed"
+
+var (
+	// errConnExpired means the wrong connection that ClientOption.ConnLifetime had passed since connecting
+	errConnExpired = errors.New("connection is expired")
+)
