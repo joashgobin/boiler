@@ -5,3 +5,4 @@
 - Updated vendors
 - Updated core
 - Added a flash style
+- Added flash-body partial
