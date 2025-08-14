@@ -423,7 +423,21 @@ exec bash
 		}
 		if !helpers.FileExists("views/layouts/main.html") {
 			helpers.SaveTextToDirectory(`
-			{{embed}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App</title>
+</head>
+<body>
+<header></header>
+<main>
+{{embed}}
+</main>
+<footer></footer>
+</body>
+</html>
 			`, "views/layouts/main.html")
 		}
 	}
