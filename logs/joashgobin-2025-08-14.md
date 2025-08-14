@@ -4,3 +4,4 @@
 - Updated vendors
 - Updated vendors
 - Updated core
+- Added a flash style
