@@ -6,3 +6,4 @@
 - Updated core
 - Added a flash style
 - Added flash-body partial
+- Added flash functions to delete session and save a map to the session

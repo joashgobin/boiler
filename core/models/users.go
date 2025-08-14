@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS users (
 }
 
 func (m *UserModel) Insert(name, email, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -160,6 +160,7 @@ func (m *UserModel) Authenticate(email, password string) (int, string, error) {
 			return 0, "", err
 		}
 	}
+	log.Error(err)
 	return id, roles, nil
 }
 

@@ -18,6 +18,19 @@ type FlashInterface interface {
 	RequireKeys(keys []string, redirectRoute string) fiber.Handler
 	Get(c *fiber.Ctx, key string) string
 	Set(c *fiber.Ctx, key string, value string)
+	SetMany(c *fiber.Ctx, pairs map[string]any) error
+	DeleteSession(c *fiber.Ctx)
+}
+
+func (flash *FlashModel) DeleteSession(c *fiber.Ctx) {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		log.Errorf("session delete error: %v", err)
+	}
+	if err := sess.Destroy(); err != nil {
+		log.Errorf("session delete error: %v", err)
+	}
+
 }
 
 type FlashModel struct {
@@ -42,6 +55,20 @@ func (flash *FlashModel) Set(c *fiber.Ctx, key string, value string) {
 	if err := sess.Save(); err != nil {
 		panic(err)
 	}
+}
+
+func (flash *FlashModel) SetMany(c *fiber.Ctx, pairs map[string]any) error {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		return err
+	}
+	for key, value := range pairs {
+		sess.Set(key, value)
+	}
+	if err := sess.Save(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (flash *FlashModel) RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error) {
