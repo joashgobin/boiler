@@ -158,6 +158,11 @@ func FingerprintFromBuffer(content []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
+func GetHash(content string) string {
+	hashBytes := sha256.Sum256([]byte(content))
+	return hex.EncodeToString(hashBytes[:])
+}
+
 func ParseBodyForKey(bodyData []byte, key string) map[string]string {
 	body := string(bodyData)
 	// Split the body into individual key-value pairs

@@ -602,7 +602,7 @@ func loadConfig(filename string) (*Config, error) {
 			return nil, fmt.Errorf("missing required configuration fields")
 		}
 	*/
-	fmt.Printf("config: %v", config)
+	// fmt.Printf("config: %v", config)
 
 	return config, nil
 }
@@ -663,10 +663,10 @@ func loadPublicKey(filename string) (*rsa.PublicKey, error) {
 
 func generateURL(token []byte, msisdn, clientID string) string {
 	tokenStr := base64.URLEncoding.EncodeToString(token)
-	fmt.Printf("-- CHECKOUT URL PARAMS --\n")
-	fmt.Printf("MSISDN: %s\n", msisdn)
-	fmt.Printf("CLIENTID: %s\n", clientID)
-	fmt.Printf("TOKEN: %s\n\n", tokenStr)
+	// fmt.Printf("-- CHECKOUT URL PARAMS --\n")
+	// fmt.Printf("MSISDN: %s\n", msisdn)
+	// fmt.Printf("CLIENTID: %s\n", clientID)
+	// fmt.Printf("TOKEN: %s\n\n", tokenStr)
 
 	fmt.Printf("-- CHECKOUT URL --\n")
 	return fmt.Sprintf("https://gtt-uat-checkout.qpass.com:8743/checkout-endpoint/home?token=%s&merchantId=%s&X-Client-ID=%s\n",
@@ -706,7 +706,7 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 	return data, nil
 }
 
-func InitiateCheckout(merchantNumber int, merchantName, itemDescription string) string {
+func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, cost float64) string {
 	config, err := loadConfig(fmt.Sprintf("merchants/%d.cfg", merchantNumber))
 	if err != nil {
 		log.Fatal(err)
@@ -717,13 +717,14 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string) 
 		log.Fatal(err)
 	}
 
+	internalTransactionID := helpers.GetHash(helpers.GetHash(config.MerchantMsisdn) + "-" + helpers.GetHash(itemDescription) + "-" + helpers.GetHash(time.Now().Format(time.RFC3339)))
 	timestamp := time.Now().Unix()
 	tokenParams := TokenParams{
 		SecretKey:             config.SecretKey,
-		Amount:                config.Amount,
+		Amount:                strconv.FormatFloat(cost, 'g', -1, 64),
 		MerchantID:            config.MerchantMsisdn,
 		MerchantTransactionID: fmt.Sprint(timestamp),
-		ProductDescription:    itemDescription,
+		ProductDescription:    itemDescription + "|||" + internalTransactionID,
 		RequestInitiationTime: timestamp,
 		MerchantName:          merchantName,
 	}
@@ -736,7 +737,7 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string) 
 	return generateURL(token, config.MerchantMsisdn, config.ClientID)
 }
 
-func InitMMG(db *sql.DB, appName string) {
+func UseMMG(db *sql.DB, appName string) {
 	helpers.RunMigration(strings.ReplaceAll(`
 -- Select database
 USE <appName>;

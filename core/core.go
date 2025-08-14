@@ -446,7 +446,7 @@ exec bash
 	}
 
 	//
-	payments.InitMMG(db, config.AppName)
+	payments.UseMMG(db, config.AppName)
 	helpers.InitShelf(db, config.AppName)
 	models.InitUsers(db, config.AppName)
 
