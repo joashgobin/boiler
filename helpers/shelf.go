@@ -101,27 +101,15 @@ func SetShelf(db *sql.DB, key string, value string) {
 
 func GetShelf(db *sql.DB, key string) string {
 	log.Infof("retrieving from shelf: %s", key)
-	query := "SELECT id, name, value FROM shelf WHERE name = ?"
-	rows, err := db.Query(query, key)
+
+	var value string
+	query := "SELECT value FROM shelf WHERE name = ?"
+	err := db.QueryRow(query, key).Scan(&value)
 	if err != nil {
+		log.Errorf("shelf value not found for key %s", key)
 		return ""
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			id    int
-			name  string
-			value string
-		)
-		err = rows.Scan(&id, &name, &value)
-		if err != nil {
-			return ""
-		}
-		log.Infof("shelf value: %s", value)
-		return value
-	}
-	log.Errorf("shelf value not found for %s",key)
-	return ""
+	return value
 }
 
 func InitShelf(db *sql.DB, appName string) {

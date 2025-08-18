@@ -25,6 +25,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/joashgobin/boiler/email"
 	"github.com/joashgobin/boiler/helpers"
 )
 
@@ -381,6 +382,16 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 				return
 			}
 			resourceToken := getResourceToken(db, merchantNumber)
+
+			// in case resource token is empty
+			if resourceToken == "" {
+				log.Error("resource token returned empty")
+				LoadNewResourceToken(db, merchantNumber)
+				LoadMMGTransactionHistory(db, merchantNumber)
+				return
+			}
+
+			log.Infof("resource token: %s", resourceToken)
 			req.Header.Add("x-wss-token", "Bearer "+resourceToken)
 			req.Header.Add("x-wss-mid", pairs["merchant_mid"])
 			req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
@@ -401,12 +412,19 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 				log.Error(err)
 				return
 			}
+			log.Infof("response body: %s", string(body))
 
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
 				log.Error("failed to use valid resource token")
 				LoadNewResourceToken(db, merchantNumber)
 				LoadMMGTransactionHistory(db, merchantNumber)
+				return
+			}
+
+			// in case authentication fails
+			if strings.Contains(string(body), "Authentication failed") {
+				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Authentication Error", fmt.Sprintf("Response: %v<br>Merchant: %d", string(body), merchantNumber), "")
 				return
 			}
 
