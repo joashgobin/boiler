@@ -120,6 +120,7 @@ func GetShelf(db *sql.DB, key string) string {
 		log.Infof("shelf value: %s", value)
 		return value
 	}
+	log.Errorf("shelf value not found for %s",key)
 	return ""
 }
 

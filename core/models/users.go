@@ -160,7 +160,6 @@ func (m *UserModel) Authenticate(email, password string) (int, string, error) {
 			return 0, "", err
 		}
 	}
-	log.Error(err)
 	return id, roles, nil
 }
 
