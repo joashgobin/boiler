@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	ht "html/template"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -398,10 +399,8 @@ exec bash
 		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n",
 	}))
 	f, err := os.OpenFile(config.AppName+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		return app, Base{}
-	}
-	log.SetOutput(f)
+	iw := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(iw)
 
 	// serve static files when in development
 	app.Static("/static/", "./static", fiber.Static{
