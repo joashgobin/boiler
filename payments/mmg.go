@@ -387,7 +387,7 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
 				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "Resource Token Returned Empty", fmt.Sprintf("Merchant: %d", merchantNumber), "")
-				LoadNewResourceToken(db, merchantNumber)
+				// LoadNewResourceToken(db, merchantNumber)
 				// LoadMMGTransactionHistory(db, merchantNumber)
 				return
 			}
