@@ -386,8 +386,8 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case resource token is empty
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
-				LoadNewResourceToken(db, merchantNumber)
-				LoadMMGTransactionHistory(db, merchantNumber)
+				// LoadNewResourceToken(db, merchantNumber)
+				// LoadMMGTransactionHistory(db, merchantNumber)
 				return
 			}
 
@@ -417,8 +417,8 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
 				log.Error("failed to use valid resource token")
-				LoadNewResourceToken(db, merchantNumber)
-				LoadMMGTransactionHistory(db, merchantNumber)
+				// LoadNewResourceToken(db, merchantNumber)
+				// LoadMMGTransactionHistory(db, merchantNumber)
 				return
 			}
 
