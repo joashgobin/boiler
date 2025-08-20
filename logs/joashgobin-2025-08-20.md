@@ -4,3 +4,4 @@
 - Load resource token if empty
 - Tweak
 - Fix
+- Added more email admin notifications

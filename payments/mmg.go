@@ -386,7 +386,7 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case resource token is empty
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
-				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "Resource Token Returned Empty", fmt.Sprintf("Merchant: %d", merchantNumber), "")
+				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty", fmt.Sprintf("Merchant: %d", merchantNumber), "")
 				LoadNewResourceToken(db, merchantNumber)
 				// LoadMMGTransactionHistory(db, merchantNumber)
 				return
@@ -418,7 +418,7 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
 				log.Error("failed to use valid resource token")
-				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "Client Authorization Error", fmt.Sprintf("Response: %v<br>Merchant: %d", string(body), merchantNumber), "")
+				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error", fmt.Sprintf("Response: %v<br>Merchant: %d", string(body), merchantNumber), "")
 				LoadNewResourceToken(db, merchantNumber)
 				// LoadMMGTransactionHistory(db, merchantNumber)
 				return
@@ -473,6 +473,7 @@ func LoadNewResourceToken(db *sql.DB, merchantNumber int) {
 
 	if err != nil {
 		log.Errorf("failed to extract resource token")
+		email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Merchant: %d", merchantNumber), "")
 		return
 	}
 	log.Infof("new resource token: %s", token)
