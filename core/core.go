@@ -397,6 +397,11 @@ exec bash
 	app.Use(logger.New(logger.Config{
 		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n",
 	}))
+	f, err := os.OpenFile(config.AppName+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return app, Base{}
+	}
+	log.SetOutput(f)
 
 	// serve static files when in development
 	app.Static("/static/", "./static", fiber.Static{
