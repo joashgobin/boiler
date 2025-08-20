@@ -5,3 +5,4 @@
 - Tweak
 - Fix
 - Added more email admin notifications
+- Spelling fix

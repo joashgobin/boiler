@@ -472,7 +472,7 @@ func LoadNewResourceToken(db *sql.DB, merchantNumber int) {
 	token, err := extractResourceTokenFromBody(body)
 
 	if err != nil {
-		log.Errorf("failed to extract resource token")
+		log.Error("failed to extract resource token")
 		email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Merchant: %d", merchantNumber), "")
 		return
 	}
