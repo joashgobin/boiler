@@ -420,7 +420,7 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			if strings.Contains(string(body), "clientAuthorisationError") {
 				log.Error("failed to use valid resource token")
 				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
-					fmt.Sprintf("Response: %vHead: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
+					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
 				LoadNewResourceToken(db, merchantNumber)
 				// LoadMMGTransactionHistory(db, merchantNumber)
 				return
@@ -429,7 +429,7 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case authentication fails
 			if strings.Contains(string(body), "Authentication failed") {
 				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
-					fmt.Sprintf("Response: %vHead: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
+					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
 				return
 			}
 
