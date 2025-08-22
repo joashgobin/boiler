@@ -694,7 +694,7 @@ func generateURL(token []byte, msisdn, clientID string) string {
 	// fmt.Printf("TOKEN: %s\n\n", tokenStr)
 
 	fmt.Printf("-- CHECKOUT URL --\n")
-	return fmt.Sprintf("https://gtt-uat-checkout.qpass.com:8743/checkout-endpoint/home?token=%s&merchantId=%s&X-Client-ID=%s",
+	return fmt.Sprintf("https://gtt-uat-checkout.qpass.com:8743/checkout-endpoint/home?token=%s&merchantId=%s&X-Client-ID=%s\n",
 		tokenStr, msisdn, clientID)
 }
 
