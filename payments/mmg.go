@@ -611,7 +611,7 @@ func loadConfig(filename string) (*Config, error) {
 			config.SecretKey = value
 		case "amount":
 			config.Amount = value
-		case "client_id":
+		case "clientId":
 			config.ClientID = value
 		}
 	}
@@ -694,7 +694,7 @@ func generateURL(token []byte, msisdn, clientID string) string {
 	// fmt.Printf("TOKEN: %s\n\n", tokenStr)
 
 	fmt.Printf("-- CHECKOUT URL --\n")
-	return fmt.Sprintf("https://gtt-uat-checkout.qpass.com:8743/checkout-endpoint/home?token=%s&merchantId=%s&X-Client-ID=%s\n",
+	return fmt.Sprintf("https://gtt-uat-checkout.qpass.com:8743/checkout-endpoint/home?token=%s&merchantId=%s&X-Client-ID=%s",
 		tokenStr, msisdn, clientID)
 }
 
