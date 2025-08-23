@@ -760,7 +760,7 @@ func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode, i
 func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescription string, productCode, userEmail string) {
 	query := `
 		INSERT INTO purchases (timestamp, user, internalid, description, status, productcode)
-		VALUES (?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?)
 		`
 	result, err := db.Exec(query, time.Now().Format("2006-01-02 15:04:05"), userEmail, internalTransactionID, itemDescription, "pending", productCode)
 	if err != nil {
