@@ -12,3 +12,4 @@
 - Updated update row for metadata 
 - Fixed expiration date field
 - Tweaked log
+- Include error in log

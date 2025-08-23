@@ -193,7 +193,7 @@ func LoadMMGTransactionDetails(db *sql.DB, merchantNumber int, transactionRefere
 				`
 				result, err := db.Exec(query, metadata, user, internalId, productCode, transactionReference)
 				if err != nil {
-					log.Errorf("failed to update transaction: ref %s", transactionReference)
+					log.Errorf("failed to update transaction ref %s: %v", transactionReference, err)
 					return
 				}
 				rowsAffected, err := result.RowsAffected()
@@ -360,7 +360,7 @@ func IsMMGSubscribed(db *sql.DB, thresholdAmount float64, userEmail string) bool
 	return count > 0
 }
 
-func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
+func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 	helpers.Background(
 		func() {
 			now := time.Now()
@@ -424,7 +424,7 @@ func LoadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 				log.Error(err)
 				return
 			}
-			log.Infof("response body: %s", string(body))
+			// log.Infof("response body: %s", string(body))
 
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
@@ -755,7 +755,7 @@ type MMGModel struct {
 }
 
 func (m *MMGModel) LoadHistory(merchantNumber int) {
-	LoadMMGTransactionHistory(m.DB, merchantNumber)
+	loadMMGTransactionHistory(m.DB, merchantNumber)
 }
 
 func (m *MMGModel) AddProduct(productCode, itemDescription string) {
