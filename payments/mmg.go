@@ -176,13 +176,23 @@ func LoadMMGTransactionDetails(db *sql.DB, merchantNumber int, transactionRefere
 			if err != nil {
 				log.Errorf("error getting transaction meta: %v", err)
 			} else {
+				parts := strings.Split(metadata, "||")
+				user := ""
+				internalId := ""
+				productCode := parts[0]
+				if len(parts) > 1 {
+					internalId = parts[1]
+				}
+				if len(parts) > 2 {
+					user = parts[2]
+				}
 				query := `
 				UPDATE transactions
-				SET metadata = ?
+				SET metadata = ?, user = ?, internalid = ?, productcode = ?
 				WHERE reference = ?
 				AND metadata IS NULL
 				`
-				result, err := db.Exec(query, metadata, transactionReference)
+				result, err := db.Exec(query, metadata, user, internalId, productCode, transactionReference)
 				if err != nil {
 					log.Errorf("failed to update transaction: ref %d", transactionReference)
 					return
@@ -843,6 +853,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     user VARCHAR(100),
 	productcode VARCHAR(30),
 	internalid VARCHAR(40)
+    expiration_date DATETIME,
 );
 	`, "<appName>", appName), db)
 
