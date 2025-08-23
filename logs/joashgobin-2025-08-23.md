@@ -13,3 +13,4 @@
 - Fixed expiration date field
 - Tweaked log
 - Include error in log
+- Increase product code length

@@ -850,7 +850,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 	status    VARCHAR(20) NOT NULL,
     metadata VARCHAR(100),
     user VARCHAR(100),
-	productcode VARCHAR(30),
+	productcode VARCHAR(200),
 	internalid VARCHAR(40),
     expiration_date DATETIME
 );
