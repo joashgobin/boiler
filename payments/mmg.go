@@ -15,6 +15,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -731,6 +732,29 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 	return data, nil
 }
 
+type MMGInterface interface {
+	RegisterMerchant(merchantNumber int, merchantName string)
+	Checkout(merchantNumber int, itemDescription string, cost float64) string
+	LoadHistory(merchantNumber int)
+}
+
+type MMGModel struct {
+	DB        *sql.DB
+	Merchants map[int]string
+}
+
+func (m *MMGModel) LoadHistory(merchantNumber int) {
+	LoadMMGTransactionHistory(m.DB, merchantNumber)
+}
+
+func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) {
+	m.Merchants[merchantNumber] = merchantName
+}
+
+func (m *MMGModel) Checkout(merchantNumber int, itemDescription string, cost float64) string {
+	return InitiateCheckout(merchantNumber, m.Merchants[merchantNumber], itemDescription, cost)
+}
+
 func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, cost float64) string {
 	config, err := loadConfig(fmt.Sprintf("merchants/%d.cfg", merchantNumber))
 	if err != nil {
@@ -742,14 +766,14 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, 
 		log.Fatal(err)
 	}
 
-	internalTransactionID := helpers.GetHash(helpers.GetHash(config.MerchantMsisdn) + "-" + helpers.GetHash(itemDescription) + "-" + helpers.GetHash(time.Now().Format(time.RFC3339)))
 	timestamp := time.Now().Unix()
+	internalTransactionID := url.QueryEscape(helpers.GetHash(helpers.GetHash(config.MerchantMsisdn) + "-" + helpers.GetHash(itemDescription) + "-" + helpers.GetHash(time.Now().Format(time.RFC3339))))[:8] + "_" + fmt.Sprint(timestamp)
 	tokenParams := TokenParams{
 		SecretKey:             config.SecretKey,
 		Amount:                strconv.FormatFloat(cost, 'g', -1, 64),
 		MerchantID:            config.MerchantMsisdn,
 		MerchantTransactionID: fmt.Sprint(timestamp),
-		ProductDescription:    itemDescription + "|||" + internalTransactionID,
+		ProductDescription:    itemDescription + "|(" + internalTransactionID + ")|",
 		RequestInitiationTime: timestamp,
 		MerchantName:          merchantName,
 	}

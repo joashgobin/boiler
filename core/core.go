@@ -37,6 +37,7 @@ type Base struct {
 	Shelf  helpers.ShelfModelInterface
 	Flash  helpers.FlashInterface
 	Bank   *valkey.Storage
+	MMG    payments.MMGInterface
 	Anchor string
 }
 
@@ -460,6 +461,7 @@ exec bash
 		Shelf:  &helpers.ShelfModel{DB: db},
 		Flash:  &helpers.FlashModel{Store: store},
 		Bank:   storage,
+		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}},
 		Anchor: ":" + config.Port,
 	}
 
