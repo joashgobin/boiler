@@ -17,3 +17,4 @@
 - Testing product code retrieval
 - Return empty string instead of panicking
 - Tweak
+- Added new method

@@ -747,12 +747,21 @@ type MMGInterface interface {
 	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
 	LoadHistory(merchantNumber int)
 	GetUserProducts(userEmail string) []string
+	GetProductDescription(productCode string) string
 }
 
 type MMGModel struct {
 	DB        *sql.DB
 	Merchants map[int]string
 	Products  map[string]string
+}
+
+func (m *MMGModel) GetProductDescription(productCode string) string {
+	value, exists := m.Products[productCode]
+	if exists {
+		return value
+	}
+	return ""
 }
 
 func (m *MMGModel) GetUserProducts(userEmail string) []string {
