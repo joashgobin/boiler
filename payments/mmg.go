@@ -202,7 +202,7 @@ func LoadMMGTransactionDetails(db *sql.DB, merchantNumber int, transactionRefere
 					return
 				}
 				if rowsAffected == 0 {
-					log.Errorf("%v", sql.ErrNoRows)
+					log.Errorf("rows affected error: %v", sql.ErrNoRows)
 					return
 				}
 				log.Infof("updated metadata for transaction: %s", transactionReference)
@@ -746,12 +746,42 @@ type MMGInterface interface {
 	AddProduct(productCode, itemDescription string)
 	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
 	LoadHistory(merchantNumber int)
+	GetUserProducts(userEmail string) []string
 }
 
 type MMGModel struct {
 	DB        *sql.DB
 	Merchants map[int]string
 	Products  map[string]string
+}
+
+func (m *MMGModel) GetUserProducts(userEmail string) []string {
+	query := `SELECT
+	productcode
+	FROM transactions WHERE user = ?`
+	rows, err := m.DB.Query(query, userEmail)
+	if err != nil {
+		log.Errorf("product query error: %v", err)
+		return []string{}
+	}
+	defer rows.Close()
+
+	var productCodes []string
+	for rows.Next() {
+		var productCode string
+		err := rows.Scan(
+			&productCode,
+		)
+		if err != nil {
+			log.Errorf("scan error: %v", err)
+		}
+		productCodes = append(productCodes, productCode)
+	}
+	if err := rows.Err(); err != nil {
+		log.Errorf("rows error: %v", err)
+		return []string{}
+	}
+	return productCodes
 }
 
 func (m *MMGModel) LoadHistory(merchantNumber int) {

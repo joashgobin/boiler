@@ -14,3 +14,4 @@
 - Tweaked log
 - Include error in log
 - Increase product code length
+- Testing product code retrieval
