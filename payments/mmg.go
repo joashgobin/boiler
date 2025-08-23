@@ -190,11 +190,10 @@ func LoadMMGTransactionDetails(db *sql.DB, merchantNumber int, transactionRefere
 				UPDATE transactions
 				SET metadata = ?, user = ?, internalid = ?, productcode = ?
 				WHERE reference = ?
-				AND metadata IS NULL
 				`
 				result, err := db.Exec(query, metadata, user, internalId, productCode, transactionReference)
 				if err != nil {
-					log.Errorf("failed to update transaction: ref %d", transactionReference)
+					log.Errorf("failed to update transaction: ref %s", transactionReference)
 					return
 				}
 				rowsAffected, err := result.RowsAffected()
