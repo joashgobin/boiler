@@ -4,3 +4,4 @@
 - Create events for MMG
 - Fix timestamp format
 - Create migration for mmg events
+- Added product code to purchases table

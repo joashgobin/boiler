@@ -734,7 +734,7 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 
 type MMGInterface interface {
 	RegisterMerchant(merchantNumber int, merchantName string)
-	Checkout(userEmail string, merchantNumber int, itemDescription string, cost float64) string
+	Checkout(userEmail string, merchantNumber int, productCode, itemDescription string, cost float64) string
 	LoadHistory(merchantNumber int)
 }
 
@@ -751,18 +751,18 @@ func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) {
 	m.Merchants[merchantNumber] = merchantName
 }
 
-func (m *MMGModel) Checkout(userEmail string, merchantNumber int, itemDescription string, cost float64) string {
+func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode, itemDescription string, cost float64) string {
 	internalTransactionID, url := InitiateCheckout(merchantNumber, m.Merchants[merchantNumber], itemDescription, cost)
-	insertPendingPurchase(m.DB, internalTransactionID, itemDescription, userEmail)
+	insertPendingPurchase(m.DB, internalTransactionID, itemDescription, productCode, userEmail)
 	return url
 }
 
-func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescription string, userEmail string) {
+func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescription string, productCode, userEmail string) {
 	query := `
-		INSERT INTO purchases (timestamp, user, internalid, description, status)
+		INSERT INTO purchases (timestamp, user, internalid, description, status, productcode)
 		VALUES (?, ?, ?, ?, ?)
 		`
-	result, err := db.Exec(query, time.Now().Format("2006-01-02 15:04:05"), userEmail, internalTransactionID, itemDescription, "pending")
+	result, err := db.Exec(query, time.Now().Format("2006-01-02 15:04:05"), userEmail, internalTransactionID, itemDescription, "pending", productCode)
 	if err != nil {
 		log.Errorf("pending purchase error: %v", err)
 		return
@@ -838,6 +838,7 @@ CREATE TABLE IF NOT EXISTS purchases (
     id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
     timestamp DATETIME NOT NULL,
 	user VARCHAR(30) NOT NULL,
+	productcode VARCHAR(30) NOT NULL,
 	internalid VARCHAR(60) NOT NULL UNIQUE,
 	description      VARCHAR(300) NOT NULL,
 	status    VARCHAR(20) NOT NULL
@@ -845,19 +846,19 @@ CREATE TABLE IF NOT EXISTS purchases (
 	`, "<appName>", appName), db)
 
 	/*
-	helpers.RunMigration(strings.ReplaceAll(`
--- First, ensure the event scheduler is enabled
-SET GLOBAL event_scheduler = ON;
+			helpers.RunMigration(strings.ReplaceAll(`
+		-- First, ensure the event scheduler is enabled
+		SET GLOBAL event_scheduler = ON;
 
--- Select database
-USE <appName>;
+		-- Select database
+		USE <appName>;
 
--- Create the event
-CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
-ON SCHEDULE EVERY 1 MINUTE
-DO
-DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
-	`, "<appName>", appName), db)
+		-- Create the event
+		CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
+		ON SCHEDULE EVERY 1 MINUTE
+		DO
+		DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
+			`, "<appName>", appName), db)
 	*/
 
 }
