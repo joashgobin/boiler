@@ -10,3 +10,4 @@
 - Modified transactions table
 - Removed MMG purchases clean table
 - Updated update row for metadata 
+- Fixed expiration date field

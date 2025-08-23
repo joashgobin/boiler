@@ -852,8 +852,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     metadata VARCHAR(100),
     user VARCHAR(100),
 	productcode VARCHAR(30),
-	internalid VARCHAR(40)
-    expiration_date DATETIME,
+	internalid VARCHAR(40),
+    expiration_date DATETIME
 );
 	`, "<appName>", appName), db)
 
