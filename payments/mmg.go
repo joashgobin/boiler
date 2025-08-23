@@ -734,26 +734,40 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 
 type MMGInterface interface {
 	RegisterMerchant(merchantNumber int, merchantName string)
-	Checkout(userEmail string, merchantNumber int, productCode, itemDescription string, cost float64) string
+	AddProduct(productCode, itemDescription string)
+	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
 	LoadHistory(merchantNumber int)
 }
 
 type MMGModel struct {
 	DB        *sql.DB
 	Merchants map[int]string
+	Products  map[string]string
 }
 
 func (m *MMGModel) LoadHistory(merchantNumber int) {
 	LoadMMGTransactionHistory(m.DB, merchantNumber)
 }
 
+func (m *MMGModel) AddProduct(productCode, itemDescription string) {
+	m.Products[productCode] = itemDescription
+}
+
 func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) {
 	m.Merchants[merchantNumber] = merchantName
 }
 
-func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode, itemDescription string, cost float64) string {
-	internalTransactionID, url := InitiateCheckout(merchantNumber, m.Merchants[merchantNumber], itemDescription, cost)
-	insertPendingPurchase(m.DB, internalTransactionID, itemDescription, productCode, userEmail)
+func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string {
+	_, exists := m.Merchants[merchantNumber]
+	if !exists {
+		return "/"
+	}
+	_, exists = m.Products[productCode]
+	if !exists {
+		return "/"
+	}
+	_, url := initiateCheckout(userEmail, merchantNumber, m.Merchants[merchantNumber], productCode, cost)
+	// insertPendingPurchase(m.DB, internalTransactionID, itemDescription, productCode, userEmail)
 	return url
 }
 
@@ -778,7 +792,7 @@ func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescrip
 	}
 }
 
-func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, cost float64) (string, string) {
+func initiateCheckout(userEmail string, merchantNumber int, merchantName, productCode string, cost float64) (string, string) {
 	config, err := loadConfig(fmt.Sprintf("merchants/%d.cfg", merchantNumber))
 	if err != nil {
 		log.Fatal(err)
@@ -790,13 +804,13 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, 
 	}
 
 	timestamp := time.Now().Unix()
-	internalTransactionID := url.QueryEscape(helpers.GetHash(helpers.GetHash(config.MerchantMsisdn) + "-" + helpers.GetHash(itemDescription) + "-" + helpers.GetHash(time.Now().Format(time.RFC3339))))[:8] + "_" + fmt.Sprint(timestamp)
+	internalTransactionID := url.QueryEscape(helpers.GetHash(helpers.GetHash(config.MerchantMsisdn) + "-" + userEmail + "-" + helpers.GetHash(productCode) + "-" + helpers.GetHash(time.Now().Format(time.RFC3339))))[:8] + "_" + fmt.Sprint(timestamp)
 	tokenParams := TokenParams{
 		SecretKey:             config.SecretKey,
 		Amount:                strconv.FormatFloat(cost, 'g', -1, 64),
 		MerchantID:            config.MerchantMsisdn,
 		MerchantTransactionID: fmt.Sprint(timestamp),
-		ProductDescription:    itemDescription + "|(" + internalTransactionID + ")|",
+		ProductDescription:    productCode + "||" + internalTransactionID + "||" + userEmail,
 		RequestInitiationTime: timestamp,
 		MerchantName:          merchantName,
 	}

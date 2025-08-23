@@ -6,3 +6,4 @@
 - Create migration for mmg events
 - Added product code to purchases table
 - Fix
+- Updated checkout system

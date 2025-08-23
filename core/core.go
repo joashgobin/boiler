@@ -476,7 +476,7 @@ exec bash
 		Shelf:  &helpers.ShelfModel{DB: db},
 		Flash:  &helpers.FlashModel{Store: store},
 		Bank:   storage,
-		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}},
+		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor: ":" + config.Port,
 	}
 
