@@ -40,6 +40,7 @@ type FlashModel struct {
 func (flash *FlashModel) Get(c *fiber.Ctx, key string) string {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
+		// panic(err)
 		return ""
 	}
 	value := sess.Get(key)
