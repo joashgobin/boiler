@@ -464,6 +464,9 @@ func RunMigration(migrationQuery string, db *sql.DB) {
 			if mySQLError.Number == 1064 {
 				log.Errorf("error in migration: %v", err)
 				return
+			} else {
+				log.Errorf("error in migration: %v", err)
+				return
 			}
 		}
 		return

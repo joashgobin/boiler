@@ -734,7 +734,7 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 
 type MMGInterface interface {
 	RegisterMerchant(merchantNumber int, merchantName string)
-	Checkout(merchantNumber int, itemDescription string, cost float64) string
+	Checkout(userEmail string, merchantNumber int, itemDescription string, cost float64) string
 	LoadHistory(merchantNumber int)
 }
 
@@ -751,11 +751,34 @@ func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) {
 	m.Merchants[merchantNumber] = merchantName
 }
 
-func (m *MMGModel) Checkout(merchantNumber int, itemDescription string, cost float64) string {
-	return InitiateCheckout(merchantNumber, m.Merchants[merchantNumber], itemDescription, cost)
+func (m *MMGModel) Checkout(userEmail string, merchantNumber int, itemDescription string, cost float64) string {
+	internalTransactionID, url := InitiateCheckout(merchantNumber, m.Merchants[merchantNumber], itemDescription, cost)
+	insertPendingPurchase(m.DB, internalTransactionID, itemDescription, userEmail)
+	return url
 }
 
-func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, cost float64) string {
+func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescription string, userEmail string) {
+	query := `
+		INSERT INTO purchases (timestamp, user, internalid, description, status)
+		VALUES (?, ?, ?, ?, ?)
+		`
+	result, err := db.Exec(query, time.Now().Format(time.RFC3339), userEmail, internalTransactionID, itemDescription, "pending")
+	if err != nil {
+		log.Errorf("pending purchase error: %v", err)
+		return
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Errorf("pending purchase error: failed to check the affected rows: %v", err)
+		return
+	}
+	if rowsAffected == 0 {
+		log.Errorf("pending purchase error: %v", sql.ErrNoRows)
+		return
+	}
+}
+
+func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, cost float64) (string, string) {
 	config, err := loadConfig(fmt.Sprintf("merchants/%d.cfg", merchantNumber))
 	if err != nil {
 		log.Fatal(err)
@@ -783,7 +806,7 @@ func InitiateCheckout(merchantNumber int, merchantName, itemDescription string, 
 		log.Fatal(err)
 	}
 
-	return generateURL(token, config.MerchantMsisdn, config.ClientID)
+	return internalTransactionID, generateURL(token, config.MerchantMsisdn, config.ClientID)
 }
 
 func UseMMG(db *sql.DB, appName string) {
@@ -795,14 +818,44 @@ USE <appName>;
 CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
     timestamp DATETIME NOT NULL,
-        reference VARCHAR(20) NOT NULL UNIQUE,
-        source      VARCHAR(20) NOT NULL,
-        destination        VARCHAR(20) NOT NULL,
-        amount    DECIMAL(10,2) NOT NULL,
-        currency  VARCHAR(5) NOT NULL,
-        category  VARCHAR(30) NOT NULL,
-        status    VARCHAR(20) NOT NULL,
+	reference VARCHAR(20) NOT NULL UNIQUE,
+	source      VARCHAR(20) NOT NULL,
+	destination        VARCHAR(20) NOT NULL,
+	amount    DECIMAL(10,2) NOT NULL,
+	currency  VARCHAR(5) NOT NULL,
+	category  VARCHAR(30) NOT NULL,
+	status    VARCHAR(20) NOT NULL,
     metadata VARCHAR(100)
 );
 	`, "<appName>", appName), db)
+
+	helpers.RunMigration(strings.ReplaceAll(`
+-- Select database
+USE <appName>;
+
+-- Create purchases table
+CREATE TABLE IF NOT EXISTS purchases (
+    id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    timestamp DATETIME NOT NULL,
+	user VARCHAR(30) NOT NULL,
+	internalid VARCHAR(60) NOT NULL UNIQUE,
+	description      VARCHAR(300) NOT NULL,
+	status    VARCHAR(20) NOT NULL
+);
+	`, "<appName>", appName), db)
+
+	helpers.RunMigration(strings.ReplaceAll(`
+-- First, ensure the event scheduler is enabled
+SET GLOBAL event_scheduler = ON;
+
+-- Select database
+USE <appName>;
+
+-- Create the event
+CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
+ON SCHEDULE EVERY 1 MINUTE
+DO
+DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
+	`, "<appName>", appName), db)
+
 }

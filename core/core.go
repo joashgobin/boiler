@@ -128,6 +128,7 @@ FLUSH PRIVILEGES;
 -- Verify permissions
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", config.AppName), "remote/create_app_database.sql")
+
 		helpers.SaveTextToDirectory(`
 	-- Create fiber user
 CREATE USER IF NOT EXISTS 'fiber_user'@'localhost' IDENTIFIED BY 'USER_PWD';
