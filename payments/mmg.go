@@ -762,7 +762,7 @@ func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescrip
 		INSERT INTO purchases (timestamp, user, internalid, description, status)
 		VALUES (?, ?, ?, ?, ?)
 		`
-	result, err := db.Exec(query, time.Now().Format(time.RFC3339), userEmail, internalTransactionID, itemDescription, "pending")
+	result, err := db.Exec(query, time.Now().Format("2006-01-02 15:04:05"), userEmail, internalTransactionID, itemDescription, "pending")
 	if err != nil {
 		log.Errorf("pending purchase error: %v", err)
 		return
