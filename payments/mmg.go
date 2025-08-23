@@ -844,6 +844,7 @@ CREATE TABLE IF NOT EXISTS purchases (
 );
 	`, "<appName>", appName), db)
 
+	/*
 	helpers.RunMigration(strings.ReplaceAll(`
 -- First, ensure the event scheduler is enabled
 SET GLOBAL event_scheduler = ON;
@@ -857,5 +858,6 @@ ON SCHEDULE EVERY 1 MINUTE
 DO
 DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
 	`, "<appName>", appName), db)
+	*/
 
 }

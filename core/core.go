@@ -129,6 +129,20 @@ FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", config.AppName), "remote/create_app_database.sql")
 
+		helpers.SaveTextToDirectory(strings.ReplaceAll(`
+-- First, ensure the event scheduler is enabled
+SET GLOBAL event_scheduler = ON;
+
+-- Select database
+USE <appName>;
+
+-- Create the event
+CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
+ON SCHEDULE EVERY 1 MINUTE
+DO
+DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
+`, "<appName>", config.AppName), "remote/create_mmg_events.sql")
+
 		helpers.SaveTextToDirectory(`
 	-- Create fiber user
 CREATE USER IF NOT EXISTS 'fiber_user'@'localhost' IDENTIFIED BY 'USER_PWD';

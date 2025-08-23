@@ -60,6 +60,11 @@ audit:
 	@echo 'Running tests...'
 	go test -race -vet=off ./...
 
+## mmg: set up MMG related events
+.PHONY: mmg
+mmg:
+	cat remote/create_mmg_events.sql | mysql
+
 ## user: create fiber user
 .PHONY: user
 user:
