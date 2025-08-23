@@ -7,3 +7,4 @@
 - Added product code to purchases table
 - Fix
 - Updated checkout system
+- Modified transactions table

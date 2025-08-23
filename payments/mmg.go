@@ -839,40 +839,11 @@ CREATE TABLE IF NOT EXISTS transactions (
 	currency  VARCHAR(5) NOT NULL,
 	category  VARCHAR(30) NOT NULL,
 	status    VARCHAR(20) NOT NULL,
-    metadata VARCHAR(100)
+    metadata VARCHAR(100),
+    user VARCHAR(100),
+	productcode VARCHAR(30),
+	internalid VARCHAR(40)
 );
 	`, "<appName>", appName), db)
-
-	helpers.RunMigration(strings.ReplaceAll(`
--- Select database
-USE <appName>;
-
--- Create purchases table
-CREATE TABLE IF NOT EXISTS purchases (
-    id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    timestamp DATETIME NOT NULL,
-	user VARCHAR(30) NOT NULL,
-	productcode VARCHAR(30) NOT NULL,
-	internalid VARCHAR(60) NOT NULL UNIQUE,
-	description      VARCHAR(300) NOT NULL,
-	status    VARCHAR(20) NOT NULL
-);
-	`, "<appName>", appName), db)
-
-	/*
-			helpers.RunMigration(strings.ReplaceAll(`
-		-- First, ensure the event scheduler is enabled
-		SET GLOBAL event_scheduler = ON;
-
-		-- Select database
-		USE <appName>;
-
-		-- Create the event
-		CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
-		ON SCHEDULE EVERY 1 MINUTE
-		DO
-		DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
-			`, "<appName>", appName), db)
-	*/
 
 }
