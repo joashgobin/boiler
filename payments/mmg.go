@@ -744,6 +744,7 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 type MMGInterface interface {
 	RegisterMerchant(merchantNumber int, merchantName string)
 	AddProduct(productCode, itemDescription string)
+	AddProducts(productMap map[string]string)
 	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
 	LoadHistory(merchantNumber int)
 	GetUserProducts(userEmail string) []string
@@ -754,6 +755,12 @@ type MMGModel struct {
 	DB        *sql.DB
 	Merchants map[int]string
 	Products  map[string]string
+}
+
+func (m *MMGModel) AddProducts(productMap map[string]string) {
+	for productCode, productDescription := range productMap {
+		m.AddProduct(productCode, productDescription)
+	}
 }
 
 func (m *MMGModel) GetProductDescription(productCode string) string {
