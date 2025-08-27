@@ -2,6 +2,16 @@
 This project is focused on providing boilerplate for a Gofiber app.
 
 ## Basic app
+Add the following to your **go.mod** file:
+```
+require (
+	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/joashgobin/boiler v0.0.25
+)
+
+replace github.com/joashgobin/boiler => ../boiler
+```
+
 Create a *main.go* file and paste the following code:
 
 ```go
