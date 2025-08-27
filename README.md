@@ -12,6 +12,12 @@ require (
 replace github.com/joashgobin/boiler => ../boiler
 ```
 
+Run the following:
+```sh
+go get github.com/gofiber/fiber/v2
+go get github.com/joashgobin/boiler
+```
+
 Create a *main.go* file and paste the following code:
 
 ```go
