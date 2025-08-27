@@ -98,7 +98,7 @@ The app will likely throw an error about the database not existing. Rename the M
 ```sh
 mv Makefile.example Makefile
 mv .gitignore.example .gitignore
-mv .air.toml.example .air.toml.example
+mv .air.toml.example .air.toml
 sudo make up
 ```
 
