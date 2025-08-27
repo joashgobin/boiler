@@ -38,15 +38,10 @@ func main() {
 		Templates: nil,
 		SiteInfo:  &map[string]string{},
 	}
-    app, base := core.NewApp(config)
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Welcome!")
-	})
+	app, base := core.NewApp(config)
 
 	app.Listen(base.Anchor)
 }
-
 
 ```
 
@@ -67,6 +62,7 @@ package main
 import (
 	"embed"
 
+    "github.com/gofiber/fiber/v2"
 	"github.com/joashgobin/boiler/core"
 )
 
@@ -82,11 +78,14 @@ func main() {
 		Templates: &templates,
 		SiteInfo:  &map[string]string{},
 	}
-	app, base := core.NewApp(config)
+    app, base := core.NewApp(config)
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Welcome!")
+	})
 
 	app.Listen(base.Anchor)
 }
-
 ```
 
 The app will likely throw an error about the database not existing. Rename the Makefile and run the database migration:
