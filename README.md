@@ -38,12 +38,19 @@ func main() {
 		Templates: nil,
 		SiteInfo:  &map[string]string{},
 	}
-	app, base := core.NewApp(config)
+    app, base := core.NewApp(config)
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Welcome!")
+	})
 
 	app.Listen(base.Anchor)
 }
 
+
 ```
+
+
 Note the following:
 - User - the username of the linux user that will be used to log into the VPS the app is being deployed to
 - IP - the domain name at which the app will be accessed via the internet when deployed

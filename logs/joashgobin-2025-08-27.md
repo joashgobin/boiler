@@ -3,3 +3,4 @@
 - Added more instructions
 - More commands
 - Tweak
+- Fixed instructions
