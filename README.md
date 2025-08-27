@@ -97,6 +97,8 @@ func main() {
 The app will likely throw an error about the database not existing. Rename the Makefile and run the database migration:
 ```sh
 mv Makefile.example Makefile
+mv .gitignore.example .gitignore
+mv .air.toml.example .air.toml.example
 sudo make up
 ```
 
