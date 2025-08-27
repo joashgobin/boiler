@@ -55,7 +55,13 @@ Note the following:
 - SiteInfo - general site information to be accessed in the templates using the "Get" function
 
 We can then embed the view files into the app using go embed:
+```sh
+mkdir -p views/layouts
+touch views/layouts/main.html
+touch views/index.html
+```
 
+Update the main.go file:
 ```go
 package main
 
