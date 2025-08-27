@@ -16,6 +16,8 @@ Run the following:
 ```sh
 go get github.com/gofiber/fiber/v2
 go get github.com/joashgobin/boiler
+go get github.com/joashgobin/boiler/core
+go get github.com/joashgobin/boiler/email
 ```
 
 Create a *main.go* file and paste the following code:
