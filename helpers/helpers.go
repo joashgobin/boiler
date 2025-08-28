@@ -33,6 +33,8 @@ import (
 	"github.com/tdewolff/minify/v2/js"
 )
 
+const MySQLTimestamp = "2006-01-02 15:04:05"
+
 func GetRandomUUID() string {
 	randomUUID, err := uuid.NewRandom()
 	if err != nil {
