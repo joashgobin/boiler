@@ -129,21 +129,21 @@ FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", config.AppName), "remote/create_app_database.sql")
 
-	/*
-		helpers.SaveTextToDirectory(strings.ReplaceAll(`
--- First, ensure the event scheduler is enabled
-SET GLOBAL event_scheduler = ON;
+		/*
+					helpers.SaveTextToDirectory(strings.ReplaceAll(`
+			-- First, ensure the event scheduler is enabled
+			SET GLOBAL event_scheduler = ON;
 
--- Select database
-USE <appName>;
+			-- Select database
+			USE <appName>;
 
--- Create the event
-CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
-ON SCHEDULE EVERY 1 MINUTE
-DO
-DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
-`, "<appName>", config.AppName), "remote/create_mmg_events.sql")
-*/
+			-- Create the event
+			CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
+			ON SCHEDULE EVERY 1 MINUTE
+			DO
+			DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
+			`, "<appName>", config.AppName), "remote/create_mmg_events.sql")
+		*/
 
 		helpers.SaveTextToDirectory(`
 	-- Create fiber user
@@ -200,6 +200,12 @@ exec bash
 
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
+		"humanDate": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.UTC().Format("Jan 02, 2006 at 15:04")
+		},
 		"gfont": func(fontName string, selector string) ht.HTML {
 			return ht.HTML(`<style>
 @import url('https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap');
