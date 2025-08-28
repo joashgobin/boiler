@@ -201,10 +201,7 @@ exec bash
 	// add functions to template engine
 	engine.AddFuncMap(map[string]interface{}{
 		"humanDate": func(t time.Time) string {
-			if t.IsZero() {
-				return ""
-			}
-			return t.UTC().Format("Jan 02, 2006 at 15:04")
+			return t.UTC().Format("Jan 02, 2006")
 		},
 		"gfont": func(fontName string, selector string) ht.HTML {
 			return ht.HTML(`<style>
