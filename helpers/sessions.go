@@ -13,7 +13,7 @@ type FlashInterface interface {
 	Push(c *fiber.Ctx, messages ...any) error
 	Retain(c *fiber.Ctx, keys []string)
 	ClearOld(c *fiber.Ctx)
-	Redirect(c *fiber.Ctx, route, message string) error
+	Redirect(c *fiber.Ctx, route string, messages ...any) error
 	RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
 	RetainKeys(keys []string) fiber.Handler
 	RequireKeys(keys []string, redirectRoute string) fiber.Handler
@@ -79,7 +79,13 @@ func (flash *FlashModel) RequireFields(c *fiber.Ctx, redirectRoute string, field
 	return redirectRoute + "?show=retained", err
 }
 
-func (flash *FlashModel) Redirect(c *fiber.Ctx, route, message string) error {
+func (flash *FlashModel) Redirect(c *fiber.Ctx, route string, messages ...any) error {
+	var message string
+	if len(messages) > 1 {
+		message = fmt.Sprintf(messages[0].(string), messages[1:]...)
+	} else {
+		message = messages[0].(string)
+	}
 	flash.Push(c, message)
 	return c.Redirect(route + "?show=retained")
 }
