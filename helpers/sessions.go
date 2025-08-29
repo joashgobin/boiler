@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,7 +10,7 @@ import (
 )
 
 type FlashInterface interface {
-	Push(c *fiber.Ctx, message string) error
+	Push(c *fiber.Ctx, messages ...any) error
 	Retain(c *fiber.Ctx, keys []string)
 	ClearOld(c *fiber.Ctx)
 	Redirect(c *fiber.Ctx, route, message string) error
@@ -83,10 +84,16 @@ func (flash *FlashModel) Redirect(c *fiber.Ctx, route, message string) error {
 	return c.Redirect(route + "?show=retained")
 }
 
-func (flash *FlashModel) Push(c *fiber.Ctx, message string) error {
+func (flash *FlashModel) Push(c *fiber.Ctx, messages ...any) error {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
 		return err
+	}
+	var message string
+	if len(messages) > 1 {
+		message = fmt.Sprintf(messages[0].(string), messages[1:]...)
+	} else {
+		message = messages[0].(string)
 	}
 	sess.Set("flashMessage", message)
 	sess.Set("flashTime", time.Now().UTC().Format("2006-01-02 15:04:05"))
