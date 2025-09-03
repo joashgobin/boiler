@@ -47,7 +47,11 @@ func (flash *FlashModel) Get(c *fiber.Ctx, key string) string {
 		return ""
 	}
 	value := sess.Get(key)
-	return value.(string)
+	str, ok := value.(string)
+	if ok {
+		return str
+	}
+	return ""
 }
 
 func (flash *FlashModel) Set(c *fiber.Ctx, key string, value string) {
