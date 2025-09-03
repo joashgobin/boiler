@@ -204,7 +204,7 @@ exec bash
 			return t.UTC().Format("Jan 02, 2006")
 		},
 		"humanTime": func(t time.Time) string {
-			return t.UTC().Format("Jan 02, 2006 at 15:04")
+			return t.UTC().Format("Jan 02, 2006 at 15:04 hrs")
 		},
 		"gfont": func(fontName string, selector string) ht.HTML {
 			return ht.HTML(`<style>
