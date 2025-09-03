@@ -11,12 +11,14 @@ import (
 
 type FlashInterface interface {
 	Push(c *fiber.Ctx, messages ...any) error
-	Retain(c *fiber.Ctx, keys []string)
+	// Retain(c *fiber.Ctx, keys []string)
+	// RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
 	ClearOld(c *fiber.Ctx)
 	Redirect(c *fiber.Ctx, route string, messages ...any) error
-	RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
-	RetainKeys(keys []string) fiber.Handler
-	RequireKeys(keys []string, redirectRoute string) fiber.Handler
+	// RetainKeys(keys []string) fiber.Handler
+	// RequireKeys(keys []string, redirectRoute string) fiber.Handler
+	Retain(keys ...string) fiber.Handler
+	Require(keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string) string
 	Set(c *fiber.Ctx, key string, value string)
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
@@ -73,11 +75,13 @@ func (flash *FlashModel) SetMany(c *fiber.Ctx, pairs map[string]any) error {
 	return nil
 }
 
+/*
 func (flash *FlashModel) RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error) {
 	warning, err := EnsureFiberFormFields(c, fields)
 	flash.Push(c, warning)
 	return redirectRoute + "?show=retained", err
 }
+*/
 
 func (flash *FlashModel) Redirect(c *fiber.Ctx, route string, messages ...any) error {
 	var message string
@@ -109,6 +113,7 @@ func (flash *FlashModel) Push(c *fiber.Ctx, messages ...any) error {
 	return nil
 }
 
+/*
 func (flash *FlashModel) Retain(c *fiber.Ctx, keys []string) {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
@@ -126,6 +131,7 @@ func (flash *FlashModel) Retain(c *fiber.Ctx, keys []string) {
 		return
 	}
 }
+*/
 
 func (flash *FlashModel) ClearOld(c *fiber.Ctx) {
 	sess, err := flash.Store.Get(c)
@@ -155,7 +161,7 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 	}
 }
 
-func (flash *FlashModel) RetainKeys(keys []string) fiber.Handler {
+func (flash *FlashModel) Retain(keys ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, err := flash.Store.Get(c)
 		if err != nil {
@@ -173,8 +179,10 @@ func (flash *FlashModel) RetainKeys(keys []string) fiber.Handler {
 	}
 }
 
-func (flash *FlashModel) RequireKeys(keys []string, redirectRoute string) fiber.Handler {
+func (flash *FlashModel) Require(keys ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// log.Infof("route: %v", c.OriginalURL())
+		redirectRoute := c.OriginalURL()
 		warning, err := EnsureFiberFormFields(c, keys)
 		if err != nil {
 			flash.Push(c, warning)
