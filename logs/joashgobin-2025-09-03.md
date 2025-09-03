@@ -3,3 +3,4 @@
 - Added human time function
 - Tweak
 - Fix
+- Added content for modal

@@ -99,6 +99,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		// create remote directory for adding migration scripts
 		helpers.CreateDirectory("remote/")
 
+		// create uploads directory for uploads via forms
+		helpers.CreateDirectory("uploads/")
+
 		// create Makefile and service file for deployment on remote machine
 		helpers.FileSubstitute(filepath.Dir(coreDir)+"/Makefile", "Makefile.example", map[string]string{
 			"user":    config.User,
