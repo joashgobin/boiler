@@ -5,3 +5,4 @@
 - Fix
 - Added content for modal
 - Hide modal by default
+- Modified modal styles
