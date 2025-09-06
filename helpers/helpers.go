@@ -522,6 +522,7 @@ func StructsToMaps(structs interface{}) []map[string]interface{} {
 
 func Getenv(key string) string {
 	val := viper.GetString(key)
+	log.Infof("env %s: %s", key, val)
 	if val == "" {
 		log.Warnf("env variable %s might not be set", key)
 	}
