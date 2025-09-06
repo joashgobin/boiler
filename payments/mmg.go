@@ -157,7 +157,7 @@ func LoadMMGTransactionDetails(db *sql.DB, merchantNumber int, transactionRefere
 			req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
 			req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
 			req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
-			req.Header.Add("x-api-key", os.Getenv("MMG_API_KEY"))
+			req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
 
 			res, err := client.Do(req)
 			if err != nil {
@@ -396,7 +396,7 @@ func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case resource token is empty
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
-				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty",
+				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty",
 					fmt.Sprintf("Merchant: %d", merchantNumber), "")
 				LoadNewResourceToken(db, merchantNumber)
 				// LoadMMGTransactionHistory(db, merchantNumber)
@@ -409,7 +409,7 @@ func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
 			req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
 			req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
-			req.Header.Add("x-api-key", os.Getenv("MMG_API_KEY"))
+			req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
 			req.Header.Add("Content-Type", "application/json")
 
 			res, err := client.Do(req)
@@ -429,7 +429,7 @@ func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
 				log.Error("failed to use valid resource token")
-				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
+				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
 					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
 				LoadNewResourceToken(db, merchantNumber)
 				// LoadMMGTransactionHistory(db, merchantNumber)
@@ -438,7 +438,7 @@ func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 
 			// in case authentication fails
 			if strings.Contains(string(body), "Authentication failed") {
-				email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
+				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
 					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
 				return
 			}
@@ -452,9 +452,9 @@ func LoadNewResourceToken(db *sql.DB, merchantNumber int) {
 	method := "POST"
 	var payloadBuilder strings.Builder
 	payloadBuilder.WriteString("grant_type=password")
-	payloadBuilder.WriteString("&api_key=" + os.Getenv("MMG_API_ALT"))
+	payloadBuilder.WriteString("&api_key=" + helpers.Getenv("MMG_API_ALT"))
 	payloadBuilder.WriteString("&username=" + strconv.Itoa(merchantNumber))
-	payloadBuilder.WriteString("&password=" + os.Getenv("MMG_PASSWORD"))
+	payloadBuilder.WriteString("&password=" + helpers.Getenv("MMG_PASSWORD"))
 	payload := strings.NewReader(payloadBuilder.String())
 	// log.Infof("payload: %s", &payloadBuilder)
 
@@ -486,7 +486,7 @@ func LoadNewResourceToken(db *sql.DB, merchantNumber int) {
 
 	if err != nil {
 		log.Error("failed to extract resource token")
-		email.SendEmail(os.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Response: %s<br>Merchant: %d", string(body), merchantNumber), "")
+		email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Response: %s<br>Merchant: %d", string(body), merchantNumber), "")
 		return
 	}
 	log.Infof("new resource token: %s", token)
@@ -523,7 +523,7 @@ func GetMMGBalance(merchantNumber int) {
 			req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
 			req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
 			req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
-			req.Header.Add("x-api-key", os.Getenv("MMG_API_KEY"))
+			req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
 			// for key, values := range req.Header {
 			// fmt.Printf("%s: %v\n", key, values)
 			// }

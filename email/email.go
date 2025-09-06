@@ -3,7 +3,6 @@ package email
 import (
 	"bytes"
 	"embed"
-	"os"
 
 	"github.com/wneessen/go-mail"
 
@@ -25,11 +24,11 @@ func SendEmail(to string, subject string, body string, bcc string) {
 	helpers.Background(
 		func() {
 			data := emailData{Subject: subject, Body: body}
-			var senderAddr string = os.Getenv("MAIL_USER")
-			var senderName string = os.Getenv("MAIL_USERNAME")
+			var senderAddr string = helpers.Getenv("MAIL_USER")
+			var senderName string = helpers.Getenv("MAIL_USERNAME")
 			username := senderAddr
-			password := os.Getenv("MAIL_PW")
-			mailHost := os.Getenv("MAIL_HOST")
+			password := helpers.Getenv("MAIL_PW")
+			mailHost := helpers.Getenv("MAIL_HOST")
 
 			message := mail.NewMsg()
 			if err := message.FromFormat(senderName, senderAddr); err != nil {

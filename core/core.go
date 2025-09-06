@@ -28,6 +28,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/valkey"
+	"github.com/spf13/viper"
 )
 
 type Base struct {
@@ -123,6 +124,17 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/.air.toml", ".air.toml.example", map[string]string{
 			"port": config.Port,
 		})
+
+		if !helpers.FileExists(".env") {
+			helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/.env", ".env", map[string]string{})
+		}
+
+		viper.SetConfigFile(".env")
+		err = viper.ReadInConfig()
+		if err != nil {
+			log.Errorf("error reading .env file: %v", err)
+		}
+
 		helpers.SaveTextToDirectory(strings.ReplaceAll(`
 CREATE DATABASE IF NOT EXISTS <appName>;
 GRANT ALL PRIVILEGES ON <appName>.* TO 'fiber_user'@'localhost';

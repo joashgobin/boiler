@@ -28,6 +28,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kolesa-team/go-webp/encoder"
 	"github.com/kolesa-team/go-webp/webp"
+	"github.com/spf13/viper"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/js"
@@ -517,4 +518,12 @@ func StructsToMaps(structs interface{}) []map[string]interface{} {
 	}
 
 	return result
+}
+
+func Getenv(key string) string {
+	val := viper.GetString(key)
+	if val == "" {
+		log.Warnf("env variable %s might not be set", key)
+	}
+	return val
 }
