@@ -521,10 +521,20 @@ func StructsToMaps(structs interface{}) []map[string]interface{} {
 }
 
 func Getenv(key string) string {
-	val := viper.GetString(key)
+	viper.SetConfigName("config")
+	viper.SetConfigType("env")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		log.Errorf("error reading config.env file: %v", err)
+	}
+
+	val := viper.GetString(strings.ToLower(key))
+	// log.Infof("settings: %v", viper.AllSettings())
 	log.Infof("env %s: %s", key, val)
-	if val == "" {
-		log.Warnf("env variable %s might not be set", key)
+	if !viper.IsSet(key) {
+		log.Warnf("env var not set: %s", key)
 	}
 	return val
 }

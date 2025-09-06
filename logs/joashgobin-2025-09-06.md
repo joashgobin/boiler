@@ -2,3 +2,4 @@
 
 - Added viper for .env management
 - Fix
+- Modified email template

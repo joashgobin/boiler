@@ -28,7 +28,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/valkey"
-	"github.com/spf13/viper"
 )
 
 type Base struct {
@@ -125,14 +124,8 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 			"port": config.Port,
 		})
 
-		if !helpers.FileExists(".env") {
-			helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/.env", ".env", map[string]string{})
-		}
-
-		viper.SetConfigFile(".env")
-		err = viper.ReadInConfig()
-		if err != nil {
-			log.Errorf("error reading .env file: %v", err)
+		if !helpers.FileExists("config.env") {
+			helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/config.env", "config.env", map[string]string{})
 		}
 
 		helpers.SaveTextToDirectory(strings.ReplaceAll(`
