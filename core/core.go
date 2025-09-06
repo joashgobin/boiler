@@ -171,6 +171,7 @@ FLUSH PRIVILEGES;
 tmp/
 bin/
 fiber.sqlite3
+config.env
 static/gen/
 merchants/
 	`,

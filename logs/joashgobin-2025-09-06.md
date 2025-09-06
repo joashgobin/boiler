@@ -3,3 +3,4 @@
 - Added viper for .env management
 - Fix
 - Modified email template
+- Changed gitignore example
