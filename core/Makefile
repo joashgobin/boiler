@@ -29,6 +29,7 @@ deploy/static:
 	rsync -rP ./static ${username}@${production_host_ip}:~/${project_name}/
 	rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
 	rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/
+	rsync -P ./config.env ${username}@${production_host_ip}:~/${project_name}/
 
 ## build: build local copy
 .PHONY: build
