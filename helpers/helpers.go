@@ -487,6 +487,40 @@ func RunMigration(migrationQuery string, db *sql.DB) {
 	// log.Infof("migration executed, rows affected: %d", rowsAffected)
 }
 
+func MigrateUp(db *sql.DB, migrationQuery string, args map[string]string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	finalMigrationQuery := migrationQuery
+	for key, value := range args {
+		finalMigrationQuery = strings.ReplaceAll(finalMigrationQuery, "<"+key+">", value)
+	}
+	result, err := db.ExecContext(ctx, finalMigrationQuery)
+	if err != nil {
+		var mySQLError *mysql.MySQLError
+		if errors.As(err, &mySQLError) {
+			if mySQLError.Number == 1064 {
+				log.Errorf("error in migration: %v", err)
+				return
+			} else {
+				log.Errorf("error in migration: %v", err)
+				return
+			}
+		}
+		return
+	}
+
+	/*
+		if err != nil {
+			log.Errorf("failed to run migration: %v", err)
+		}
+	*/
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Errorf("failed to run migration: %v", err)
+	}
+	// log.Infof("migration executed, rows affected: %d", rowsAffected)
+}
+
 func StructsToMaps(structs interface{}) []map[string]interface{} {
 	// Convert input to slice
 	rv := reflect.ValueOf(structs)

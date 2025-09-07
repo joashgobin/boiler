@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/wneessen/go-mail"
 
@@ -28,9 +29,68 @@ type MailModel struct {
 	WaitGroup *sync.WaitGroup
 }
 
+func NewMailModel(db *sql.DB, appName string) *MailModel {
+	helpers.MigrateUp(db, `
+	USE <appName>;
+
+CREATE TABLE IF NOT EXISTS magiclinks (
+    id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(30) NOT NULL,
+    purpose VARCHAR(30) NOT NULL,
+    value VARCHAR(200) NOT NULL UNIQUE,
+	used BOOLEAN
+);
+`, map[string]string{"appName": appName})
+	return &MailModel{DB: db}
+}
+
 type MailInterface interface {
 	Send(to, bcc, subject string, swaps ...any)
 	NotifyAdmin(subject string, swaps ...any)
+	GetMagicLink(email, purpose, urlPrefix string) string
+	IsMagicLinkValid(link string) bool
+}
+
+func (m *MailModel) IsMagicLinkValid(link string) bool {
+	// log.Infof("verifying magic link: %s", link)
+	updateQuery := `
+	UPDATE magiclinks SET used = ? WHERE value = ?
+	`
+	stmt, err := m.DB.Prepare(updateQuery)
+	if err != nil {
+		log.Errorf("prepare statement error: %v", err)
+		return false
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(true, link)
+	if err != nil {
+		log.Errorf("execute error: %v", err)
+		return false
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Errorf("rows affected error: %v", err)
+		return false
+	}
+	if rowsAffected == 0 {
+		return false
+	}
+	return true
+}
+
+func (m *MailModel) GetMagicLink(email, purpose, urlPrefix string) string {
+	value := purpose + "_" + helpers.GetHash(email+time.Now().Format(time.RFC3339)) + "-" + helpers.GetRandomUUID()
+	query := `
+	INSERT INTO magiclinks(email,purpose,value,used) VALUES (?,?,?,?)
+	`
+	_, err := m.DB.Exec(query, email, purpose, value, false)
+	if err != nil {
+		log.Errorf("magic link generation error: %v", err)
+		return urlPrefix
+	}
+
+	return urlPrefix + value
 }
 
 func (m *MailModel) NotifyAdmin(subject string, swaps ...any) {

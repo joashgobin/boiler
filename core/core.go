@@ -487,6 +487,10 @@ exec bash
 		log.Fatal(err)
 		return app, Base{}
 	}
+
+	// create email model
+	mailModel := email.NewMailModel(db, config.AppName)
+
 	// attaching users to base
 	base := Base{
 		Users:  &models.UserModel{DB: db},
@@ -497,7 +501,7 @@ exec bash
 		Bank:   storage,
 		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor: ":" + config.Port,
-		Mail:   &email.MailModel{DB: db},
+		Mail:   mailModel,
 	}
 
 	//
