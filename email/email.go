@@ -80,7 +80,7 @@ func (m *MailModel) IsMagicLinkValid(link string) bool {
 }
 
 func (m *MailModel) GetMagicLink(email, purpose, urlPrefix string) string {
-	value := purpose + "_" + helpers.GetHash(email+time.Now().Format(time.RFC3339)) + "-" + helpers.GetRandomUUID()
+	value := purpose + "_" + helpers.GetHash(email+purpose+time.Now().Format(time.RFC3339)) + "-" + helpers.GetRandomUUID()
 	query := `
 	INSERT INTO magiclinks(email,purpose,value,used) VALUES (?,?,?,?)
 	`
