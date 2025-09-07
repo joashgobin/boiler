@@ -30,6 +30,9 @@ import (
 )
 
 func main() {
+	isProd := flag.Bool("prod", false, "production mode of app (dev vs. prod)")
+	flag.Parse()
+
 	config := core.AppConfig{
 		User:      "myname",
 		IP:        "myapp.example.com",
@@ -37,6 +40,7 @@ func main() {
 		AppName:   "appname",
 		Templates: nil,
 		SiteInfo:  &map[string]string{},
+		IsProduction: *isProd,
 	}
 	app, base := core.NewApp(config)
 
@@ -76,6 +80,9 @@ import (
 var templates embed.FS
 
 func main() {
+	isProd := flag.Bool("prod", false, "production mode of app (dev vs. prod)")
+	flag.Parse()
+
 	config := core.AppConfig{
 		User:      "myname",
 		IP:        "myapp.example.com",
@@ -83,6 +90,7 @@ func main() {
 		AppName:   "appname",
 		Templates: &templates,
 		SiteInfo:  &map[string]string{},
+		IsProduction: *isProd,
 	}
     app, base := core.NewApp(config)
 

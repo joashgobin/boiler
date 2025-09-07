@@ -14,7 +14,7 @@ User=<user>
 Group=<user>
 EnvironmentFile=/etc/environment
 WorkingDirectory=/home/<user>/<appName>
-ExecStart=/home/<user>/<appName>/web
+ExecStart=/home/<user>/<appName>/web -prod
 Restart=on-failure
 RestartSec=5
 

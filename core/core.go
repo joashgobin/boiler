@@ -41,16 +41,30 @@ type Base struct {
 	MMG    payments.MMGInterface
 	Mail   email.MailInterface
 	Anchor string
+
+	// private variables
+	isProd bool
+	domain string
+	port   string
 }
 
 type AppConfig struct {
-	User        string
-	IP          string
-	Port        string
-	AppName     string
-	Templates   *embed.FS
-	StaticFiles *embed.FS
-	SiteInfo    *map[string]string
+	User         string
+	IP           string
+	Port         string
+	AppName      string
+	Templates    *embed.FS
+	StaticFiles  *embed.FS
+	SiteInfo     *map[string]string
+	IsProduction bool
+}
+
+func (base *Base) URL() string {
+	if base.isProd {
+		return "https://" + base.domain
+	} else {
+		return "http://localhost:" + base.port
+	}
 }
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
@@ -502,6 +516,9 @@ exec bash
 		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor: ":" + config.Port,
 		Mail:   mailModel,
+		isProd: config.IsProduction,
+		domain: config.IP,
+		port:   config.Port,
 	}
 
 	//
@@ -514,9 +531,13 @@ exec bash
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 
+	environment := "dev"
+	if config.IsProduction {
+		environment = "prod"
+	}
 	if !fiber.IsChild() {
 		elapsed := time.Since(start)
-		log.Infof("app startup time: %v\n", elapsed)
+		log.Infof("(%s) app startup time: %v\n", environment, elapsed)
 	}
 	// return configured fiber app and database connection pool
 	return app, base
