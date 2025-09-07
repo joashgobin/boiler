@@ -18,6 +18,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/template/html/v2"
 	"github.com/joashgobin/boiler/core/models"
+	"github.com/joashgobin/boiler/email"
 	"github.com/joashgobin/boiler/helpers"
 	"github.com/joashgobin/boiler/payments"
 
@@ -38,6 +39,7 @@ type Base struct {
 	Flash  helpers.FlashInterface
 	Bank   *valkey.Storage
 	MMG    payments.MMGInterface
+	Mail   email.MailInterface
 	Anchor string
 }
 
@@ -495,6 +497,7 @@ exec bash
 		Bank:   storage,
 		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor: ":" + config.Port,
+		Mail:   &email.MailModel{DB: db},
 	}
 
 	//

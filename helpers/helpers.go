@@ -532,7 +532,7 @@ func Getenv(key string) string {
 
 	val := viper.GetString(strings.ToLower(key))
 	// log.Infof("settings: %v", viper.AllSettings())
-	log.Infof("env %s: %s", key, val)
+	// log.Infof("env %s: %s", key, val)
 	if !viper.IsSet(key) {
 		log.Warnf("env var not set: %s", key)
 	}

@@ -2,7 +2,10 @@ package email
 
 import (
 	"bytes"
+	"database/sql"
 	"embed"
+	"fmt"
+	"sync"
 
 	"github.com/wneessen/go-mail"
 
@@ -20,11 +23,41 @@ type emailData struct {
 	Body    string
 }
 
+type MailModel struct {
+	DB        *sql.DB
+	WaitGroup *sync.WaitGroup
+}
+
+type MailInterface interface {
+	Send(to, bcc, subject string, swaps ...any)
+	NotifyAdmin(subject string, swaps ...any)
+}
+
+func (m *MailModel) NotifyAdmin(subject string, swaps ...any) {
+	body := ""
+	if len(swaps) > 1 {
+		body = fmt.Sprintf(swaps[0].(string), swaps[1:]...)
+	} else {
+		body = swaps[0].(string)
+	}
+	SendEmail(helpers.Getenv("ADMIN_EMAIL"), subject, body, "")
+}
+
+func (m *MailModel) Send(to, bcc, subject string, swaps ...any) {
+	body := ""
+	if len(swaps) > 1 {
+		body = fmt.Sprintf(swaps[0].(string), swaps[1:]...)
+	} else {
+		body = swaps[0].(string)
+	}
+	SendEmail(to, subject, body, bcc)
+}
+
 func SendEmail(to string, subject string, body string, bcc string) {
 	helpers.Background(
 		func() {
 			data := emailData{Subject: subject, Body: body}
-			var senderAddr string = helpers.Getenv("MAIL_USER")
+			var senderAddr string = helpers.Getenv("MAIL_USER_EMAIL")
 			var senderName string = helpers.Getenv("MAIL_USERNAME")
 			username := senderAddr
 			password := helpers.Getenv("MAIL_PW")
