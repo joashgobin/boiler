@@ -6,3 +6,4 @@
 - Tweaked link generation algorithm
 - Function URL() added to allow devs to access production link
 - Removed mmg related events
+- Updated README

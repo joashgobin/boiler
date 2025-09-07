@@ -26,6 +26,8 @@ Create a *main.go* file and paste the following code:
 package main
 
 import (
+    "flag"
+
 	"github.com/joashgobin/boiler/core"
 )
 
@@ -71,6 +73,7 @@ package main
 
 import (
 	"embed"
+    "flag"
 
     "github.com/gofiber/fiber/v2"
 	"github.com/joashgobin/boiler/core"
