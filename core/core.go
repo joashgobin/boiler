@@ -402,7 +402,7 @@ exec bash
 
 	// create csrf handler
 	csrfErrorHandler := func(c *fiber.Ctx, err error) error {
-		log.Infof("CSRF Error: %v Request: %v From: %v\n", err, c.OriginalURL(), c.IP())
+		// log.Infof("CSRF Error: %v Request: %v From: %v\n", err, c.OriginalURL(), c.IP())
 
 		// check accepted content types
 		switch c.Accepts("html", "json") {
@@ -413,7 +413,7 @@ exec bash
 			})
 		case "html":
 			// return a 403 Forbidden response for HTML requests
-			return c.Status(fiber.StatusForbidden).Render("views/error", fiber.Map{
+			return c.Status(fiber.StatusForbidden).Render("views/partials/error", fiber.Map{
 				"Title":     "Error",
 				"Error":     "403 Forbidden",
 				"ErrorCode": "403",
