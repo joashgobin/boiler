@@ -8,3 +8,4 @@
 - Removed mmg related events
 - Updated README
 - Include error page in partials
+- Updated flash style
