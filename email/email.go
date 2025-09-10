@@ -29,6 +29,15 @@ type MailModel struct {
 	WaitGroup *sync.WaitGroup
 }
 
+type MagicLink struct {
+	ID      int
+	Email   string
+	Purpose string
+	Value   string
+	Result  string
+	Used    bool
+}
+
 func NewMailModel(db *sql.DB, appName string) *MailModel {
 	helpers.MigrateUp(db, `
 	USE <appName>;
@@ -38,6 +47,7 @@ CREATE TABLE IF NOT EXISTS magiclinks (
     email VARCHAR(30) NOT NULL,
     purpose VARCHAR(30) NOT NULL,
     value VARCHAR(200) NOT NULL UNIQUE,
+    result VARCHAR(200) NOT NULL,
 	used BOOLEAN
 );
 `, map[string]string{"appName": appName})
@@ -48,7 +58,53 @@ type MailInterface interface {
 	Send(to, bcc, subject string, swaps ...any)
 	NotifyAdmin(subject string, swaps ...any)
 	GetMagicLink(email, purpose, urlPrefix string) string
+	GetMagicLinks() []MagicLink
 	IsMagicLinkValid(link string) bool
+	SetMagicLinkResult(value, result string)
+}
+
+func (m *MailModel) GetMagicLinks() []MagicLink {
+	var links []MagicLink
+	query := `
+	SELECT id,email,purpose,value,result,used
+	FROM magiclinks
+	`
+	rows, err := m.DB.Query(query)
+	if err != nil {
+		log.Errorf("magic links query error: %v", err)
+		return nil
+	}
+	for rows.Next() {
+		var link MagicLink
+		err := rows.Scan(&link.ID, &link.Email, &link.Purpose, &link.Value, &link.Result, &link.Used)
+		if err != nil {
+			log.Errorf("magic links row scan error: %v", err)
+			return nil
+		}
+		links = append(links, link)
+	}
+	return links
+}
+
+func (m *MailModel) SetMagicLinkResult(value, result string) {
+	updateQuery := `
+	UPDATE magiclinks SET result = ? WHERE value = ?
+	`
+	stmt, err := m.DB.Prepare(updateQuery)
+	if err != nil {
+		log.Errorf("prepare statement error: %v", err)
+		return
+	}
+	res, err := stmt.Exec(result, value)
+	if err != nil {
+		log.Errorf("execute error: %v", err)
+		return
+	}
+	_, err = res.RowsAffected()
+	if err != nil {
+		log.Errorf("rows affected error: %v", err)
+		return
+	}
 }
 
 func (m *MailModel) IsMagicLinkValid(link string) bool {
@@ -82,9 +138,9 @@ func (m *MailModel) IsMagicLinkValid(link string) bool {
 func (m *MailModel) GetMagicLink(email, purpose, urlPrefix string) string {
 	value := purpose + "_" + helpers.GetHash(email+purpose+time.Now().Format(time.RFC3339)) + "-" + helpers.GetRandomUUID()
 	query := `
-	INSERT INTO magiclinks(email,purpose,value,used) VALUES (?,?,?,?)
+	INSERT INTO magiclinks(email,purpose,value,used,result) VALUES (?,?,?,?,?)
 	`
-	_, err := m.DB.Exec(query, email, purpose, value, false)
+	_, err := m.DB.Exec(query, email, purpose, value, false, "")
 	if err != nil {
 		log.Errorf("magic link generation error: %v", err)
 		return urlPrefix
