@@ -363,7 +363,7 @@ exec bash
 		"safeHTML": func(s string) ht.HTML {
 			return ht.HTML(s)
 		},
-		"eq": func(s1, s2 string) bool {
+		"eq": func(s1, s2 any) bool {
 			return s1 == s2
 		},
 	})
