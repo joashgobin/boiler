@@ -5,3 +5,4 @@
 - Added function to generate favicons
 - Modified favicon function
 - Updated core to include favicon generation for favicon.jpg file
+- Tidy repo
