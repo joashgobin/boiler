@@ -3,3 +3,4 @@
 - Updated remote service file template
 - Added more default vars
 - Added function to generate favicons
+- Modified favicon function

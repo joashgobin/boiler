@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 
 	"github.com/disintegration/imaging"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 )
 
 type Icon struct {
@@ -130,5 +132,9 @@ func GenerateFavicon(targetImg, outputDir string) {
 		generateFaviconImages(targetImg, outputDir)
 		generateBrowserConfigXML(filepath.Join(outputDir, "browserconfig.xml"), tileColor)
 		generateWebManifest(filepath.Join(outputDir, "site.webmanifest"), "", "", "")
+	} else {
+		if !fiber.IsChild() {
+			log.Warnf("image %s could not be processed into favicon for %s", targetImg, outputDir)
+		}
 	}
 }
