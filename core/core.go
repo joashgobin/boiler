@@ -214,6 +214,9 @@ exec bash
 		// helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
 	}
 
+	// generate favicon
+	helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
+
 	// create template engine
 	engine := html.New("views/", ".html")
 	if config.Templates != nil {
