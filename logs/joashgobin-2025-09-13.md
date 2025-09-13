@@ -5,3 +5,4 @@
 - Updated Makefile
 - Formatted echo commands
 - Added Makefile targets for nginx
+- Updated nginx Makefile target

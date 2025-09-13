@@ -92,6 +92,7 @@ up:
 .PHONY: nginx
 nginx:
 	sudo cp remote/<ip>.nginx /etc/nginx/sites-enabled/
+	sudo /etc/init.d/nginx reload
 
 ## prof: profile app using pprof tool
 .PHONY: prof
