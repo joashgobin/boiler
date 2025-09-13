@@ -2,3 +2,4 @@
 
 - Modified instructions
 - Updated app setup instructions
+- Updated Makefile

@@ -12,6 +12,17 @@ help:
 .PHONY: deploy
 deploy: deploy/static deploy/app
 
+## deploy/db: sign into VPS and set up database
+.PHONY: deploy/db
+deploy/db:
+	@echo "deploying database on VPS"
+	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make up"
+
+## deploy/first: upload first version of app to VPS
+.PHONY: deploy/first
+deploy/first: deploy/static deploy/db deploy/app
+	@echo "installed app on VPS"
+
 ## deploy/app: upload only app
 .PHONY: deploy/app
 deploy/app: build
