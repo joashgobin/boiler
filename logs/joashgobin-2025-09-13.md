@@ -4,3 +4,4 @@
 - Updated app setup instructions
 - Updated Makefile
 - Formatted echo commands
+- Added Makefile targets for nginx

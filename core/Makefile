@@ -18,6 +18,12 @@ deploy/db:
 	@echo "• deploying database on VPS"
 	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make up"
 
+## deploy/nginx: sign into VPS and set up nginx config
+.PHONY: deploy/nginx
+deploy/nginx:
+	@echo "• setting up nginx config on VPS"
+	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make nginx"
+
 ## deploy/first: upload first version of app to VPS
 .PHONY: deploy/first
 deploy/first: deploy/static deploy/db deploy/app
@@ -81,6 +87,11 @@ user:
 .PHONY: up
 up:
 	cat remote/create_app_database.sql | mysql
+
+## nginx: move nginx config into sites-enabled directory
+.PHONY: nginx
+nginx:
+	sudo cp remote/<ip>.nginx /etc/nginx/sites-enabled/
 
 ## prof: profile app using pprof tool
 .PHONY: prof
