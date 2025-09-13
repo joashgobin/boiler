@@ -8,3 +8,4 @@
 - Updated nginx Makefile target
 - Added certbot as part of the nginx Makefile target
 - Added instructions for deployment to VPS
+- Moved gitignore to file

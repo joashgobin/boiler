@@ -118,8 +118,14 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		// create uploads directory for uploads via forms
 		helpers.CreateDirectory("uploads/")
 
-		// create Makefile and service file for deployment on remote machine
+		// create Makefile, gitignore and service files for deployment on remote machine
 		helpers.FileSubstitute(filepath.Dir(coreDir)+"/Makefile", "Makefile.example", map[string]string{
+			"user":    config.User,
+			"appName": config.AppName,
+			"ip":      config.IP,
+			"port":    config.Port,
+		})
+		helpers.FileSubstitute(filepath.Dir(coreDir)+"/gitignore.example", ".gitignore.example", map[string]string{
 			"user":    config.User,
 			"appName": config.AppName,
 			"ip":      config.IP,
@@ -182,16 +188,6 @@ GRANT ALL PRIVILEGES ON fiber.* TO 'fiber_user'@'localhost';
 FLUSH PRIVILEGES;
 
 	`, "remote/create_fiber_user.sql")
-
-		helpers.SaveTextToDirectory(`
-tmp/
-bin/
-fiber.sqlite3
-config.env
-static/gen/
-merchants/
-	`,
-			".gitignore.example")
 
 		helpers.SaveTextToDirectory(`
 			read -p "Enter password for user: " DB_PASSWORD
