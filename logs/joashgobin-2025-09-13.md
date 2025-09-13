@@ -6,3 +6,4 @@
 - Formatted echo commands
 - Added Makefile targets for nginx
 - Updated nginx Makefile target
+- Added certbot as part of the nginx Makefile target
