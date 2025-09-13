@@ -3,3 +3,4 @@
 - Modified instructions
 - Updated app setup instructions
 - Updated Makefile
+- Formatted echo commands
