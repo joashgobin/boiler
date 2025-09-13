@@ -69,6 +69,14 @@ touch views/layouts/main.html
 touch views/index.html
 ```
 
+We now need to create the database for our app. Rename the Makefile and run the database migration:
+```sh
+cp Makefile.example Makefile
+cp .gitignore.example .gitignore
+cp .air.toml.example .air.toml
+sudo make up
+```
+
 Update the main.go file:
 ```go
 package main
@@ -105,14 +113,6 @@ func main() {
 
 	app.Listen(base.Anchor)
 }
-```
-
-The app will likely throw an error about the database not existing. Rename the Makefile and run the database migration:
-```sh
-cp Makefile.example Makefile
-cp .gitignore.example .gitignore
-cp .air.toml.example .air.toml
-sudo make up
 ```
 
 If this is your first app using this project as your starter, run the command to create the fiber user:
