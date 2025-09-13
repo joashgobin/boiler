@@ -7,3 +7,4 @@
 - Added Makefile targets for nginx
 - Updated nginx Makefile target
 - Added certbot as part of the nginx Makefile target
+- Added instructions for deployment to VPS

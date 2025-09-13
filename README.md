@@ -119,3 +119,26 @@ If this is your first app using this project as your starter, run the command to
 ```sh
 sudo make user
 ```
+
+## Deployment to VPS
+Upload the first version of the app to the VPS:
+```sh
+make deploy/first
+```
+This will upload the static assets, deploy the database, build and upload the binary, create and run the app service
+
+Next we can deploy the nginx configuration and certbot certification with the target:
+```sh
+make deploy/nginx
+```
+
+For successive deployments you will only have to run:
+```sh
+make deploy
+```
+
+To specifically deploy the static assets or the app binary run the following respectively:
+```sh
+make deploy/static
+make deploy/app
+```
