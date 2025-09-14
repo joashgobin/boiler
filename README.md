@@ -142,3 +142,14 @@ To specifically deploy the static assets or the app binary run the following res
 make deploy/static
 make deploy/app
 ```
+
+## Features
+- Favicon generation
+- Image optimization
+- CSS minification
+- Efficient caching and Nginx configuration
+- Deployments to VPS:
+    - Database setup
+    - Static file transfer
+    - Binary transfer and service setup
+- User profile creation and management
