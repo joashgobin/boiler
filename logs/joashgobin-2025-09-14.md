@@ -2,3 +2,4 @@
 
 - Added feature list
 - Added more features
+- Added rate limiting

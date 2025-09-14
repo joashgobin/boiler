@@ -24,6 +24,7 @@ import (
 
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
@@ -541,6 +542,20 @@ exec bash
 	app.Get("/metrics", monitor.New())
 
 	app.Use(helpers.SessionInfoMiddleware(store))
+
+	app.Use(limiter.New(limiter.Config{
+		Max:        20,
+		Expiration: 30 * time.Second,
+		/*
+			KeyGenerator: func(c *fiber.Ctx) string {
+				return c.Get("x-forwarded-for")
+			},
+		*/
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.SendString("Too many requests!")
+		},
+		Storage: storage,
+	}))
 
 	environment := "dev"
 	if config.IsProduction {

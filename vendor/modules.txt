@@ -20,6 +20,8 @@ github.com/go-sql-driver/mysql
 ## explicit; go 1.18
 github.com/go-viper/mapstructure/v2
 github.com/go-viper/mapstructure/v2/internal/errors
+# github.com/gofiber/fiber v1.13.3
+## explicit; go 1.11
 # github.com/gofiber/fiber/v2 v2.52.9
 ## explicit; go 1.20
 github.com/gofiber/fiber/v2
@@ -38,11 +40,14 @@ github.com/gofiber/fiber/v2/internal/wmi
 github.com/gofiber/fiber/v2/log
 github.com/gofiber/fiber/v2/middleware/csrf
 github.com/gofiber/fiber/v2/middleware/filesystem
+github.com/gofiber/fiber/v2/middleware/limiter
 github.com/gofiber/fiber/v2/middleware/logger
 github.com/gofiber/fiber/v2/middleware/monitor
 github.com/gofiber/fiber/v2/middleware/pprof
 github.com/gofiber/fiber/v2/middleware/session
 github.com/gofiber/fiber/v2/utils
+# github.com/gofiber/limiter v0.1.2
+## explicit; go 1.11
 # github.com/gofiber/storage/valkey v0.1.1
 ## explicit; go 1.23
 github.com/gofiber/storage/valkey
@@ -58,6 +63,8 @@ github.com/gofiber/utils
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
+# github.com/gorilla/schema v1.1.0
+## explicit
 # github.com/klauspost/compress v1.18.0
 ## explicit; go 1.22
 github.com/klauspost/compress
