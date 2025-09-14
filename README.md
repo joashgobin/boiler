@@ -147,9 +147,11 @@ make deploy/app
 - Favicon generation
 - Image optimization
 - CSS minification
-- Efficient caching and Nginx configuration
+- Efficient caching
 - Deployments to VPS:
     - Database setup
     - Static file transfer
     - Binary transfer and service setup
+    - Nginx configuration and certbot certification
 - User profile creation and management
+- Low memory usage
