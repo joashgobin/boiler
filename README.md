@@ -155,3 +155,4 @@ make deploy/app
     - Nginx configuration and certbot certification
 - User profile creation and management
 - Low memory usage
+- Rate limiting
