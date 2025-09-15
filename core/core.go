@@ -544,7 +544,7 @@ exec bash
 	app.Use(helpers.SessionInfoMiddleware(store))
 
 	app.Use(limiter.New(limiter.Config{
-		Max:        20,
+		Max:        50,
 		Expiration: 30 * time.Second,
 		/*
 			KeyGenerator: func(c *fiber.Ctx) string {
