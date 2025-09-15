@@ -552,7 +552,7 @@ exec bash
 			},
 		*/
 		LimitReached: func(c *fiber.Ctx) error {
-			return c.SendString("Too many requests!")
+			return c.SendStatus(429)
 		},
 		Storage: storage,
 	}))
