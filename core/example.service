@@ -1,14 +1,10 @@
 [Unit]
 Description=<appName> service
-StartLimitIntervalSec=400
-StartLimitBurst=3
 
 After=mysql.service
 After=network-online.target
 Wants=network-online.target
 
-StartLimitIntervalSec=600
-StartLimitBurst=5
 
 [Service]
 Type=exec
@@ -17,8 +13,10 @@ Group=<user>
 EnvironmentFile=/etc/environment
 WorkingDirectory=/home/<user>/<appName>
 ExecStart=/home/<user>/<appName>/web -prod
-Restart=always
+Restart=on-failure
 RestartSec=90
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target
