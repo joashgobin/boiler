@@ -9,6 +9,7 @@ import (
 )
 
 func GetQR(message string, jpegSavePath string) {
+	// fmt.Println("generating qr for", message)
 	qrc, err := qrc.New(message)
 	if err != nil {
 		fmt.Printf("could not generate QR Code for: %v\n", err)
@@ -42,7 +43,7 @@ type QRInterface interface {
 
 func (qr *QR) Send(c *fiber.Ctx, message string) error {
 	jpegSavePath := "./qr/" + GetHash(message)
-	if !FileExists(jpegSavePath) {
+	if !FileExists(jpegSavePath + ".jpeg") {
 		GetQR(message, jpegSavePath)
 	}
 	return c.SendFile(jpegSavePath + ".jpeg")
