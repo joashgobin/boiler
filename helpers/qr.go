@@ -46,5 +46,6 @@ func (qr *QR) Send(c *fiber.Ctx, message string) error {
 	if !FileExists(jpegSavePath + ".jpeg") {
 		GetQR(message, jpegSavePath)
 	}
+	c.Response().Header.Set("Cache-Control", "max-age=31536000, public")
 	return c.SendFile(jpegSavePath + ".jpeg")
 }

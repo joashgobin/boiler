@@ -2,3 +2,4 @@
 
 - Added QR code generation and Gofiber struct to implement interface
 - Updated qr generation function
+- Set cache control header for qr codes sent using interface
