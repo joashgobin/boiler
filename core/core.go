@@ -42,6 +42,7 @@ type Base struct {
 	MMG    payments.MMGInterface
 	Mail   email.MailInterface
 	Anchor string
+	QR     helpers.QRInterface
 
 	// private variables
 	isProd bool
@@ -527,6 +528,7 @@ exec bash
 		Bank:   storage,
 		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor: ":" + config.Port,
+		QR:     helpers.NewQR(),
 		Mail:   mailModel,
 		isProd: config.IsProduction,
 		domain: config.IP,
