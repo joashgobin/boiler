@@ -16,13 +16,13 @@ deploy: deploy/static deploy/app
 .PHONY: deploy/db
 deploy/db:
 	@echo "• deploying database on VPS"
-	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make up"
+	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make up"
 
 ## deploy/nginx: sign into VPS and set up nginx config
 .PHONY: deploy/nginx
 deploy/nginx:
 	@echo "• setting up nginx config on VPS"
-	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make nginx"
+	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make nginx"
 
 ## deploy/first: upload first version of app to VPS
 .PHONY: deploy/first
@@ -35,14 +35,14 @@ deploy/app: build
 	@echo "• transferring binary to VPS"
 	rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
 	@echo "• restarting app service via SSH"
-	ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo mkdir -p /usr/local/share/fiber/${project_name}/ && sleep 5 && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/${project_name}/"
+	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo mkdir -p /usr/local/share/fiber/${project_name}/ && sleep 5 && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/${project_name}/"
 
 ## deploy/static: upload only static files
 .PHONY: deploy/static
 deploy/static:
 	@echo "• transferring static files to VPS"
 	rm -rf static/gen
-	ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
+	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
 	rsync -rP ./static ${username}@${production_host_ip}:~/${project_name}/
 	rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
 	rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/
