@@ -2,6 +2,9 @@ production_host_ip = "<ip>"
 project_name = "<appName>"
 username = "<user>"
 
+YELLOW=\033[33m
+NC=\033[0m
+
 ## help: list all options
 .PHONY: help
 help:
@@ -33,7 +36,9 @@ deploy/first: deploy/static deploy/db deploy/app
 .PHONY: deploy/app
 deploy/app: build
 	@echo "• transferring binary to VPS"
+	@echo "${YELLOW}"
 	@rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
+	@echo "${NC}"
 	@echo "• restarting app service via SSH"
 	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo mkdir -p /usr/local/share/fiber/${project_name}/ && sleep 5 && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/${project_name}/"
 
@@ -43,10 +48,12 @@ deploy/static:
 	@echo "• transferring static files to VPS"
 	rm -rf static/gen
 	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
+	@echo "${YELLOW}"
 	@rsync -rP ./static ${username}@${production_host_ip}:~/${project_name}/
 	@rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
 	@rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/
 	@rsync -P ./config.env ${username}@${production_host_ip}:~/${project_name}/
+	@echo "${NC}"
 
 ## build: build local copy
 .PHONY: build

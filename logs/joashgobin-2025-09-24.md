@@ -7,3 +7,4 @@
 - Sleep for 5 seconds after restarting service
 - Silence ssh commands in Make targets
 - Silent rsync commands
+- Use ansi escape codes to change color for rsync output
