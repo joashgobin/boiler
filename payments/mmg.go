@@ -210,9 +210,9 @@ func LoadMMGTransactionDetails(db *sql.DB, merchantNumber int, transactionRefere
 		})
 }
 
-func getTransactionData(db *sql.DB, data []byte, merchantNumber int, resourceToken string) {
+func getTransactionData(db *sql.DB, data string, merchantNumber int, resourceToken string) {
 	var response TransactionsResponse
-	err := json.Unmarshal(data, &response)
+	err := json.Unmarshal([]byte(data), &response)
 	if err != nil {
 		log.Errorf("error unmarshaling JSON: %v\n", err)
 		return
@@ -360,9 +360,54 @@ func IsMMGSubscribed(db *sql.DB, thresholdAmount float64, userEmail string) bool
 	return count > 0
 }
 
+func getMMGHistory(merchantNumber int, url string, resourceToken string) (string, *http.Response) {
+
+	// get merchant environment details
+	pairs, err := getEnvironmentData(merchantNumber)
+	if err != nil {
+		log.Error(err)
+		return "", nil
+	}
+
+	// set up http client for request
+	method := "GET"
+	payload := strings.NewReader("{\"query\":\"\",\"variables\":{}}")
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+	if err != nil {
+		log.Error(err)
+		return "", nil
+	}
+
+	// send request
+	req.Header.Add("x-wss-token", "Bearer "+resourceToken)
+	req.Header.Add("x-wss-mid", pairs["merchant_mid"])
+	req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
+	req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
+	req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
+	req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Errorf("mmg history response error: %v", err)
+		return "", nil
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Error(err)
+		return "", nil
+	}
+	return string(body), res
+}
+
 func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 	helpers.Background(
 		func() {
+
+			// build transaction history URL from timestamps
 			now := time.Now()
 			toDate := now.AddDate(0, 0, 0).Format("2006-01-02")
 			fromDate := now.AddDate(0, 0, -30).Format("2006-01-02")
@@ -374,23 +419,8 @@ func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 			urlBuilder.WriteString("&fromdate=" + fromDate)
 			urlBuilder.WriteString("&todate=" + toDate)
 			url := urlBuilder.String()
-			fmt.Printf("Making request to: %s\n", url)
-			method := "GET"
 
-			payload := strings.NewReader("{\"query\":\"\",\"variables\":{}}")
-
-			client := &http.Client{}
-			req, err := http.NewRequest(method, url, payload)
-
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			// get merchant environment details
-			pairs, err := getEnvironmentData(merchantNumber)
-			if err != nil {
-				return
-			}
+			// retrieve resource token from database
 			resourceToken := getResourceToken(db, merchantNumber)
 
 			// in case resource token is empty
@@ -399,45 +429,39 @@ func loadMMGTransactionHistory(db *sql.DB, merchantNumber int) {
 				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty",
 					fmt.Sprintf("Merchant: %d", merchantNumber), "")
 				LoadNewResourceToken(db, merchantNumber)
-				// LoadMMGTransactionHistory(db, merchantNumber)
+
+				// send request
+				body, _ := getMMGHistory(merchantNumber, url, resourceToken)
+				getTransactionData(db, body, merchantNumber, resourceToken)
 				return
 			}
 
 			log.Infof("resource token: %s", resourceToken)
-			req.Header.Add("x-wss-token", "Bearer "+resourceToken)
-			req.Header.Add("x-wss-mid", pairs["merchant_mid"])
-			req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
-			req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
-			req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
-			req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
-			req.Header.Add("Content-Type", "application/json")
 
-			res, err := client.Do(req)
-			if err != nil {
-				log.Errorf("mmg history response error: %v", err)
-				return
-			}
-			defer res.Body.Close()
-
-			body, err := io.ReadAll(res.Body)
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			// log.Infof("response body: %s", string(body))
+			// send request
+			body, res := getMMGHistory(merchantNumber, url, resourceToken)
 
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
+
+				// log error and notify admin via email
 				log.Error("failed to use valid resource token")
 				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
 					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
+
+				// request new resource token
 				LoadNewResourceToken(db, merchantNumber)
-				// LoadMMGTransactionHistory(db, merchantNumber)
+
+				// resend request
+				body, _ := getMMGHistory(merchantNumber, url, resourceToken)
+				getTransactionData(db, body, merchantNumber, resourceToken)
 				return
 			}
 
 			// in case authentication fails
 			if strings.Contains(string(body), "Authentication failed") {
+
+				// notify admin via email
 				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
 					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "")
 				return
@@ -879,6 +903,8 @@ func initiateCheckout(userEmail string, merchantNumber int, merchantName, produc
 }
 
 func UseMMG(db *sql.DB, appName string) {
+
+	// create database
 	helpers.RunMigration(strings.ReplaceAll(`
 -- Select database
 USE <appName>;
