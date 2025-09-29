@@ -176,8 +176,16 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 		if err != nil {
 			return err
 		}
+		// add roles to locals
 		c.Locals("roles", sess.Get("userRoles"))
+
+		// add session to locals
 		c.Locals("session", sess)
+
+		// add user to locals
+		c.Locals("user", sess.Get("user"))
+
+		// add old values to locals
 		if c.Query("show") == "retained" {
 			c.Locals("old", sess.Get("old"))
 		} else {

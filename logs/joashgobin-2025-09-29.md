@@ -6,3 +6,4 @@
 - Updated require role middleware
 - Updated table for users
 - Fixed magic link login
+- Added some comments
