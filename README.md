@@ -159,7 +159,7 @@ make deploy/app
 
 ## Template
 Add the following to your *views/layouts/main.html* file:
-```
+```html
 <!DOCTYPE html>
 <html lang="en">
 
