@@ -88,7 +88,9 @@ func (m *UserModel) AssignRole(email, role string) error {
 	newRoles := roles
 	if !strings.Contains(roles, "|"+role+"|") {
 		newRoles += "|" + role + "|"
+
 		log.Infof("setting new roles to: %s", newRoles)
+
 		updateStmt := `UPDATE users
 		SET roles = ?
 		WHERE email = ?
@@ -108,7 +110,7 @@ func (m *UserModel) AssignRole(email, role string) error {
 }
 
 func (m *UserModel) RemoveRole(email, role string) error {
-	selectStmt := `SELECT email, roles FROM users WHERE id = ?`
+	selectStmt := `SELECT id, roles FROM users WHERE email = ?`
 
 	var roles string
 	var id int
@@ -124,7 +126,9 @@ func (m *UserModel) RemoveRole(email, role string) error {
 	newRoles := roles
 	if strings.Contains(roles, "|"+role+"|") {
 		newRoles = strings.ReplaceAll(newRoles, "|"+role+"|", "")
+
 		log.Infof("setting new roles to: %s", newRoles)
+
 		updateStmt := `UPDATE users
 		SET roles = ?
 		WHERE email = ?
@@ -178,23 +182,23 @@ func RequireRoleMiddleware(store *session.Store, flash helpers.FlashInterface, r
 		if err != nil {
 			return c.SendStatus(fiber.StatusInternalServerError)
 		}
-		user := sess.Get("user")
-		roles := sess.Get("userRoles")
+		user, ok := sess.Get("user").(User)
 
 		// redirect if user value is not set in session
-		if user == nil {
+		if !ok {
 			flash.Push(c, "You need to be logged in")
 			return c.Redirect("/login")
 		}
 
 		// redirect if user roles are not defined in session
-		if roles == nil {
+		roles := user.Roles
+		if roles == "" {
 			flash.Push(c, "You need to be logged in")
 			return c.Redirect("/login")
 		}
 
 		// redirect if user session does not specify the required role
-		if !strings.Contains(roles.(string), "|"+role+"|") {
+		if !strings.Contains(roles, "|"+role+"|") {
 			flash.Push(c, fmt.Sprintf("You need to be logged in as %s", role))
 			return c.Redirect("/")
 		}

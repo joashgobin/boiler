@@ -3,3 +3,4 @@
 - Added template for main.html file
 - Specify language for code block
 - Updated some functions
+- Updated require role middleware
