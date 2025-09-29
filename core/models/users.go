@@ -17,10 +17,10 @@ import (
 
 type UserModelInterface interface {
 	Insert(name, email, password string) error
-	Authenticate(email, password string) (int, string, error)
+	Authenticate(email, password string) (User, error)
 	Exists(id int) (bool, error)
-	AssignRole(id int, role string) error
-	RemoveRole(id int, role string) error
+	AssignRole(email, role string) error
+	RemoveRole(email, role string) error
 }
 
 type User struct {
@@ -73,12 +73,14 @@ func (m *UserModel) Insert(name, email, password string) error {
 	return nil
 }
 
-func (m *UserModel) AssignRole(id int, role string) error {
-	selectStmt := `SELECT email, roles FROM users WHERE id = ?`
+func (m *UserModel) AssignRole(email, role string) error {
+	selectStmt := `SELECT id, roles FROM users WHERE email = ?`
 
 	var roles string
-	var email string
-	err := m.DB.QueryRow(selectStmt, id).Scan(&email, &roles)
+	var id int
+
+	err := m.DB.QueryRow(selectStmt, email).Scan(&id, &roles)
+
 	if err != nil {
 		return err
 	}
@@ -89,9 +91,9 @@ func (m *UserModel) AssignRole(id int, role string) error {
 		log.Infof("setting new roles to: %s", newRoles)
 		updateStmt := `UPDATE users
 		SET roles = ?
-		WHERE id = ?
+		WHERE email = ?
 		`
-		result, err := m.DB.Exec(updateStmt, newRoles, id)
+		result, err := m.DB.Exec(updateStmt, newRoles, email)
 		if err != nil {
 			return err
 		}
@@ -105,12 +107,14 @@ func (m *UserModel) AssignRole(id int, role string) error {
 	return nil
 }
 
-func (m *UserModel) RemoveRole(id int, role string) error {
+func (m *UserModel) RemoveRole(email, role string) error {
 	selectStmt := `SELECT email, roles FROM users WHERE id = ?`
 
 	var roles string
-	var email string
-	err := m.DB.QueryRow(selectStmt, id).Scan(&email, &roles)
+	var id int
+
+	err := m.DB.QueryRow(selectStmt, id).Scan(&id, &roles)
+
 	if err != nil {
 		return err
 	}
@@ -123,9 +127,9 @@ func (m *UserModel) RemoveRole(id int, role string) error {
 		log.Infof("setting new roles to: %s", newRoles)
 		updateStmt := `UPDATE users
 		SET roles = ?
-		WHERE id = ?
+		WHERE email = ?
 		`
-		result, err := m.DB.Exec(updateStmt, newRoles, id)
+		result, err := m.DB.Exec(updateStmt, newRoles, email)
 		if err != nil {
 			return err
 		}
@@ -139,28 +143,26 @@ func (m *UserModel) RemoveRole(id int, role string) error {
 	return nil
 }
 
-func (m *UserModel) Authenticate(email, password string) (int, string, error) {
-	var id int
-	var hashedPassword []byte
-	var roles string
-	stmt := "SELECT id, roles, hashed_password FROM users WHERE email = ?"
-	err := m.DB.QueryRow(stmt, email).Scan(&id, &roles, &hashedPassword)
+func (m *UserModel) Authenticate(email, password string) (User, error) {
+	var user User
+	stmt := "SELECT id, name, roles, hashed_password FROM users WHERE email = ?"
+	err := m.DB.QueryRow(stmt, email).Scan(&user.ID, &user.Name, &user.Roles, &user.HashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, "", ErrInvalidCredentials
+			return user, ErrInvalidCredentials
 		} else {
-			return 0, "", err
+			return user, err
 		}
 	}
-	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
+	err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return 0, "", ErrInvalidCredentials
+			return user, ErrInvalidCredentials
 		} else {
-			return 0, "", err
+			return user, err
 		}
 	}
-	return id, roles, nil
+	return user, nil
 }
 
 func (m *UserModel) Exists(id int) (bool, error) {

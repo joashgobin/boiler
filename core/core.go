@@ -90,6 +90,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 
 	start := time.Now()
 	gob.Register(map[string]string{})
+	gob.Register(models.User{})
 
 	fingerprints := make(map[string]string, 3)
 	optimizations := make(map[string]string, 3)
@@ -210,10 +211,11 @@ exec bash
 		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
 		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
 		// helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
-	}
 
-	// generate favicon
-	helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
+		// generate favicon
+		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")
+		helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
+	}
 
 	// create template engine
 	engine := html.New("views/", ".html")

@@ -21,8 +21,8 @@ type FlashInterface interface {
 	// RequireKeys(keys []string, redirectRoute string) fiber.Handler
 	Retain(keys ...string) fiber.Handler
 	Require(keys ...string) fiber.Handler
-	Get(c *fiber.Ctx, key string) string
-	Set(c *fiber.Ctx, key string, value string)
+	Get(c *fiber.Ctx, key string) any
+	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
 	DeleteSession(c *fiber.Ctx)
 	UploadImage(c *fiber.Ctx, imageFormName string) (string, error)
@@ -59,29 +59,32 @@ type FlashModel struct {
 	Store *session.Store
 }
 
-func (flash *FlashModel) Get(c *fiber.Ctx, key string) string {
+func (flash *FlashModel) Get(c *fiber.Ctx, key string) any {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
 		// panic(err)
-		return ""
+		return nil
 	}
 	value := sess.Get(key)
-	str, ok := value.(string)
-	if ok {
-		return str
-	}
-	return ""
+	/*
+		str, ok := value.(string)
+		if ok {
+			return str
+		}
+	*/
+	return value
 }
 
-func (flash *FlashModel) Set(c *fiber.Ctx, key string, value string) {
+func (flash *FlashModel) Set(c *fiber.Ctx, key string, value any) error {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	sess.Set(key, value)
 	if err := sess.Save(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (flash *FlashModel) SetMany(c *fiber.Ctx, pairs map[string]any) error {
