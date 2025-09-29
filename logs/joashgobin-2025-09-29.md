@@ -5,3 +5,4 @@
 - Updated some functions
 - Updated require role middleware
 - Updated table for users
+- Fixed magic link login

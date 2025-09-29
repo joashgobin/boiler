@@ -2,8 +2,10 @@ package models
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -22,6 +24,7 @@ type UserModelInterface interface {
 	Exists(id int) (bool, error)
 	AssignRole(email, role string) error
 	RemoveRole(email, role string) error
+	ParseFromCSV(path string) error
 }
 
 type User struct {
@@ -35,6 +38,29 @@ type User struct {
 
 type UserModel struct {
 	DB *sql.DB
+}
+
+func (m *UserModel) ParseFromCSV(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	csvReader := csv.NewReader(file)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return err
+	}
+	for _, record := range records {
+		if len(record) >= 3 {
+			m.Insert(record[0], record[1], "")
+			for _, role := range strings.Split(record[2], ";") {
+				m.AssignRole(record[1], role)
+			}
+		}
+	}
+	return nil
 }
 
 func InitUsers(db *sql.DB, appName string) {

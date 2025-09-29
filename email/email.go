@@ -108,8 +108,8 @@ func (m *MailModel) SetMagicLinkResult(value, result string) string {
 
 	var userEmail string
 	err = m.DB.QueryRow(`
-	SELECT email FROM users WHERE value = ?
-	`).Scan(&value)
+	SELECT email FROM magiclinks WHERE value = ?
+	`, value).Scan(&userEmail)
 	if err != nil {
 		return ""
 	}
