@@ -44,8 +44,8 @@ func NewMailModel(db *sql.DB, appName string) *MailModel {
 
 CREATE TABLE IF NOT EXISTS magiclinks (
     id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(30) NOT NULL,
-    purpose VARCHAR(30) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    purpose VARCHAR(100) NOT NULL,
     value VARCHAR(200) NOT NULL UNIQUE,
     result VARCHAR(200) NOT NULL,
 	used BOOLEAN
@@ -60,7 +60,7 @@ type MailInterface interface {
 	GetMagicLink(email, purpose, urlPrefix string) string
 	GetMagicLinks() []MagicLink
 	IsMagicLinkValid(link string) bool
-	SetMagicLinkResult(value, result string)
+	SetMagicLinkResult(value, result string) string
 }
 
 func (m *MailModel) GetMagicLinks() []MagicLink {
@@ -86,25 +86,34 @@ func (m *MailModel) GetMagicLinks() []MagicLink {
 	return links
 }
 
-func (m *MailModel) SetMagicLinkResult(value, result string) {
+func (m *MailModel) SetMagicLinkResult(value, result string) string {
 	updateQuery := `
 	UPDATE magiclinks SET result = ? WHERE value = ?
 	`
 	stmt, err := m.DB.Prepare(updateQuery)
 	if err != nil {
 		log.Errorf("prepare statement error: %v", err)
-		return
+		return ""
 	}
 	res, err := stmt.Exec(result, value)
 	if err != nil {
 		log.Errorf("execute error: %v", err)
-		return
+		return ""
 	}
 	_, err = res.RowsAffected()
 	if err != nil {
 		log.Errorf("rows affected error: %v", err)
-		return
+		return ""
 	}
+
+	var userEmail string
+	err = m.DB.QueryRow(`
+	SELECT email FROM users WHERE value = ?
+	`).Scan(&value)
+	if err != nil {
+		return ""
+	}
+	return userEmail
 }
 
 func (m *MailModel) IsMagicLinkValid(link string) bool {

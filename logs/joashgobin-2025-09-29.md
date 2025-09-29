@@ -4,3 +4,4 @@
 - Specify language for code block
 - Updated some functions
 - Updated require role middleware
+- Updated table for users

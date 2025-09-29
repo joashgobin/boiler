@@ -18,6 +18,7 @@ import (
 type UserModelInterface interface {
 	Insert(name, email, password string) error
 	Authenticate(email, password string) (User, error)
+	EmailAuthenticate(email string) (User, error)
 	Exists(id int) (bool, error)
 	AssignRole(email, role string) error
 	RemoveRole(email, role string) error
@@ -145,6 +146,16 @@ func (m *UserModel) RemoveRole(email, role string) error {
 	}
 
 	return nil
+}
+
+func (m *UserModel) EmailAuthenticate(email string) (User, error) {
+	var user User
+	stmt := "SELECT id, name, roles FROM users WHERE email = ?"
+	err := m.DB.QueryRow(stmt, email).Scan(&user.ID, &user.Name, &user.Roles)
+	if err != nil {
+		return User{}, err
+	}
+	return user, nil
 }
 
 func (m *UserModel) Authenticate(email, password string) (User, error) {
