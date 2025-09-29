@@ -156,3 +156,66 @@ make deploy/app
 - User profile creation and management
 - Low memory usage
 - Rate limiting
+
+## Template
+Add the following to your *views/layouts/main.html* file:
+```
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System</title>
+    <link rel="stylesheet" href="{{min "mango.css"}}">
+    <link rel="stylesheet" href="{{min "mango-utils.css"}}">
+    <link rel="stylesheet" href="{{min "mango-tokens.css"}}">
+    <link rel="stylesheet" href="{{min "mango-blocks.css"}}">
+
+    {{template "views/partials/flash-style" .}}
+    {{template "views/partials/modal-style" .}}
+    {{favicon}}
+    <style>
+
+
+    </style>
+</head>
+
+<body class="bp cs">
+    <div class="img-bg"></div>
+    {{template "views/partials/modal-body" .}}
+    <header class="flex bs cp op">
+        <a href="/" class="grow"><strong>School MS</strong></a>
+        <nav>
+            <ul class="flex right sm">
+                {{if .session.Get "user"}}
+                <li><a href="/admin/">Dashboard</a></li>
+                <form method="post" action="/logout">
+                    <input type="hidden" name="csrf" value="{{.csrf}}">
+                    <button type="submit">Log out</button>
+                </form>
+                {{else}}
+                <li><a href="/login/">Login</a></li>
+                <li><a href="/about/">About</a></li>
+                {{end}}
+            </ul>
+        </nav>
+    </header>
+    <main id="swup" class="transition-main">
+        {{template "views/partials/flash-body" .}}
+        {{embed}}
+    </main>
+    {{template "views/partials/modal-logic" .}}
+    {{template "views/partials/swup" .}}
+    <footer class="cols bs cp round">
+        <div class="stack">
+            <h3>Quick links</h3>
+            <p><a href="/login">Admin portal</a></p>
+        </div>
+        <p>Guyana's premier learning institution</p>
+        <p>&copy; Queen's College Guyana, 2025</p>
+    </footer>
+</body>
+
+</html>
+```
