@@ -21,6 +21,7 @@ type FlashInterface interface {
 	// RequireKeys(keys []string, redirectRoute string) fiber.Handler
 	Retain(keys ...string) fiber.Handler
 	Require(keys ...string) fiber.Handler
+	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string) any
 	GetUser(c *fiber.Ctx) interface{}
 	Set(c *fiber.Ctx, key string, value any) error
@@ -227,6 +228,17 @@ func (flash *FlashModel) Require(keys ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// log.Infof("route: %v", c.OriginalURL())
 		redirectRoute := c.OriginalURL()
+		warning, err := EnsureFiberFormFields(c, keys)
+		if err != nil {
+			flash.Push(c, warning)
+			return c.Redirect(redirectRoute + "?show=retained")
+		}
+		return c.Next()
+	}
+}
+
+func (flash *FlashModel) RequireRedirect(redirectRoute string, keys ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		warning, err := EnsureFiberFormFields(c, keys)
 		if err != nil {
 			flash.Push(c, warning)
