@@ -22,10 +22,20 @@ type FlashInterface interface {
 	Retain(keys ...string) fiber.Handler
 	Require(keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string) any
+	GetUser(c *fiber.Ctx) interface{}
 	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
 	DeleteSession(c *fiber.Ctx)
 	UploadImage(c *fiber.Ctx, imageFormName string) (string, error)
+}
+
+func (flash *FlashModel) GetUser(c *fiber.Ctx) interface{} {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		return nil
+	}
+	value := sess.Get("user")
+	return value
 }
 
 func (flash *FlashModel) UploadImage(c *fiber.Ctx, imageFormName string) (string, error) {
