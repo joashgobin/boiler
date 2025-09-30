@@ -7,3 +7,4 @@
 - Updated table for users
 - Fixed magic link login
 - Added some comments
+- Updated Exists function to check for user

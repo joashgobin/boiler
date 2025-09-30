@@ -21,7 +21,7 @@ type UserModelInterface interface {
 	Insert(name, email, password string) error
 	Authenticate(email, password string) (User, error)
 	EmailAuthenticate(email string) (User, error)
-	Exists(id int) (bool, error)
+	Exists(email string) (bool, error)
 	AssignRole(email, role string) error
 	RemoveRole(email, role string) error
 	ParseFromCSV(path string) error
@@ -206,10 +206,10 @@ func (m *UserModel) Authenticate(email, password string) (User, error) {
 	return user, nil
 }
 
-func (m *UserModel) Exists(id int) (bool, error) {
+func (m *UserModel) Exists(email string) (bool, error) {
 	var exists bool
-	stmt := "SELECT EXISTS(SELECT true FROM users WHERE id = ?)"
-	err := m.DB.QueryRow(stmt, id).Scan(&exists)
+	stmt := "SELECT EXISTS(SELECT true FROM users WHERE email = ?)"
+	err := m.DB.QueryRow(stmt, email).Scan(&exists)
 	return exists, err
 }
 
