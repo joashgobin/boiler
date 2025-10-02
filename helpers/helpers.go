@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -54,16 +55,21 @@ func WasteTime(numSeconds int) {
 	}
 }
 
-func Background(fn func()) {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Error(fmt.Sprintf("%v", err))
-			}
-		}()
-
+func Background(fn func(), wg *sync.WaitGroup) {
+	wg.Go(func() {
 		fn()
-	}()
+	})
+	/*
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Error(fmt.Sprintf("%v", err))
+				}
+			}()
+
+			fn()
+		}()
+	*/
 }
 
 func PrintType(v interface{}) {

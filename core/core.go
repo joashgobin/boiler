@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -33,16 +34,18 @@ import (
 )
 
 type Base struct {
-	Users  models.UserModelInterface
-	DB     *sql.DB
-	Store  *session.Store
-	Shelf  helpers.ShelfModelInterface
-	Flash  helpers.FlashInterface
-	Bank   *valkey.Storage
-	MMG    payments.MMGInterface
-	Mail   email.MailInterface
-	Anchor string
-	QR     helpers.QRInterface
+	// public variables
+	Users     models.UserModelInterface
+	DB        *sql.DB
+	Store     *session.Store
+	Shelf     helpers.ShelfModelInterface
+	Flash     helpers.FlashInterface
+	Bank      *valkey.Storage
+	MMG       payments.MMGInterface
+	Mail      email.MailInterface
+	Anchor    string
+	QR        helpers.QRInterface
+	WaitGroup *sync.WaitGroup
 
 	// private variables
 	isProd bool
@@ -517,21 +520,25 @@ exec bash
 		return app, Base{}
 	}
 
+	var wg sync.WaitGroup
+
 	// create email model
-	mailModel := email.NewMailModel(db, config.AppName)
+	mailModel := email.NewMailModel(db, &wg, config.AppName)
 
 	// attaching users to base
 	base := Base{
-		Users:  &models.UserModel{DB: db},
-		DB:     db,
-		Store:  store,
-		Shelf:  &helpers.ShelfModel{DB: db},
-		Flash:  &helpers.FlashModel{Store: store},
-		Bank:   storage,
-		MMG:    &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
-		Anchor: ":" + config.Port,
-		QR:     helpers.NewQR(),
-		Mail:   mailModel,
+		Users:     &models.UserModel{DB: db},
+		DB:        db,
+		Store:     store,
+		Shelf:     &helpers.ShelfModel{DB: db},
+		Flash:     &helpers.FlashModel{Store: store},
+		Bank:      storage,
+		MMG:       &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
+		Anchor:    ":" + config.Port,
+		QR:        helpers.NewQR(),
+		Mail:      mailModel,
+		WaitGroup: &wg,
+
 		isProd: config.IsProduction,
 		domain: config.IP,
 		port:   config.Port,
@@ -574,6 +581,14 @@ exec bash
 		elapsed := time.Since(start)
 		log.Infof("(%s) app startup time: %v\n", environment, elapsed)
 	}
+
+	// clean up on app shutdown
+	app.Hooks().OnShutdown(func() error {
+		wg.Wait()
+		log.Infof("Shutting down %s...", config.AppName)
+		return nil
+	})
+
 	// return configured fiber app and database connection pool
 	return app, base
 }

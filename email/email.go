@@ -38,7 +38,7 @@ type MagicLink struct {
 	Used    bool
 }
 
-func NewMailModel(db *sql.DB, appName string) *MailModel {
+func NewMailModel(db *sql.DB, wg *sync.WaitGroup, appName string) *MailModel {
 	helpers.MigrateUp(db, `
 	USE <appName>;
 
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS magiclinks (
 	used BOOLEAN
 );
 `, map[string]string{"appName": appName})
-	return &MailModel{DB: db}
+	return &MailModel{DB: db, WaitGroup: wg}
 }
 
 type MailInterface interface {
@@ -165,7 +165,7 @@ func (m *MailModel) NotifyAdmin(subject string, swaps ...any) {
 	} else {
 		body = swaps[0].(string)
 	}
-	SendEmail(helpers.Getenv("ADMIN_EMAIL"), subject, body, "")
+	SendEmail(helpers.Getenv("ADMIN_EMAIL"), subject, body, "", m.WaitGroup)
 }
 
 func (m *MailModel) Send(to, bcc, subject string, swaps ...any) {
@@ -175,10 +175,10 @@ func (m *MailModel) Send(to, bcc, subject string, swaps ...any) {
 	} else {
 		body = swaps[0].(string)
 	}
-	SendEmail(to, subject, body, bcc)
+	SendEmail(to, subject, body, bcc, m.WaitGroup)
 }
 
-func SendEmail(to string, subject string, body string, bcc string) {
+func SendEmail(to string, subject string, body string, bcc string, wg *sync.WaitGroup) {
 	helpers.Background(
 		func() {
 			data := emailData{Subject: subject, Body: body}
@@ -227,5 +227,5 @@ func SendEmail(to string, subject string, body string, bcc string) {
 
 			// helpers.WasteTime(5)
 			// log.Infof("Sending email\n'%s'\n to: %s", message, to)
-		})
+		}, wg)
 }
