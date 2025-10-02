@@ -130,7 +130,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 
 	// combine stylesheet files into a single file and fingerprint
 	helpers.CombineAndFingerprint("static/gen/mango-final.css", &fingerprints,
-		"static/mango.css", "static/mango-tokens.css", "static/mango-utils.css", "static/mango-blocks.css")
+		"static/gen/mango.css", "static/gen/mango-tokens.css", "static/gen/mango-utils.css", "static/gen/mango-blocks.css")
+
+	fmt.Println(fingerprints)
 
 	// convert all images to webp
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
@@ -237,14 +239,20 @@ exec bash
 			`, "remote/create_fiber_user.sh")
 		helpers.CreateDirectory("views/layouts")
 		helpers.CreateDirectory("views/partials")
+		helpers.CreateDirectory("static/styles")
+		helpers.CreateDirectory("static/gen")
 		helpers.CreateDirectory("static/img")
 		helpers.CreateDirectory("static/script")
 
 		// copy partials from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
+
+		// copy images and scripts from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
 		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
-		// helpers.CopyDir(filepath.Dir(coreDir)+"/air/", "")
+
+		// copy styles into gen folder
+		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/gen/")
 
 		// generate favicon
 		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")

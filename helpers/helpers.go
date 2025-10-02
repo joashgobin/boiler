@@ -124,9 +124,14 @@ func GenerateFingerprint(srcPath string, fileListPtr *map[string]string) (string
 	m.AddFunc("text/css", css.Minify)
 	m.AddFunc("text/javascript", js.Minify)
 
+	finalFolder := srcPath
+	if !strings.HasPrefix(srcPath, "static/gen") {
+		finalFolder = strings.Replace(srcPath, "static/", "static/gen/", -1)
+
+	}
 	// minify the file first e.g. style.min.css
 	minPath := fmt.Sprintf("%s.min%s",
-		strings.TrimSuffix(strings.Replace(srcPath, "static/", "static/gen/", -1), filepath.Ext(srcPath)),
+		strings.TrimSuffix(finalFolder, filepath.Ext(srcPath)),
 		filepath.Ext(srcPath))
 
 	mimeType := GetMimeType(srcPath)
@@ -138,12 +143,14 @@ func GenerateFingerprint(srcPath string, fileListPtr *map[string]string) (string
 	hashString := FingerprintFromBuffer(minifiedContent)
 
 	dstPath := fmt.Sprintf("%s.min.%s%s",
-		strings.TrimSuffix(strings.Replace(srcPath, "static/", "static/gen/", -1), filepath.Ext(srcPath)),
+		strings.TrimSuffix(finalFolder, filepath.Ext(srcPath)),
 		hashString,
 		filepath.Ext(srcPath))
 
+	key := strings.TrimPrefix(strings.TrimPrefix(srcPath, "static/"), "gen/")
+
 	if FileExists(dstPath) {
-		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = dstPath
+		(*fileListPtr)[key] = dstPath
 		return dstPath, nil
 	}
 
@@ -153,7 +160,7 @@ func GenerateFingerprint(srcPath string, fileListPtr *map[string]string) (string
 
 	log.Infof("minified file (%s) to new file: %s", minPath, dstPath)
 	// map src path to dest path
-	(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = dstPath
+	(*fileListPtr)[key] = dstPath
 
 	return dstPath, nil
 }
@@ -365,6 +372,7 @@ func CombineAndFingerprint(outputPath string, fileListPtr *map[string]string, fi
 
 	// Process each input file
 	for _, filePath := range files {
+		// fmt.Println(filePath)
 		inputFile, err := os.Open(filePath)
 		if err != nil {
 			return fmt.Errorf("failed to open %s: %v", filePath, err)

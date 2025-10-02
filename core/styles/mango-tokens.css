@@ -1,0 +1,128 @@
+.bp {
+    background-color: var(--prim);
+}
+
+.bs {
+    background-color: var(--sec);
+}
+
+.cp {
+    color: var(--prim);
+}
+
+.cs {
+    color: var(--sec);
+}
+
+.ba {
+    background-color: var(--accent);
+}
+
+.cm {
+    color: color-mix(in hsl, var(--sec) 30%, white);
+}
+
+.bm {
+    background-color: color-mix(in hsl, var(--sec) 30%, white);
+}
+
+.om {
+    border: 1px solid color-mix(in hsl, var(--sec) 30%, white);
+}
+
+.ca {
+    color: var(--accent);
+}
+
+.bb {
+    background-color: var(--black);
+}
+
+.cb {
+    color: var(--black);
+}
+
+.ob {
+    border: 1px solid var(--black);
+}
+
+.op {
+    border: 1px solid var(--prim);
+}
+
+.os {
+    border: 1px solid var(--sec);
+}
+
+.oa {
+    border: 1px solid var(--accent);
+}
+
+.t-2 {
+    border-width: 2px;
+}
+
+.t-3 {
+    border-width: 3px;
+}
+
+.t-4 {
+    border-width: 4px;
+}
+
+.round {
+    border-radius: 1rem;
+}
+
+.margin {
+    margin: 1rem;
+}
+
+.pad {
+    padding: 1rem;
+}
+
+.no-pad {
+    padding: 0;
+}
+
+.tilt-l {
+    transform: rotateZ(-5deg);
+}
+
+.tilt-r {
+    transform: rotateZ(5deg);
+}
+
+.indent {
+    margin-inline-start: 1rem;
+}
+
+.invert {
+    filter: invert(100%);
+}
+
+.square {
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    width: 100%;
+}
+
+.rect {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    width: 100%;
+}
+
+.no-dec {
+    text-decoration: none;
+}
+
+.contain {
+    object-fit: contain;
+}
+
+.wrap {
+    hyphens: auto;
+    word-break: break-all;
+}
