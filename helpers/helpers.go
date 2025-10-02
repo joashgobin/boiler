@@ -57,6 +57,12 @@ func WasteTime(numSeconds int) {
 
 func Background(fn func(), wg *sync.WaitGroup) {
 	wg.Go(func() {
+		// recover any panic
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error(fmt.Sprintf("%v", err))
+			}
+		}()
 		fn()
 	})
 	/*

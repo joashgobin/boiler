@@ -48,7 +48,7 @@ func main() {
 	}
 	app, base := core.NewApp(config)
 
-	app.Listen(base.Anchor)
+	base.Serve(app)
 }
 
 ```
@@ -111,7 +111,7 @@ func main() {
 		return c.SendString("Welcome!")
 	})
 
-	app.Listen(base.Anchor)
+	base.Serve(app)
 }
 ```
 

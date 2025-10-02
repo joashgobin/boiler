@@ -9,10 +9,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -70,6 +72,31 @@ func (base *Base) URL() string {
 	} else {
 		return "http://localhost:" + base.port
 	}
+}
+
+func (base Base) Serve(app *fiber.App) {
+	go func() {
+		if err := app.Listen(base.Anchor); err != nil {
+			log.Panic(err)
+		}
+	}()
+
+	// create channel to signify a signal being sent
+	c := make(chan os.Signal, 1)
+	// when an interrupt or termination signal is sent, notify the channel
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	// block the main thread until an interrupt is received
+	_ = <-c
+	log.Info("gracefully shutting down...")
+	_ = app.Shutdown()
+
+	// cleanup tasks
+	log.Info("running cleanup tasks...")
+	base.DB.Close()
+	base.WaitGroup.Wait()
+
+	log.Info("fiber was successful shutdown.")
 }
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
@@ -581,13 +608,6 @@ exec bash
 		elapsed := time.Since(start)
 		log.Infof("(%s) app startup time: %v\n", environment, elapsed)
 	}
-
-	// clean up on app shutdown
-	app.Hooks().OnShutdown(func() error {
-		wg.Wait()
-		log.Infof("Shutting down %s...", config.AppName)
-		return nil
-	})
 
 	// return configured fiber app and database connection pool
 	return app, base
