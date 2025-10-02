@@ -355,6 +355,54 @@ func GenerateFingerprintsForFolder(folderPath string, targetFolder string, ext s
 	}
 }
 
+func CombineAndFingerprint(outputPath string, fileListPtr *map[string]string, files ...string) error {
+	// Open output file for writing
+	outputFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %v", err)
+	}
+	defer outputFile.Close()
+
+	// Process each input file
+	for _, filePath := range files {
+		inputFile, err := os.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to open %s: %v", filePath, err)
+		}
+		defer inputFile.Close()
+
+		// Copy file contents in chunks
+		buf := make([]byte, 32*1024) // 32KB buffer
+		for {
+			n, err := inputFile.Read(buf)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return fmt.Errorf("failed to read from %s: %v", filePath, err)
+			}
+
+			_, err = outputFile.Write(buf[:n])
+			if err != nil {
+				return fmt.Errorf("failed to write to output: %v", err)
+			}
+		}
+
+		// Write separator between files
+		_, err = outputFile.WriteString("\n\n")
+		if err != nil {
+			return fmt.Errorf("failed to write separator: %v", err)
+		}
+	}
+
+	// fingerprint resulting file
+	_, err = GenerateFingerprint(outputPath, fileListPtr)
+	if err != nil {
+		return fmt.Errorf("fingerprinting error: %v", err)
+	}
+	return nil
+}
+
 func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, fileListPtr *map[string]string) {
 	err := os.MkdirAll(targetFolder, 0755)
 	if err != nil {

@@ -128,6 +128,10 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	// generate new minified style file with fingerprint in file name
 	helpers.GenerateFingerprintsForFolder("static", "static/gen", ".css", &fingerprints)
 
+	// combine stylesheet files into a single file and fingerprint
+	helpers.CombineAndFingerprint("static/gen/mango-final.css", &fingerprints,
+		"static/mango.css", "static/mango-tokens.css", "static/mango-utils.css", "static/mango-blocks.css")
+
 	// convert all images to webp
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
