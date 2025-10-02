@@ -4,3 +4,4 @@
 - Support graceful shutdown by rurunning app within separate go routine
 - Concatenation and fingerprinting of mango css files
 - Modified README
+- Update
