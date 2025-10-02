@@ -523,25 +523,6 @@ exec bash
 		if !helpers.FileExists("views/index.html") {
 			helpers.TouchFile("views/index.html")
 		}
-		if !helpers.FileExists("views/layouts/main.html") {
-			helpers.SaveTextToDirectory(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App</title>
-</head>
-<body>
-<header></header>
-<main>
-{{embed}}
-</main>
-<footer></footer>
-</body>
-</html>
-			`, "views/layouts/main.html")
-		}
 	}
 
 	// open database corresponding to app name

@@ -5,3 +5,4 @@
 - Concatenation and fingerprinting of mango css files
 - Modified README
 - Update
+- Updated instructions for new project
