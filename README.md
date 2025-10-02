@@ -67,6 +67,7 @@ We can then embed the view files into the app using go embed:
 mkdir -p views/layouts
 touch views/layouts/main.html
 touch views/index.html
+touch views/scripts.html
 ```
 
 We now need to create the database for our app. Rename the Makefile and run the database migration:
