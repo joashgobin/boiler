@@ -96,7 +96,7 @@ func (base Base) Serve(app *fiber.App) {
 	base.DB.Close()
 	base.WaitGroup.Wait()
 
-	log.Info("fiber was successful shutdown.")
+	log.Infof("fiber app was successfully shutdown.")
 }
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
