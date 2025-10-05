@@ -146,8 +146,8 @@ make deploy/app
 
 ## Features
 - Favicon generation
-- Image optimization
-- CSS minification
+- Image optimization with fingerprinting
+- CSS minification with fingerprinting
 - Efficient caching
 - Deployments to VPS:
     - Database setup

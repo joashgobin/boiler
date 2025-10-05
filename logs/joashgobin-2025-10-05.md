@@ -3,3 +3,4 @@
 - Fingerprint webp files generated
 - Added comment
 - Tweak
+- Modified README
