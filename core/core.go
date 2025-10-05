@@ -138,6 +138,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".png", &optimizations)
+	// fmt.Println(optimizations)
 
 	// only use parent process to do file operations
 	if !fiber.IsChild() {

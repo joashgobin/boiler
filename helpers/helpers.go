@@ -298,9 +298,15 @@ func ReplaceSpecial(text string) string {
 }
 
 func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDir string) error {
-	outputPath := fmt.Sprintf("%s.webp",
+	srcContent, err := os.ReadFile(srcPath)
+	if err != nil {
+		return err
+	}
+
+	hashString := FingerprintFromBuffer(srcContent)
+	outputPath := fmt.Sprintf("%s-%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)))
+			filepath.Ext(srcPath)), hashString)
 	if FileExists(outputPath) {
 		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
 		return nil
