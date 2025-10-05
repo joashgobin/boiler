@@ -307,6 +307,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 	outputPath := fmt.Sprintf("%s-%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), hashString)
+
 	if FileExists(outputPath) {
 		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
 		return nil
