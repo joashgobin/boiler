@@ -182,7 +182,7 @@ func (m *UserModel) EmailAuthenticate(email string) (User, error) {
 		return User{}, err
 	}
 	user.Email = email
-	log.Info("user: ", user)
+	log.Info("user sign-in: ", user.Email)
 	return user, nil
 }
 
