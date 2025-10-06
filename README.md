@@ -168,7 +168,13 @@ Add the following to your *views/layouts/main.html* file:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App</title>
-    <link rel="stylesheet" href="{{min "mango-final.css"}}">
+    <script>
+        function showBody(){
+            document.body.classList.add('loaded');
+        }
+    </script>
+    <link rel="preload" as="style" href="{{min "mango-final.css"}}">
+    <link rel="stylesheet" media="none" onload="this.media='all';showBody()" href="{{min "mango-final.css"}}">
 
     {{template "views/partials/flash-style" .}}
     {{template "views/partials/modal-style" .}}
