@@ -304,7 +304,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 	}
 
 	hashString := FingerprintFromBuffer(srcContent)
-	outputPath := fmt.Sprintf("%s-%s.webp",
+	outputPath := fmt.Sprintf("%s.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), hashString)
 
