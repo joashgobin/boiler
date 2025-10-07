@@ -442,7 +442,7 @@ exec bash
 		Views:             engine,
 		ViewsLayout:       "views/layouts/main",
 		PassLocalsToViews: true,
-		Prefork:           true,
+		Prefork:           config.IsProduction,
 	})
 
 	// initialize fiber session middleware
