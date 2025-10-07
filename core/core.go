@@ -252,7 +252,7 @@ exec bash
 		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
 		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
 
-		// copy styles into gen folder
+		// copy styles from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/styles/")
 
 		// generate favicon
