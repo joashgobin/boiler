@@ -185,7 +185,7 @@ Add the following to your *views/layouts/main.html* file:
     </style>
 </head>
 
-<body class="bp cs">
+<body>
     <div class="img-bg"></div>
     {{template "views/partials/modal-body" .}}
     <header class="flex bs cp op">
