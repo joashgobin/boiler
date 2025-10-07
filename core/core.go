@@ -130,7 +130,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 
 	// combine stylesheet files into a single file and fingerprint
 	helpers.CombineAndFingerprint("static/gen/mango-final.css", &fingerprints,
-		"static/gen/mango.css", "static/gen/mango-tokens.css", "static/gen/mango-utils.css", "static/gen/mango-blocks.css")
+		"static/styles/mango.css", "static/styles/mango-tokens.css", "static/styles/mango-utils.css", "static/styles/mango-blocks.css")
 
 	// fmt.Println(fingerprints)
 
@@ -253,7 +253,7 @@ exec bash
 		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
 
 		// copy styles into gen folder
-		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/gen/")
+		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/styles/")
 
 		// generate favicon
 		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")
