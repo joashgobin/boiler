@@ -188,7 +188,7 @@ Add the following to your *views/layouts/main.html* file:
 <body>
     <div class="img-bg"></div>
     {{template "views/partials/modal-body" .}}
-    <header class="flex bs cp op">
+    <header class="flex bs cp">
         <a href="/" class="grow"><strong>My App</strong></a>
         <nav>
             <ul class="flex right sm">

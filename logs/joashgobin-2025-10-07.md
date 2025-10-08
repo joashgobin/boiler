@@ -4,3 +4,4 @@
 - Enable prefork in production
 - Modified air config
 - Tweaked comment
+- Removed outline from header
