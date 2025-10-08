@@ -201,7 +201,7 @@ Add the following to your *views/layouts/main.html* file:
         <a href="/" class="grow"><strong>My App</strong></a>
         <nav>
             <ul class="flex right sm">
-                {{if .session.Get "user"}}
+                {{if .user}}
                 <li><a href="/admin/">Dashboard</a></li>
                 <form method="post" action="/logout">
                     <input type="hidden" name="csrf" value="{{.csrf}}">
