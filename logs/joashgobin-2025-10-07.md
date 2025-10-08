@@ -8,3 +8,4 @@
 - Added body transition
 - Changed footer layout to grid
 - Added meta tags
+- Fixed meta tags partial

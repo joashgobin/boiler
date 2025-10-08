@@ -1,5 +1,5 @@
 <meta name='description' content='{{with (get "description")}}{{.}}{{else}}Meta Description{{end}}'>
-<meta property='og:title' content='{{with .mt}}{{.}}{{else}}Meta Title{{end}}'>
-<meta property='og:description' content='{{with .md}}{{.}}{{else}}Meta Description{{end}}'>
-<meta property='og:image' content='{{with .mi}}{{.}}{{else}}Meta Image Name{{end}}'>
-<meta property='og:url' content='{{with .mu}}{{.}}{{else}}Meta Image URL{{end}}'>
+<meta property='og:title' content='{{with (get "title")}}{{.}}{{else}}Meta Title{{end}}'>
+<meta property='og:description' content='{{with (get "description")}}{{.}}{{else}}Meta Description{{end}}'>
+<meta property='og:image' content='{{with (get "image")}}{{.}}{{else}}Meta Image URL{{end}}'>
+<meta property='og:url' content='{{with (get "url")}}{{.}}{{else}}Meta Page URL{{end}}'>
