@@ -7,6 +7,7 @@ import (
 	"fmt"
 	ht "html/template"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"os/signal"
@@ -391,6 +392,10 @@ exec bash
 				return val
 			}
 			return "<" + key + ">"
+		},
+		"mimeType": func(name string) string {
+			ext := filepath.Ext(name)
+			return mime.TypeByExtension(ext)
 		},
 		"Use": func(values map[string]string, key string) string {
 			value, exists := values[key]

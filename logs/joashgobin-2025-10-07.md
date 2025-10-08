@@ -9,3 +9,4 @@
 - Changed footer layout to grid
 - Added meta tags
 - Fixed meta tags partial
+- Insert mimetype for site image automatically

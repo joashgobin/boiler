@@ -2,4 +2,5 @@
 <meta property='og:title' content='{{with (get "title")}}{{.}}{{else}}Meta Title{{end}}'>
 <meta property='og:description' content='{{with (get "description")}}{{.}}{{else}}Meta Description{{end}}'>
 <meta property='og:image' content='{{with (get "image")}}{{.}}{{else}}Meta Image URL{{end}}'>
+<meta property='og:image:type' content='{{with (get "image")}}{{mimeType .}}{{else}}Meta Image URL{{end}}'>
 <meta property='og:url' content='{{with (get "url")}}{{.}}{{else}}Meta Page URL{{end}}'>
