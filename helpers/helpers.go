@@ -309,6 +309,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 			filepath.Ext(srcPath)), hashString)
 
 	if FileExists(outputPath) {
+		// log.Info("skipping ", outputPath)
 		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
 		return nil
 	}
