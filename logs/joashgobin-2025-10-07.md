@@ -6,3 +6,4 @@
 - Tweaked comment
 - Removed outline from header
 - Added body transition
+- Changed footer layout to grid
