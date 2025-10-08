@@ -176,6 +176,7 @@ Add the following to your *views/layouts/main.html* file:
     <link rel="preload" as="style" href="{{min "mango-final.css"}}">
     <link rel="stylesheet" media="none" onload="this.media='all';showBody()" href="{{min "mango-final.css"}}">
 
+    {{template "views/partials/meta" .}}
     {{template "views/partials/flash-style" .}}
     {{template "views/partials/modal-style" .}}
     {{favicon}}
@@ -183,7 +184,7 @@ Add the following to your *views/layouts/main.html* file:
 
     body {
         opacity: 0;
-        transition: opacity 100ms ease-in-out;
+        transition: opacity 500ms ease-in-out;
     }
 
     body.loaded{
