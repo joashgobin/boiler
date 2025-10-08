@@ -181,6 +181,14 @@ Add the following to your *views/layouts/main.html* file:
     {{favicon}}
     <style>
 
+    body {
+        opacity: 0;
+        transition: opacity 100ms ease-in-out;
+    }
+
+    body.loaded{
+        opacity: 1;
+    }
 
     </style>
 </head>
