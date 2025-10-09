@@ -2,3 +2,4 @@
 
 - Added function to shuffle a slice
 - Reduced body transition
+- Added katex
