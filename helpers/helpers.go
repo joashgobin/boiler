@@ -686,9 +686,9 @@ func ConvertPNGToJPG(inputPath, outputPath string) {
 	}
 }
 
-func ShuffleSlice[T any](items []T) {
+func ShuffleSlice[T any](items *[]T) {
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(items), func(i, j int) {
-		items[i], items[j] = items[i], items[j]
+	rand.Shuffle(len(*items), func(i, j int) {
+		(*items)[i], (*items)[j] = (*items)[j], (*items)[i]
 	})
 }

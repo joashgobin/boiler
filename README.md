@@ -184,7 +184,7 @@ Add the following to your *views/layouts/main.html* file:
 
     body {
         opacity: 0;
-        transition: opacity 500ms ease-in-out;
+        transition: opacity 300ms ease-in-out;
     }
 
     body.loaded{
