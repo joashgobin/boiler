@@ -256,21 +256,22 @@ exec bash
 		showElapsed("app directory creation time", start)
 
 		// copy partials from core
-		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
+		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/", false)
 
-		// copy images and scripts from core
-		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/")
-		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/")
+		// copy images and scripts from core, skipping image repeats
+		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/", false)
+		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/", true)
 
 		// copy styles from core
-		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/styles/")
+		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/styles/", false)
+
+		showElapsed("app resource copy time", start)
 
 		// generate favicon
 		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")
 		helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
+		showElapsed("app favicon generation time", start)
 	}
-
-	showElapsed("app resource copy time", start)
 
 	// create template engine
 	engine := html.New("views/", ".html")

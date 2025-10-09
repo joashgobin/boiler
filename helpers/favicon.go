@@ -97,6 +97,9 @@ func generateBrowserConfigXML(dstPath, tileColor string) {
 }
 
 func generateImage(img *image.Image, dstPath string, width, height int) {
+	if FileExists(dstPath) {
+		return
+	}
 	newImg := imaging.Clone(*img)
 	resizeImg := imaging.Resize(newImg, width, height, imaging.Lanczos)
 

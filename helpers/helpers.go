@@ -472,7 +472,7 @@ func CreateDirectory(path string) error {
 	return nil
 }
 
-func CopyDir(src, dst string) error {
+func CopyDir(src, dst string, skipRepeats bool) error {
 	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -488,6 +488,11 @@ func CopyDir(src, dst string) error {
 		destPath := filepath.Join(dst, relPath)
 		if info.IsDir() {
 			return os.MkdirAll(destPath, info.Mode())
+		}
+
+		if skipRepeats && FileExists(destPath) {
+			// log.Infof("skipping repeat: %s", destPath)
+			return nil
 		}
 
 		// Copy file
@@ -651,6 +656,9 @@ func Getenv(key string) string {
 }
 
 func ConvertPNGToJPG(inputPath, outputPath string) {
+	if FileExists(outputPath) {
+		return
+	}
 	pngBytes, err := os.ReadFile(inputPath)
 	if err != nil {
 		log.Errorf("Error reading PNG file: %v", err)
