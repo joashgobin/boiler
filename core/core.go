@@ -582,7 +582,7 @@ exec bash
 		port:   config.Port,
 	}
 
-	//
+	// run special migrations
 	payments.UseMMG(db, config.AppName)
 	helpers.InitShelf(db, config.AppName)
 	models.InitUsers(db, config.AppName)
