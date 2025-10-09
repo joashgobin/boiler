@@ -97,7 +97,12 @@ func (base Base) Serve(app *fiber.App) {
 	base.DB.Close()
 	base.WaitGroup.Wait()
 
-	log.Infof("fiber app was successfully shutdown.")
+	log.Info("fiber app was successfully shutdown.")
+}
+
+func showElapsed(description string, start time.Time) {
+	elapsed := time.Since(start)
+	log.Infof("%s: %v\n", description, elapsed)
 }
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
@@ -123,8 +128,8 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	gob.Register(map[string]string{})
 	gob.Register(models.User{})
 
-	fingerprints := make(map[string]string, 3)
-	optimizations := make(map[string]string, 3)
+	fingerprints := make(map[string]string, 50)
+	optimizations := make(map[string]string, 50)
 
 	// generate new minified style file with fingerprint in file name
 	helpers.GenerateFingerprintsForFolder("static", "static/gen", ".css", &fingerprints)
@@ -140,6 +145,8 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".png", &optimizations)
 	// fmt.Println(optimizations)
+
+	showElapsed("app resource optimization time", start)
 
 	// only use parent process to do file operations
 	if !fiber.IsChild() {
@@ -246,6 +253,8 @@ exec bash
 		helpers.CreateDirectory("static/img")
 		helpers.CreateDirectory("static/script")
 
+		showElapsed("app directory creation time", start)
+
 		// copy partials from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/")
 
@@ -260,6 +269,8 @@ exec bash
 		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")
 		helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
 	}
+
+	showElapsed("app resource copy time", start)
 
 	// create template engine
 	engine := html.New("views/", ".html")
