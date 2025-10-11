@@ -258,8 +258,8 @@ exec bash
 		// copy partials from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/", false)
 
-		// copy images and scripts from core, skipping image repeats
-		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/", false)
+		// copy images and scripts from core, skipping any repeats
+		helpers.CopyDir(filepath.Dir(coreDir)+"/script/", "static/script/", true)
 		helpers.CopyDir(filepath.Dir(coreDir)+"/img/", "static/img/", true)
 
 		// copy styles from core
