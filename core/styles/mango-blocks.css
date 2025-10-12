@@ -2,7 +2,7 @@
     border-radius: 1rem;
     padding: 1rem;
     margin-bottom: 0.2rem;
-    box-shadow: 2px 2px 4px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow),var(--highlight);
     transition: transform 240ms;
 }
 
@@ -31,7 +31,7 @@
     text-decoration: none;
     padding: 1rem;
     margin: 0.2rem;
-    box-shadow: 2px 2px 4px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow);
     transition: transform 240ms;
     transform: translateY(0);
 }

@@ -126,3 +126,11 @@
     hyphens: auto;
     word-break: break-all;
 }
+
+.highlight {
+    box-shadow: var(--highlight);
+}
+
+.shadow {
+    box-shadow: var(--shadow);
+}
