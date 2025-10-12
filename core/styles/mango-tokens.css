@@ -134,3 +134,7 @@
 .shadow {
     box-shadow: var(--shadow);
 }
+
+.deep {
+    box-shadow: var(--deep-shadow);
+}
