@@ -2,3 +2,4 @@
 
 - Added more meta tags
 - Modified mango
+- Updated shadow and highlight colors
