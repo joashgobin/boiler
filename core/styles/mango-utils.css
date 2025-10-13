@@ -131,9 +131,9 @@
 
 .switcher {
     --space: 1rem;
+    gap: var(--space);
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space);
     --threshold: 30rem;
 }
 
@@ -172,6 +172,35 @@
 
 .cover> :last-child:not(.emph) {
     margin-block-end: 0;
+}
+
+.frame {
+    --space: 1rem;
+    gap: var(--space);
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.frame>img,
+.frame>video {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+}
+
+.reel {
+    --space: 1rem;
+    gap: var(--space);
+    display: flex;
+    overflow-x: auto;
+}
+
+.reel>* {
+    min-width: 50%;
+    max-width: 100%;
 }
 
 /* spacing */
