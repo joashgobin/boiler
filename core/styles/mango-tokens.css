@@ -11,14 +11,6 @@
     color: var(--text-color);
 }
 
-.mute {
-    color: hsl(from var(--text-color) h s l / 0.7);
-}
-
-.mute-2 {
-    color: hsl(from var(--text-color) h s l / 0.5);
-}
-
 .cs {
     --text-color: var(--sec);
     color: var(--text-color);
@@ -150,4 +142,12 @@
 
 .deep {
     box-shadow: var(--deep-shadow);
+}
+
+.mute {
+    color: hsl(from var(--text-color) h s l / 0.7);
+}
+
+.mute-2 {
+    color: hsl(from var(--text-color) h s l / 0.5);
 }
