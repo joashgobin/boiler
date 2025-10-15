@@ -1,7 +1,7 @@
 :root {
     --heading-font: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, 'DejaVu Sans', source-sans-pro, sans-serif;
     --body-font: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif;
-    --prim: white;
+    --prim: #f1f5f9;
     --sec: rgb(43, 99, 64);
     --accent: hsl(0, 44%, 50%);
     --black: #000000e2;
