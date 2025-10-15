@@ -7,10 +7,20 @@
 }
 
 .cp {
+    --text-color: var(--prim);
     color: var(--prim);
 }
 
+.mute {
+    color: color-mix(in hsl, var(--text-color) 75%, rgba(255, 255, 255, 0.1));
+}
+
+.mute-2 {
+    color: color-mix(in hsl, var(--text-color) 50%, rgba(255, 255, 255, 0.1));
+}
+
 .cs {
+    --text-color: var(--sec);
     color: var(--sec);
 }
 
@@ -19,6 +29,7 @@
 }
 
 .cm {
+    --text-color: color-mix(in hsl, var(--sec) 30%, white);
     color: color-mix(in hsl, var(--sec) 30%, white);
 }
 
@@ -31,6 +42,7 @@
 }
 
 .ca {
+    --text-color: var(--accent);
     color: var(--accent);
 }
 
