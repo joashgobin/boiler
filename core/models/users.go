@@ -188,8 +188,8 @@ func (m *UserModel) EmailAuthenticate(email string) (User, error) {
 
 func (m *UserModel) Authenticate(email, password string) (User, error) {
 	var user User
-	stmt := "SELECT id, email, name, roles, hashed_password FROM users WHERE email = ?"
-	err := m.DB.QueryRow(stmt, email).Scan(&user.ID, &user.Email, &user.Name, &user.Roles, &user.HashedPassword)
+	stmt := "SELECT id, name, roles, hashed_password FROM users WHERE email = ?"
+	err := m.DB.QueryRow(stmt, email).Scan(&user.ID, &user.Name, &user.Roles, &user.HashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, ErrInvalidCredentials
@@ -205,6 +205,7 @@ func (m *UserModel) Authenticate(email, password string) (User, error) {
 			return user, err
 		}
 	}
+	user.Email = email
 	return user, nil
 }
 
