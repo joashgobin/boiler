@@ -389,6 +389,9 @@ exec bash
 		"split": func(str, delim string) []string {
 			return strings.Split(str, delim)
 		},
+		"replace": func(str, before, after string) string {
+			return strings.ReplaceAll(str, before, after)
+		},
 		"Condense": func(str string) string {
 			return helpers.ReplaceSpecial(str)
 		},
