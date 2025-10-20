@@ -321,13 +321,17 @@ exec bash
 </script>
 			`)
 		},
-		"icon": func(iconName string) ht.HTML {
+		"icon": func(iconName ...string) ht.HTML {
+			dim := "20"
+			if len(iconName) > 1 {
+				dim = iconName[1]
+			}
 			return ht.HTML(`
-			<div style="min-width:20px;min-height:20px;display:flex;align-items:center;justify-content:center;">
+			<div style="max-width:` + dim + `px;max-height:` + dim + `px;display:flex;align-items:center;justify-content:center;">
 			<script
     class="script-tag"
-    data-svg-src="/static/img/bootstrap-icons/` + iconName + `.svg"
-    hx-get="/static/img/bootstrap-icons/` + iconName + `.svg"
+    data-svg-src="/static/img/bootstrap-icons/` + iconName[0] + `.svg"
+    hx-get="/static/img/bootstrap-icons/` + iconName[0] + `.svg"
     hx-swap="outerHTML"
     hx-trigger="load">
 </script>
