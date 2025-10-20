@@ -158,6 +158,10 @@ video {
     max-width: 100%;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 html.is-animating img {
     transform: translateX(6rem);
 }
