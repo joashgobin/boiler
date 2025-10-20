@@ -5,3 +5,4 @@
 - Updated icon function for template engine
 - Added modifiers for stack layout
 - Updated styles
+- Updated section padding
