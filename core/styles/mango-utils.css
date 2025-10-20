@@ -73,6 +73,27 @@
     gap: var(--space);
 }
 
+.stack.top {
+    align-content: start;
+}
+
+.stack.bottom {
+    align-content: end;
+}
+
+.stack.center {
+    justify-items: center;
+    align-content: center;
+}
+
+.stack.left {
+    justify-items: start;
+}
+
+.stack.right {
+    justify-items: end;
+}
+
 .box {
     border: 1px solid black;
     padding: 1rem;
