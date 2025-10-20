@@ -327,7 +327,7 @@ exec bash
 				dim = iconName[1]
 			}
 			return ht.HTML(`
-			<div style="max-width:` + dim + `px;max-height:` + dim + `px;display:flex;align-items:center;justify-content:center;">
+			<div style="width:` + dim + `px;height:` + dim + `px;display:flex;align-items:center;justify-content:center;">
 			<script
     class="script-tag"
     data-svg-src="/static/img/bootstrap-icons/` + iconName[0] + `.svg"

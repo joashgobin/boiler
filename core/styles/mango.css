@@ -10,7 +10,7 @@
         inset 0 0px 4px rgba(130, 130, 130, 0.7);
     --highlight: inset 0 1px 2px rgba(255, 255, 255, 0.7);
 
-    --s0: calc(1.2rem + 0.2vw);
+    --s0: calc(1.15rem + 0.2vw);
     --ratio: 1.25;
     --s1: calc(var(--s0)*var(--ratio));
     --s2: calc(var(--s1)*var(--ratio));

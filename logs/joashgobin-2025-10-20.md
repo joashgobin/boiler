@@ -4,3 +4,4 @@
 - Added partial for svg animations
 - Updated icon function for template engine
 - Added modifiers for stack layout
+- Updated styles
