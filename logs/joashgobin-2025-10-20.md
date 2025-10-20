@@ -6,3 +6,4 @@
 - Added modifiers for stack layout
 - Updated styles
 - Updated section padding
+- Removed px from dim for icon
