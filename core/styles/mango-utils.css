@@ -130,7 +130,7 @@
 }
 
 .switcher {
-    --space: 1rem;
+    --space: 0.5rem;
     gap: var(--space);
     display: flex;
     flex-wrap: wrap;
@@ -152,6 +152,7 @@
 }
 
 .cover {
+    --space: 0.5rem;
     display: flex;
     flex-direction: column;
     min-block-size: 100vh;
@@ -175,7 +176,7 @@
 }
 
 .frame {
-    --space: 1rem;
+    --space: 0.5rem;
     gap: var(--space);
     aspect-ratio: 16/9;
     overflow: hidden;
@@ -192,7 +193,7 @@
 }
 
 .reel {
-    --space: 1rem;
+    --space: 0.5rem;
     gap: var(--space);
     display: flex;
     overflow-x: auto;
