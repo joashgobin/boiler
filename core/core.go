@@ -27,6 +27,7 @@ import (
 	"github.com/joashgobin/boiler/payments"
 
 	"github.com/gofiber/fiber/v2/middleware/csrf"
+	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -593,6 +594,10 @@ exec bash
 	payments.UseMMG(db, config.AppName)
 	helpers.InitShelf(db, config.AppName)
 	models.InitUsers(db, config.AppName)
+
+	app.Use(etag.New(etag.Config{
+		Weak: false,
+	}))
 
 	app.Use(pprof.New(pprof.Config{Prefix: "/profiler"}))
 	app.Get("/metrics", monitor.New())
