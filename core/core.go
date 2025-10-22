@@ -33,6 +33,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/valkey"
 )
@@ -598,6 +599,8 @@ exec bash
 	app.Use(etag.New(etag.Config{
 		Weak: false,
 	}))
+
+	app.Use(recover.New())
 
 	app.Use(pprof.New(pprof.Config{Prefix: "/profiler"}))
 	app.Get("/metrics", monitor.New())
