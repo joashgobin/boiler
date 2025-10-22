@@ -5,3 +5,4 @@
 - Added sitemap generator
 - Fixed the sitemap generator
 - Append slash if path added to sitemap lacks it
+- Listed more features in README

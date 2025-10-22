@@ -157,6 +157,9 @@ make deploy/app
 - User profile creation and management
 - Low memory usage
 - Rate limiting
+- Caching by ETag
+- Sitemap generation
+- Panic recovery
 
 ## Template
 Add the following to your *views/layouts/main.html* file:
