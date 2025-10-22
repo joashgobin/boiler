@@ -50,6 +50,7 @@ require (
 	github.com/yeqown/go-qrcode/v2 v2.2.5 // indirect
 	github.com/yeqown/go-qrcode/writer/standard v1.3.0 // indirect
 	github.com/yeqown/reedsolomon v1.0.0 // indirect
+	go.rumenx.com/sitemap v1.0.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/image v0.10.0 // indirect

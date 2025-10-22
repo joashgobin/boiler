@@ -2,3 +2,4 @@
 
 - Added etag system
 - Added recover middleware
+- Added sitemap generator

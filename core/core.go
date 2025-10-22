@@ -36,6 +36,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/valkey"
+	"go.rumenx.com/sitemap"
+	"go.rumenx.com/sitemap/adapters/fiber"
 )
 
 type Base struct {
@@ -51,6 +53,7 @@ type Base struct {
 	Anchor    string
 	QR        helpers.QRInterface
 	WaitGroup *sync.WaitGroup
+	SiteMap   helpers.SitemapInterface
 
 	// private variables
 	isProd bool
@@ -78,6 +81,10 @@ func (base *Base) URL() string {
 }
 
 func (base Base) Serve(app *fiber.App) {
+	app.Get("/sitemap.xml")
+	fiberadapter.Sitemap(func() *sitemap.Sitemap {
+		return base.SiteMap.Get()
+	})
 	go func() {
 		if err := app.Listen(base.Anchor); err != nil {
 			log.Panic(err)
@@ -585,6 +592,7 @@ exec bash
 		QR:        helpers.NewQR(),
 		Mail:      mailModel,
 		WaitGroup: &wg,
+		SiteMap:   helpers.NewSitemap(config.IP),
 
 		isProd: config.IsProduction,
 		domain: config.IP,

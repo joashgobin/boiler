@@ -42,11 +42,13 @@ github.com/gofiber/fiber/v2/internal/storage/memory
 github.com/gofiber/fiber/v2/internal/wmi
 github.com/gofiber/fiber/v2/log
 github.com/gofiber/fiber/v2/middleware/csrf
+github.com/gofiber/fiber/v2/middleware/etag
 github.com/gofiber/fiber/v2/middleware/filesystem
 github.com/gofiber/fiber/v2/middleware/limiter
 github.com/gofiber/fiber/v2/middleware/logger
 github.com/gofiber/fiber/v2/middleware/monitor
 github.com/gofiber/fiber/v2/middleware/pprof
+github.com/gofiber/fiber/v2/middleware/recover
 github.com/gofiber/fiber/v2/middleware/session
 github.com/gofiber/fiber/v2/utils
 # github.com/gofiber/limiter v0.1.2
@@ -195,6 +197,10 @@ github.com/yeqown/go-qrcode/writer/standard/imgkit
 ## explicit
 github.com/yeqown/reedsolomon
 github.com/yeqown/reedsolomon/binary
+# go.rumenx.com/sitemap v1.0.1
+## explicit; go 1.23.0
+go.rumenx.com/sitemap
+go.rumenx.com/sitemap/adapters/fiber
 # go.uber.org/atomic v1.9.0
 ## explicit; go 1.13
 go.uber.org/atomic
