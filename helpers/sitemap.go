@@ -1,5 +1,7 @@
 package helpers
 
+import "strings"
+
 type SitemapInterface interface {
 	Add(path string)
 	Get() []string
@@ -10,6 +12,9 @@ type Sitemap struct {
 }
 
 func (s *Sitemap) Add(path string) {
+	if !strings.HasSuffix(path, "/") {
+		path = path + "/"
+	}
 	s.locations = append(s.locations, "https://"+s.baseURL+path)
 }
 

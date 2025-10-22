@@ -4,3 +4,4 @@
 - Added recover middleware
 - Added sitemap generator
 - Fixed the sitemap generator
+- Append slash if path added to sitemap lacks it
