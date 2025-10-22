@@ -1,29 +1,23 @@
 package helpers
 
-import (
-	"time"
-
-	"go.rumenx.com/sitemap"
-)
-
 type SitemapInterface interface {
 	Add(path string)
-	Get() *sitemap.Sitemap
+	Get() []string
 }
 type Sitemap struct {
-	targetMap *sitemap.Sitemap
 	baseURL   string
+	locations []string
 }
 
 func (s *Sitemap) Add(path string) {
-	s.targetMap.Add(path, time.Now(), 1.0, sitemap.Daily)
+	s.locations = append(s.locations, "https://"+s.baseURL+path)
 }
 
-func (s *Sitemap) Get() *sitemap.Sitemap {
-	return s.targetMap
+func (s *Sitemap) Get() []string {
+	return s.locations
 }
 
 func NewSitemap(url string) *Sitemap {
-	sitemap := Sitemap{targetMap: sitemap.New(), baseURL: url}
+	sitemap := Sitemap{baseURL: url, locations: []string{}}
 	return &sitemap
 }

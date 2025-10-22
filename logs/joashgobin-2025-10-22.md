@@ -3,3 +3,4 @@
 - Added etag system
 - Added recover middleware
 - Added sitemap generator
+- Fixed the sitemap generator

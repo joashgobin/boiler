@@ -25,6 +25,8 @@ import (
 	"github.com/joashgobin/boiler/email"
 	"github.com/joashgobin/boiler/helpers"
 	"github.com/joashgobin/boiler/payments"
+	"go.rumenx.com/sitemap"
+	fiberadapter "go.rumenx.com/sitemap/adapters/fiber"
 
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/etag"
@@ -36,8 +38,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/valkey"
-	"go.rumenx.com/sitemap"
-	"go.rumenx.com/sitemap/adapters/fiber"
 )
 
 type Base struct {
@@ -81,10 +81,14 @@ func (base *Base) URL() string {
 }
 
 func (base Base) Serve(app *fiber.App) {
-	app.Get("/sitemap.xml")
-	fiberadapter.Sitemap(func() *sitemap.Sitemap {
-		return base.SiteMap.Get()
-	})
+	app.Get("/sitemap.xml", fiberadapter.Sitemap(func() *sitemap.Sitemap {
+		sm := sitemap.New()
+		for _, location := range base.SiteMap.Get() {
+			sm.Add(location, time.Now(), 1.0, sitemap.Daily)
+		}
+		return sm
+	}))
+
 	go func() {
 		if err := app.Listen(base.Anchor); err != nil {
 			log.Panic(err)
