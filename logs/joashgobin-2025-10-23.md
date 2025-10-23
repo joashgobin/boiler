@@ -4,3 +4,4 @@
 - Tweaks
 - Added another figlet command
 - Fix
+- Exclude static/gen instead of deleting it every deploy

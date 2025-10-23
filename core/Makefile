@@ -51,10 +51,9 @@ deploy/app: build
 deploy/static:
 	@-figlet "Deploy static"
 	@echo "• transferring static files to VPS"
-	rm -rf static/gen
 	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
 	@echo "${YELLOW}"
-	@rsync -rP ./static ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -rP --exclude='static/gen' ./static ${username}@${production_host_ip}:~/${project_name}/
 	@rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
 	@rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/
 	@rsync -P ./config.env ${username}@${production_host_ip}:~/${project_name}/
