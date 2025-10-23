@@ -18,7 +18,7 @@ deploy: deploy/static deploy/app
 ## deploy/db: sign into VPS and set up database
 .PHONY: deploy/db
 deploy/db:
-	@-figlet "Deploy database"
+	@-figlet "Deploy db"
 	@echo "• deploying database on VPS"
 	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make up"
 
@@ -48,7 +48,7 @@ deploy/app: build
 ## deploy/static: upload only static files
 .PHONY: deploy/static
 deploy/static:
-	@-figlet "Deploy static files"
+	@-figlet "Deploy static"
 	@echo "• transferring static files to VPS"
 	rm -rf static/gen
 	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
