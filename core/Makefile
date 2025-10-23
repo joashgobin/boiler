@@ -42,8 +42,8 @@ deploy/app: build
 	@echo "${YELLOW}"
 	@rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
 	@echo "${NC}"
-	@-figlet "Restart service"
-	@echo "• restarting app service via"
+	@-figlet "Restart app"
+	@echo "• restarting app service"
 	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo mkdir -p /usr/local/share/fiber/${project_name}/ && sleep 5 && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/${project_name}/"
 
 ## deploy/static: upload only static files
