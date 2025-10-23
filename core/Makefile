@@ -18,12 +18,14 @@ deploy: deploy/static deploy/app
 ## deploy/db: sign into VPS and set up database
 .PHONY: deploy/db
 deploy/db:
+	@-figlet "Deploy database"
 	@echo "• deploying database on VPS"
 	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make up"
 
 ## deploy/nginx: sign into VPS and set up nginx config
 .PHONY: deploy/nginx
 deploy/nginx:
+	@-figlet "Deploy nginx"
 	@echo "• setting up nginx config on VPS"
 	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo make nginx"
 
@@ -35,6 +37,7 @@ deploy/first: deploy/static deploy/db deploy/app
 ## deploy/app: upload only app
 .PHONY: deploy/app
 deploy/app: build
+	@-figlet "Deploy app"
 	@echo "• transferring binary to VPS"
 	@echo "${YELLOW}"
 	@rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
@@ -45,6 +48,7 @@ deploy/app: build
 ## deploy/static: upload only static files
 .PHONY: deploy/static
 deploy/static:
+	@-figlet "Deploy static files"
 	@echo "• transferring static files to VPS"
 	rm -rf static/gen
 	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
@@ -58,6 +62,7 @@ deploy/static:
 ## build: build local copy
 .PHONY: build
 build:
+	@-figlet "Build app"
 	@echo "• building binary locally"
 	@go build -ldflags='-s' -o=./bin/web .
 	@GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/web .
@@ -65,6 +70,7 @@ build:
 ## tidy: tidy module dependencies and format all .go files
 .PHONY: tidy
 tidy:
+	@-figlet "Tidy"
 	@echo '• tidying module dependencies...'
 	go mod tidy
 	@echo '• verifying and vendoring module dependencies...'
@@ -76,6 +82,7 @@ tidy:
 ## audit: run quality control checks
 .PHONY: audit
 audit:
+	@-figlet "Audit"
 	@echo '• checking module dependencies...'
 	go mod tidy -diff
 	go mod verify
@@ -88,16 +95,19 @@ audit:
 ## user: create fiber user
 .PHONY: user
 user:
+	@-figlet "Create user"
 	sh ./remote/create_fiber_user.sh
 
 ## up: create app database
 .PHONY: up
 up:
+	@-figlet "Migrate up"
 	cat remote/create_app_database.sql | mysql
 
 ## nginx: move nginx config into sites-enabled directory
 .PHONY: nginx
 nginx:
+	@-figlet "Set up nginx"
 	sudo cp remote/<ip>.nginx /etc/nginx/sites-enabled/
 	sudo certbot --nginx -d <ip>
 	sudo /etc/init.d/nginx reload
@@ -105,11 +115,13 @@ nginx:
 ## prof: profile app using pprof tool
 .PHONY: prof
 prof:
+	@-figlet "Prof"
 	go tool pprof http://localhost:<port>/profiler/debug/pprof/heap
 
 ## prof/png: output png of pprof
 .PHONY: prof/png
 prof/png:
+	@-figlet "Prof/png"
 	go tool pprof -png http://localhost:<port>/profiler/debug/pprof/heap > prof.png
 	sudo cp prof.png /usr/local/share/fiber/${project_name}/static/
 
