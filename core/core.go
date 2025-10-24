@@ -164,7 +164,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	helpers.CombineAndFingerprint("static/gen/mango-simplified.css", &fingerprints,
 		"static/styles/mango.css", "static/gen/mango-opt.css")
 
-	// fmt.Println(fingerprints)
+	log.Info("fingerprints:", fingerprints)
 
 	// convert all images to webp
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
