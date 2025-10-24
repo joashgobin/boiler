@@ -3,7 +3,7 @@ package helpers
 import (
 	"embed"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -35,7 +35,7 @@ func GetEmbedFiles(fs *embed.FS, path string) ([]string, error) {
 
 func ExtractClassNames(filePath string, classes *[]string) error {
 	// Read file content
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %v", err)
 	}
@@ -82,7 +82,23 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 	}
 	fmt.Println(classes)
 	for _, file := range cssFiles {
-		fmt.Println(file)
+		fmt.Println("optimizing:", file)
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("failed to read file: %v", err)
+		}
+
+		// fmt.Println(string(data))
+
+		// getting chunks that match the regex \n*\.([^{]*){[^}]*}|@[^{]*{([^{]*){[^}]*}[^}*]}
+		classExp := `^\n*?([^{]*?){[^}]*?}`
+		// queryExp := `@[^{]*{([^{]*){[^}]*}[^}*]}`
+		classRe := regexp.MustCompile(classExp)
+		matches := classRe.FindAllStringSubmatch(string(data), -1)
+		for _, match := range matches {
+			fmt.Printf("Selector (CSS): %s\n", match[1])
+			fmt.Printf("Full match: %s\n", match[0])
+		}
 	}
 	return nil
 }
