@@ -8,3 +8,4 @@
 - Fixed the regex for @supports query
 - Remove unused CSS classes from mango css
 - Show fingerprints on startup
+- Fixed view file reading issue

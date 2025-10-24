@@ -154,8 +154,11 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	helpers.GenerateFingerprintsForFolder("static", "static/gen", ".css", &fingerprints)
 
 	// optimize css files for used class names
-	helpers.SaveCSSClasses(config.Templates, "static/gen/mango-opt.css",
+	err := helpers.SaveCSSClasses(config.Templates, "static/gen/mango-opt.css",
 		"static/styles/mango-tokens.css", "static/styles/mango-utils.css", "static/styles/mango-blocks.css")
+	if err != nil {
+		log.Errorf("failed to crunch CSS: %v", err)
+	}
 
 	// combine stylesheet files into a single file and fingerprint
 	helpers.CombineAndFingerprint("static/gen/mango-final.css", &fingerprints,
@@ -164,7 +167,7 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	helpers.CombineAndFingerprint("static/gen/mango-simplified.css", &fingerprints,
 		"static/styles/mango.css", "static/gen/mango-opt.css")
 
-	log.Info("fingerprints:", fingerprints)
+	// log.Info("fingerprints:", fingerprints)
 
 	// convert all images to webp
 	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)

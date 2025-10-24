@@ -35,9 +35,9 @@ func GetEmbedFiles(fs *embed.FS, path string) ([]string, error) {
 	return out, nil
 }
 
-func ExtractClassNames(filePath string, classes *[]string) error {
+func ExtractClassNames(fs *embed.FS, filePath string, classes *[]string) error {
 	// Read file content
-	data, err := os.ReadFile(filePath)
+	data, err := fs.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %v", err)
 	}
@@ -77,7 +77,7 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 	}
 	for _, file := range viewFiles {
 		// fmt.Println(file)
-		err = ExtractClassNames(file, &classes)
+		err = ExtractClassNames(fs, file, &classes)
 		if err != nil {
 			return err
 		}
