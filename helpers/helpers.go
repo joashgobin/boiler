@@ -450,15 +450,28 @@ func FileExists(filename string) bool {
 
 // helper to create a database connection pool
 func OpenDB(dsn string) (*sql.DB, error) {
+	// set maximum connection lifetime to prevent resource leaks
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
-	err = db.Ping()
+	// set connection parameters
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(10)
+
+	// ping with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
 	if err != nil {
-		db.Close()
-		return nil, err
+		// close connection before returning error
+		if err := db.Close(); err != nil {
+			log.Infof("failed to close database connection during error: %v", err)
+		}
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	return db, nil

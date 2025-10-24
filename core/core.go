@@ -107,8 +107,14 @@ func (base Base) Serve(app *fiber.App) {
 
 	// cleanup tasks
 	log.Info("running cleanup tasks...")
-	base.DB.Close()
-	base.WaitGroup.Wait()
+	if base.DB != nil {
+		if err := base.DB.Close(); err != nil {
+			log.Errorf("failed to close database connection: %v", err)
+		}
+	}
+	if base.WaitGroup != nil {
+		base.WaitGroup.Wait()
+	}
 
 	log.Info("fiber app was successfully shutdown.")
 }
@@ -166,11 +172,13 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		// get core directory
 		_, filename, _, ok := runtime.Caller(0)
 		if !ok {
-			fmt.Println("could not get filename")
+			log.Error("failed to get caller information")
+			return nil, Base{}
 		}
 		coreDir, err := filepath.Abs(filename)
 		if err != nil {
-			fmt.Println("could not get filename")
+			log.Fatalf("failed to get absolute path: %v", err)
+			return nil, Base{}
 		}
 
 		// create remote directory for adding migration scripts
@@ -459,6 +467,11 @@ exec bash
 			return ht.HTML(links)
 		},
 	})
+
+	if err := engine.Load(); err != nil {
+		log.Errorf("failed to load templates: %v", err)
+		return nil, Base{}
+	}
 
 	// declare database URIs
 	var dbURI string = os.Getenv("FIBER_USER_URI")
