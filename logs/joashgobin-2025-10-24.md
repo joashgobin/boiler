@@ -5,3 +5,4 @@
 - Intermediate step of optimizing css files for used class names
 - Testing regex parsing of css classes
 - Renamed string
+- Fixed the regex for @supports query
