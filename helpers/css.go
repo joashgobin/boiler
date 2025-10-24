@@ -88,16 +88,26 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 			return fmt.Errorf("failed to read file: %v", err)
 		}
 
-		// fmt.Println(string(data))
+		targetCSSstring := string(data)
+		// fmt.Println(targetCSSstring)
 
 		// getting chunks that match the regex \n*\.([^{]*){[^}]*}|@[^{]*{([^{]*){[^}]*}[^}*]}
 		classExp := `^\n*?([^{]*?){[^}]*?}`
-		// queryExp := `@[^{]*{([^{]*){[^}]*}[^}*]}`
+		queryExp := `@[^{]*{([^{]*){[^}]*}[^}*]}`
+
 		classRe := regexp.MustCompile(classExp)
-		matches := classRe.FindAllStringSubmatch(string(data), -1)
-		for _, match := range matches {
+		queryRe := regexp.MustCompile(queryExp)
+
+		classMatches := classRe.FindAllStringSubmatch(targetCSSstring, -1)
+		queryMatches := queryRe.FindAllStringSubmatch(targetCSSstring, -1)
+
+		for _, match := range classMatches {
 			fmt.Printf("Selector (CSS): %s\n", match[1])
-			fmt.Printf("Full match: %s\n", match[0])
+			fmt.Printf("Class match: %s\n", match[0])
+		}
+		for _, match := range queryMatches {
+			fmt.Printf("Selector (CSS): %s\n", match[1])
+			fmt.Printf("Query match: %s\n", match[0])
 		}
 	}
 	return nil
