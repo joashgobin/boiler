@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
-	"embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -707,25 +706,3 @@ func ShuffleSlice[T any](items *[]T) {
 	})
 }
 
-func GetEmbedFiles(fs *embed.FS, path string) ([]string, error) {
-	entries, err := fs.ReadDir(filepath.Clean(path))
-	if err != nil {
-		return nil, err
-	}
-
-	var out []string
-	for _, entry := range entries {
-		fullPath := filepath.Join(path, entry.Name())
-		if entry.IsDir() {
-			res, err := GetEmbedFiles(fs, fullPath)
-			if err != nil {
-				return nil, err
-			}
-			out = append(out, res...)
-			continue
-		}
-		out = append(out, fullPath)
-	}
-
-	return out, nil
-}

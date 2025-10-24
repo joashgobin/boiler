@@ -2,3 +2,4 @@
 
 - Updated open database helper function
 - Precursor to checking for used class names in template files
+- Intermediate step of optimizing css files for used class names

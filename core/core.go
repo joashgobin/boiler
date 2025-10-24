@@ -153,6 +153,10 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	// generate new minified style file with fingerprint in file name
 	helpers.GenerateFingerprintsForFolder("static", "static/gen", ".css", &fingerprints)
 
+	// optimize css files for used class names
+	helpers.SaveCSSClasses(config.Templates, "static/gen/mango-opt.css",
+		"static/styles/mango-tokens.css", "static/styles/mango-utils.css", "static/styles/mango-blocks.css")
+
 	// combine stylesheet files into a single file and fingerprint
 	helpers.CombineAndFingerprint("static/gen/mango-final.css", &fingerprints,
 		"static/styles/mango.css", "static/styles/mango-tokens.css", "static/styles/mango-utils.css", "static/styles/mango-blocks.css")
@@ -298,16 +302,6 @@ exec bash
 	engine := html.New("views/", ".html")
 	if config.Templates != nil {
 		engine = html.NewFileSystem(http.FS(*config.Templates), ".html")
-	}
-
-	// get all template files
-	templateFiles, err := helpers.GetEmbedFiles(config.Templates, "views")
-	if err != nil {
-		log.Errorf("failed to get template files: %v", err)
-		return nil, Base{}
-	}
-	for _, template := range templateFiles {
-		fmt.Println(template)
 	}
 
 	// register presets
