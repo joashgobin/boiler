@@ -6,3 +6,4 @@
 - Testing regex parsing of css classes
 - Renamed string
 - Fixed the regex for @supports query
+- Remove unused CSS classes from mango css

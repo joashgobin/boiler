@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/gofiber/fiber/v2/log"
 )
 
 func GetEmbedFiles(fs *embed.FS, path string) ([]string, error) {
@@ -80,9 +82,10 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 			return err
 		}
 	}
-	fmt.Println(classes)
+	// fmt.Println(classes)
+	accruedString := ""
 	for _, file := range cssFiles {
-		fmt.Println("optimizing:", file)
+		// fmt.Println("optimizing:", file)
 		data, err := os.ReadFile(file)
 		if err != nil {
 			return fmt.Errorf("failed to read file: %v", err)
@@ -92,23 +95,60 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 		// fmt.Println(targetCSSstring)
 
 		// getting chunks that match the regex \n*\.([^{]*){[^}]*}|@[^{]*{([^{]*){[^}]*}[^}*]}
-		// classExp := `(?m)^\n*?([^{]*?){[^}]*?}`
 		queryExp := `(?m)@([^{]*?{[^{]*?){([^}]*?)*}([^}])*}`
-
-		// classRe := regexp.MustCompile(classExp)
 		queryRe := regexp.MustCompile(queryExp)
-
-		// classMatches := classRe.FindAllStringSubmatch(targetCSSstring, -1)
 		queryMatches := queryRe.FindAllStringSubmatch(targetCSSstring, -1)
 
-		/*for _, match := range classMatches {
-			fmt.Printf("Selector (CSS): %s\n", match[1])
-			// fmt.Printf("Class match: %s\n", match[0])
-		}*/
 		for _, match := range queryMatches {
-			fmt.Printf("Query (CSS): %s\n", match[1])
+			// fmt.Printf("Query (CSS): %s\n", match[1])
 			// fmt.Printf("Query match: %s\n", match[0])
+			for _, class := range classes {
+				// add query content to accrued CSS string
+				// if query name contains class
+				if strings.Contains(match[1], "."+class) {
+					accruedString += match[0]
+				}
+			}
+
+			// remove query match from body
+			targetCSSstring = strings.ReplaceAll(targetCSSstring, match[0], "")
 		}
+
+		classExp := `(?m)^\n*?([^{]*?){[^}]*?}`
+		classRe := regexp.MustCompile(classExp)
+		classMatches := classRe.FindAllStringSubmatch(targetCSSstring, -1)
+
+		for _, match := range classMatches {
+			selectorName := strings.TrimSpace(match[1])
+			selectorContent := match[0]
+			// fmt.Printf("Selector (CSS): %s\n", selectorName)
+			// fmt.Printf("Class match: %s\n", selectorContent)
+			for _, class := range classes {
+				// add selector content to accrued CSS string
+				// if selector name contains class
+				if strings.Contains(selectorName, "."+class) {
+					accruedString += selectorContent
+					// fmt.Println(selectorName, "contains", "."+class)
+				} else {
+					// fmt.Println(selectorName, "does not contain", "."+class)
+				}
+			}
+		}
+	}
+	// fmt.Println(accruedString)
+	accruedFile, err := os.Create(targetFile)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := accruedFile.Close(); closeErr != nil {
+			log.Errorf("error closing accrued CSS file: %v", err)
+		}
+	}()
+
+	_, err = accruedFile.WriteString(accruedString)
+	if err != nil {
+		log.Errorf("error saving accrued CSS file: %v", err)
 	}
 	return nil
 }
