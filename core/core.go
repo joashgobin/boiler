@@ -300,6 +300,17 @@ exec bash
 		engine = html.NewFileSystem(http.FS(*config.Templates), ".html")
 	}
 
+	// get all template files
+	templateFiles, err := helpers.GetEmbedFiles(config.Templates, "views")
+	if err != nil {
+		log.Errorf("failed to get template files: %v", err)
+		return nil, Base{}
+	}
+	for _, template := range templateFiles {
+		fmt.Println(template)
+	}
+
+	// register presets
 	formPresets := helpers.FormPresets()
 	externalPresets := helpers.ExternalPresets()
 
