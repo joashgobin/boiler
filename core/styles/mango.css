@@ -134,7 +134,6 @@ a {
 }
 
 main {
-    max-width: var(--measure);
     width: 100%;
     min-height: 100vh;
     justify-self: center;
@@ -144,6 +143,11 @@ main {
 
 section {
     padding: 1.5rem 1rem;
+}
+
+section>div{
+    max-width: var(--measure);
+    justify-self: center;
 }
 
 img {
@@ -172,7 +176,6 @@ html.is-leaving img {
 
 footer {
     padding: 2rem 1rem;
-    margin: 0 1rem;
 }
 
 form {
