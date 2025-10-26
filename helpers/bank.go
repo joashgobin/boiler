@@ -8,6 +8,7 @@ import (
 
 type Bank struct {
 	storage *valkey.Storage
+	prefix  string
 }
 
 type BankInterface interface {
@@ -19,8 +20,8 @@ type BankInterface interface {
 
 var _ BankInterface = (*Bank)(nil)
 
-func NewBank(storage *valkey.Storage) *Bank {
-	return &Bank{storage: storage}
+func NewBank(storage *valkey.Storage, appName string) *Bank {
+	return &Bank{storage: storage, prefix: appName + "-"}
 }
 
 func (b *Bank) Close() {
@@ -28,7 +29,7 @@ func (b *Bank) Close() {
 }
 
 func (b *Bank) GetString(key string) string {
-	data, err := b.storage.Get(key)
+	data, err := b.storage.Get(b.prefix + key)
 	if err != nil {
 		return ""
 	}
@@ -36,9 +37,9 @@ func (b *Bank) GetString(key string) string {
 }
 
 func (b *Bank) DeleteString(key string) {
-	b.storage.Delete(key)
+	b.storage.Delete(b.prefix + key)
 }
 
 func (b *Bank) SetString(key string, value string, exp time.Duration) {
-	b.storage.Set(key, []byte(value), exp)
+	b.storage.Set(b.prefix+key, []byte(value), exp)
 }

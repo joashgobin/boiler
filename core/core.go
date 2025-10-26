@@ -616,7 +616,7 @@ exec bash
 		Store:     store,
 		Shelf:     &helpers.ShelfModel{DB: db},
 		Flash:     &helpers.FlashModel{Store: store},
-		Bank:      helpers.NewBank(storage),
+		Bank:      helpers.NewBank(storage, config.AppName),
 		MMG:       &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor:    ":" + config.Port,
 		QR:        helpers.NewQR(),
