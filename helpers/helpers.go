@@ -370,7 +370,8 @@ func GenerateFingerprintsForFolder(folderPath string, targetFolder string, ext s
 	}
 }
 
-func CombineAndFingerprint(outputPath string, fileListPtr *map[string]string, files ...string) error {
+func CombineAndFingerprint(finalPath string, fileListPtr *map[string]string, files ...string) error {
+	outputPath := fmt.Sprintf("%s.%d.lock", finalPath, os.Getpid())
 	// Open output file for writing
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
@@ -411,8 +412,13 @@ func CombineAndFingerprint(outputPath string, fileListPtr *map[string]string, fi
 		}
 	}
 
+	err = os.Rename(outputPath, finalPath)
+	if err != nil {
+		return err
+	}
+
 	// fingerprint resulting file
-	_, err = GenerateFingerprint(outputPath, fileListPtr)
+	_, err = GenerateFingerprint(finalPath, fileListPtr)
 	if err != nil {
 		return fmt.Errorf("fingerprinting error: %v", err)
 	}
@@ -705,4 +711,3 @@ func ShuffleSlice[T any](items *[]T) {
 		(*items)[i], (*items)[j] = (*items)[j], (*items)[i]
 	})
 }
-
