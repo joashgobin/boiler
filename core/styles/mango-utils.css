@@ -81,7 +81,7 @@
     align-content: end;
 }
 
-.stack.center {
+.stack.middle {
     justify-items: center;
     align-content: center;
 }
