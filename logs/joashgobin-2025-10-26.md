@@ -7,3 +7,4 @@
 - Revert
 - Updated bm color
 - Added generic functions to help with slice conversion to bytes
+- Return nil for empty bytes
