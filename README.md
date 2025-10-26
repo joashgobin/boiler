@@ -223,7 +223,7 @@ Add the following to your *views/layouts/main.html* file:
     </main>
     {{template "views/partials/modal-logic" .}}
     {{template "views/partials/swup" .}}
-    <footer class="cols bs cp round">
+    <footer class="cols bs cp">
     </footer>
 </body>
 
