@@ -62,7 +62,7 @@ func (b *Bank) SetBytes(key string, value []byte, exp time.Duration) {
 func SliceToBytes[T any](data []T) []byte {
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
-		return nil
+		return []byte{}
 	}
 	return jsonStr
 }
