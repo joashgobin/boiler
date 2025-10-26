@@ -47,7 +47,7 @@ type Base struct {
 	Store     *session.Store
 	Shelf     helpers.ShelfModelInterface
 	Flash     helpers.FlashInterface
-	Bank      *valkey.Storage
+	Bank      helpers.BankInterface
 	MMG       payments.MMGInterface
 	Mail      email.MailInterface
 	Anchor    string
@@ -115,6 +115,8 @@ func (base Base) Serve(app *fiber.App) {
 	if base.WaitGroup != nil {
 		base.WaitGroup.Wait()
 	}
+
+	base.Bank.Close()
 
 	log.Info("fiber app was successfully shutdown.")
 }
@@ -614,7 +616,7 @@ exec bash
 		Store:     store,
 		Shelf:     &helpers.ShelfModel{DB: db},
 		Flash:     &helpers.FlashModel{Store: store},
-		Bank:      storage,
+		Bank:      helpers.NewBank(storage),
 		MMG:       &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
 		Anchor:    ":" + config.Port,
 		QR:        helpers.NewQR(),
