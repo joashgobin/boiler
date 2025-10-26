@@ -4,3 +4,4 @@
 - Updated with width for divs nested in sections
 - Updated readme
 - Updated stack layout
+- Revert
