@@ -286,7 +286,7 @@ func MapFromFormBody(c *fiber.Ctx, excludeEmpty bool) map[string]string {
 func EnsureFiberFormFields(c *fiber.Ctx, fields []string) (string, error) {
 	for _, v := range fields {
 		if c.FormValue(v) == "" || len(strings.Trim(c.FormValue(v), " ")) == 0 {
-			return fmt.Sprintf("Please input %s", v), fmt.Errorf("form: value missing: %s", v)
+			return fmt.Sprintf("Please input %s", strings.ReplaceAll(v, "-", " ")), fmt.Errorf("form: value missing: %s", v)
 		}
 	}
 	return "", nil
