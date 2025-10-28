@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,7 +14,7 @@ import (
 
 func FileSubstitute(templatePath string, savePath string, values map[string]string) {
 	createRecursive(filepath.Dir(savePath))
-	templateContent, err := ioutil.ReadFile(templatePath)
+	templateContent, err := os.ReadFile(templatePath)
 	if err != nil {
 		log.Infof("error reading template (%s): %v", templatePath, err)
 		return
@@ -25,7 +24,7 @@ func FileSubstitute(templatePath string, savePath string, values map[string]stri
 	for key, value := range values {
 		saveContent = strings.ReplaceAll(saveContent, fmt.Sprintf("<%s>", key), value)
 	}
-	err = ioutil.WriteFile(savePath, []byte(saveContent), 0644)
+	err = os.WriteFile(savePath, []byte(saveContent), 0644)
 	if err != nil {
 		log.Infof("error saving new content to %s: %v", savePath, err)
 		return
@@ -41,7 +40,7 @@ func createRecursive(saveDir string) {
 
 func GetFieldsFromTemplateFile(templatePath string) ([]string, error) {
 	re := regexp.MustCompile(`<([^>]+)>`)
-	templateContent, err := ioutil.ReadFile(templatePath)
+	templateContent, err := os.ReadFile(templatePath)
 	if err != nil {
 		log.Infof("error reading template (%s): %v", templatePath, err)
 		return nil, err
@@ -60,7 +59,7 @@ func GetFieldsFromTemplateFile(templatePath string) ([]string, error) {
 }
 
 func ParseToml(filePath string) (map[string]interface{}, error) {
-	fileContent, err := ioutil.ReadFile(filePath)
+	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %v", err)
 	}

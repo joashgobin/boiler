@@ -70,6 +70,8 @@ func ExtractClassNames(fs *embed.FS, filePath string, classes *[]string) error {
 }
 
 func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
+	tempExt := fmt.Sprintf(".%d.lock", os.Getpid())
+	tempFile := targetFile + tempExt
 	viewFiles, err := GetEmbedFiles(fs, "views")
 	classes := []string{}
 	if err != nil {
@@ -136,7 +138,7 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 		}
 	}
 	// fmt.Println(accruedString)
-	accruedFile, err := os.Create(targetFile)
+	accruedFile, err := os.Create(tempFile)
 	if err != nil {
 		return err
 	}
@@ -150,5 +152,11 @@ func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 	if err != nil {
 		log.Errorf("error saving accrued CSS file: %v", err)
 	}
+
+	err = os.Rename(tempFile, targetFile)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -122,8 +122,10 @@ func (base Base) Serve(app *fiber.App) {
 }
 
 func showElapsed(description string, start time.Time) {
-	elapsed := time.Since(start)
-	log.Infof("%s: %v\n", description, elapsed)
+	if !fiber.IsChild() {
+		elapsed := time.Since(start)
+		log.Infof("%s: %v\n", description, elapsed)
+	}
 }
 
 // NewApp returns a configured fiber app with session, csrf and other middleware
@@ -179,26 +181,25 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 
 	showElapsed("app resource optimization time", start)
 
-	// only use parent process to do file operations
+	// get core directory
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		log.Error("failed to get caller information")
+		return nil, Base{}
+	}
+	coreDir, err := filepath.Abs(filename)
+	if err != nil {
+		log.Fatalf("failed to get absolute path: %v", err)
+		return nil, Base{}
+	}
+
+	// create remote directory for adding migration scripts
+	helpers.CreateDirectory("remote/")
+
+	// create uploads directory for uploads via forms
+	helpers.CreateDirectory("uploads/")
+
 	if !fiber.IsChild() {
-		// get core directory
-		_, filename, _, ok := runtime.Caller(0)
-		if !ok {
-			log.Error("failed to get caller information")
-			return nil, Base{}
-		}
-		coreDir, err := filepath.Abs(filename)
-		if err != nil {
-			log.Fatalf("failed to get absolute path: %v", err)
-			return nil, Base{}
-		}
-
-		// create remote directory for adding migration scripts
-		helpers.CreateDirectory("remote/")
-
-		// create uploads directory for uploads via forms
-		helpers.CreateDirectory("uploads/")
-
 		// create Makefile, gitignore and service files for deployment on remote machine
 		helpers.FileSubstitute(filepath.Dir(coreDir)+"/Makefile", "Makefile.example", map[string]string{
 			"user":    config.User,
@@ -230,7 +231,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		if !helpers.FileExists("config.env") {
 			helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/config.env", "config.env", map[string]string{})
 		}
+	}
 
+	if !fiber.IsChild() {
 		helpers.SaveTextToDirectory(strings.ReplaceAll(`
 CREATE DATABASE IF NOT EXISTS <appName>;
 GRANT ALL PRIVILEGES ON <appName>.* TO 'fiber_user'@'localhost';
@@ -239,22 +242,6 @@ FLUSH PRIVILEGES;
 -- Verify permissions
 SHOW GRANTS FOR 'fiber_user'@'localhost';
 	`, "<appName>", config.AppName), "remote/create_app_database.sql")
-
-		/*
-					helpers.SaveTextToDirectory(strings.ReplaceAll(`
-			-- First, ensure the event scheduler is enabled
-			SET GLOBAL event_scheduler = ON;
-
-			-- Select database
-			USE <appName>;
-
-			-- Create the event
-			CREATE EVENT IF NOT EXISTS cleanup_pending_mmg_purchases
-			ON SCHEDULE EVERY 1 MINUTE
-			DO
-			DELETE FROM purchases WHERE status = 'pending' AND timestamp < NOW() - INTERVAL 5 MINUTE;
-			`, "<appName>", config.AppName), "remote/create_mmg_events.sql")
-		*/
 
 		helpers.SaveTextToDirectory(`
 	-- Create fiber user
@@ -279,15 +266,17 @@ cat ./remote/create_fiber_user.sql | sed "s/USER_PWD/$DB_PASSWORD/g" | sudo mysq
 exec bash
 
 			`, "remote/create_fiber_user.sh")
-		helpers.CreateDirectory("views/layouts")
-		helpers.CreateDirectory("views/partials")
-		helpers.CreateDirectory("static/styles")
-		helpers.CreateDirectory("static/gen")
-		helpers.CreateDirectory("static/img")
-		helpers.CreateDirectory("static/script")
+	}
+	helpers.CreateDirectory("views/layouts")
+	helpers.CreateDirectory("views/partials")
+	helpers.CreateDirectory("static/styles")
+	helpers.CreateDirectory("static/gen")
+	helpers.CreateDirectory("static/img")
+	helpers.CreateDirectory("static/script")
 
-		showElapsed("app directory creation time", start)
+	showElapsed("app directory creation time", start)
 
+	if !fiber.IsChild() {
 		// copy partials from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/partials/", "views/partials/", false)
 
@@ -297,14 +286,16 @@ exec bash
 
 		// copy styles from core
 		helpers.CopyDir(filepath.Dir(coreDir)+"/styles/", "static/styles/", false)
+	}
 
-		showElapsed("app resource copy time", start)
+	showElapsed("app resource copy time", start)
 
+	if !fiber.IsChild() {
 		// generate favicon
 		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")
 		helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
-		showElapsed("app favicon generation time", start)
 	}
+	showElapsed("app favicon generation time", start)
 
 	// create template engine
 	engine := html.New("views/", ".html")
@@ -486,6 +477,8 @@ exec bash
 		return nil, Base{}
 	}
 
+	showElapsed("template engine load time", start)
+
 	// declare database URIs
 	var dbURI string = os.Getenv("FIBER_USER_URI")
 	// var storageURI string = dbURI + appName + "?multiStatements=true"
@@ -505,7 +498,7 @@ exec bash
 		Views:             engine,
 		ViewsLayout:       "views/layouts/main",
 		PassLocalsToViews: true,
-		Prefork:           config.IsProduction,
+		Prefork:           true, //config.IsProduction,
 	})
 
 	// initialize fiber session middleware

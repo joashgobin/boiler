@@ -446,12 +446,20 @@ func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, f
 
 }
 
-func FileExists(filename string) bool {
-	info, err := os.Stat(filename)
+func FileExists(filePath string) bool {
+	info, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return false
 	}
 	return !info.IsDir()
+}
+
+func FolderExists(folderPath string) bool {
+	_, err := os.Stat(folderPath)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // helper to create a database connection pool
@@ -484,6 +492,9 @@ func OpenDB(dsn string) (*sql.DB, error) {
 }
 
 func CreateDirectory(path string) error {
+	if FolderExists(path) {
+		return nil
+	}
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
 		return err
