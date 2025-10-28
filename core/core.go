@@ -193,11 +193,13 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		return nil, Base{}
 	}
 
-	// create remote directory for adding migration scripts
-	helpers.CreateDirectory("remote/")
+	if !fiber.IsChild() {
+		// create remote directory for adding migration scripts
+		helpers.CreateDirectory("remote/")
 
-	// create uploads directory for uploads via forms
-	helpers.CreateDirectory("uploads/")
+		// create uploads directory for uploads via forms
+		helpers.CreateDirectory("uploads/")
+	}
 
 	if !fiber.IsChild() {
 		// create Makefile, gitignore and service files for deployment on remote machine
@@ -267,12 +269,15 @@ exec bash
 
 			`, "remote/create_fiber_user.sh")
 	}
-	helpers.CreateDirectory("views/layouts")
-	helpers.CreateDirectory("views/partials")
-	helpers.CreateDirectory("static/styles")
-	helpers.CreateDirectory("static/gen")
-	helpers.CreateDirectory("static/img")
-	helpers.CreateDirectory("static/script")
+
+	if !fiber.IsChild() {
+		helpers.CreateDirectory("views/layouts")
+		helpers.CreateDirectory("views/partials")
+		helpers.CreateDirectory("static/styles")
+		helpers.CreateDirectory("static/gen")
+		helpers.CreateDirectory("static/img")
+		helpers.CreateDirectory("static/script")
+	}
 
 	showElapsed("app directory creation time", start)
 

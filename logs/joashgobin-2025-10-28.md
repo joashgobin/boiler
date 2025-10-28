@@ -2,3 +2,4 @@
 
 - Increased the rate limiting limit
 - Fixed issue of fiber prefork parent and children processes producing different minified CSS files
+- Only parent creates directories
