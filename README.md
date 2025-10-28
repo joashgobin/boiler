@@ -160,7 +160,7 @@ make deploy/app
 - Caching by ETag
 - Sitemap generation
 - Panic recovery
-- Algorithmic layouts for mango CSS
+- Algorithmic layouts via mango CSS
 
 ## Template
 Add the following to your *views/layouts/main.html* file:
