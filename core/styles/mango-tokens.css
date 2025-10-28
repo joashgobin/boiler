@@ -1,9 +1,11 @@
 .bp {
-    background-color: var(--prim);
+    --bg-color: var(--prim);
+    background-color: var(--bg-color);
 }
 
 .bs {
-    background-color: var(--sec);
+    --bg-color: var(--sec);
+    background-color: var(--bg-color);
 }
 
 .cp {
@@ -17,7 +19,8 @@
 }
 
 .ba {
-    background-color: var(--accent);
+    --bg-color: var(--accent);
+    background-color: var(--bg-color);
 }
 
 .cm {
@@ -26,7 +29,8 @@
 }
 
 .bm {
-    background-color: color-mix(in hsl, var(--sec) 20%, white);
+    --bg-color: color-mix(in hsl, var(--sec) 20%, white);
+    background-color: var(--bg-color);
 }
 
 .om {
@@ -39,7 +43,8 @@
 }
 
 .bb {
-    background-color: var(--black);
+    --bg-color: var(--black);
+    background-color: var(--bg-color);
 }
 
 .cb {
@@ -85,6 +90,14 @@
 
 .pad {
     padding: 1rem;
+}
+
+.pad-2 {
+    padding: 1.5rem;
+}
+
+.pad-3 {
+    padding: 2.0rem;
 }
 
 .no-pad {
@@ -154,4 +167,19 @@
 
 .mute-3 {
     color: hsl(from var(--text-color) h s l / 0.4);
+}
+
+.darken {
+    background-color: hsl(from var(--bg-color) h s l / 0.85);
+    background-blend-mode: darken;
+}
+
+.darken-2 {
+    background-color: hsl(from var(--bg-color) h s l / 0.9);
+    background-blend-mode: darken;
+}
+
+.darken-3 {
+    background-color: hsl(from var(--bg-color) h s l / 0.95);
+    background-blend-mode: darken;
 }
