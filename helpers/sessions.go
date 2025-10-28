@@ -23,11 +23,21 @@ type FlashInterface interface {
 	Require(keys ...string) fiber.Handler
 	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string) any
-	GetUser(c *fiber.Ctx) interface{}
+	// GetUser(c *fiber.Ctx) interface{}
 	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
 	DeleteSession(c *fiber.Ctx)
 	UploadImage(c *fiber.Ctx, imageFormName string) (string, error)
+}
+
+func GetUser[T any](c *fiber.Ctx, flash FlashInterface) T {
+	user := flash.Get(c, "user")
+	data, ok := user.(T)
+	if ok {
+		return data
+	}
+	var emptyUser T
+	return emptyUser
 }
 
 func (flash *FlashModel) GetUser(c *fiber.Ctx) interface{} {

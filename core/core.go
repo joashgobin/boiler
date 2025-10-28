@@ -535,9 +535,10 @@ exec bash
 		case "html":
 			// return a 403 Forbidden response for HTML requests
 			return c.Status(fiber.StatusForbidden).Render("views/partials/error", fiber.Map{
-				"Title":     "Error",
-				"Error":     "403 Forbidden",
-				"ErrorCode": "403",
+				"Title":        "Error",
+				"Error":        "403 Forbidden",
+				"ErrorCode":    "403",
+				"ErrorMessage": err,
 			})
 		default:
 			// return a 403 Forbidden response for all other requests
@@ -651,7 +652,7 @@ exec bash
 			        return c.IP() == "127.0.0.1"
 			    },
 		*/
-		Max:        50,
+		Max:        100,
 		Expiration: 30 * time.Second,
 		/*
 			KeyGenerator: func(c *fiber.Ctx) string {
