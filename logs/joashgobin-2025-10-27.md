@@ -4,3 +4,4 @@
 - Added classes to mango for bg image darken blend mode
 - Updated README
 - Update
+- Added stack.middle
