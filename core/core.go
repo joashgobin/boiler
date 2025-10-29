@@ -320,6 +320,9 @@ exec bash
 		"humanTime": func(t time.Time) string {
 			return t.UTC().Format("Jan 02, 2006 @ 15:04 hrs")
 		},
+		"humanYear": func(t time.Time) string {
+			return t.UTC().Format("2006")
+		},
 		"gfont": func(fontName string, selector string) ht.HTML {
 			return ht.HTML(`<style>
 @import url('https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap');
