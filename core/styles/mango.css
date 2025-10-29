@@ -1,5 +1,5 @@
 :root {
-    --heading-font: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, 'DejaVu Sans', source-sans-pro, sans-serif;
+    --heading-font: Bahnschrift, 'DIN Alternate', 'Franklin Gothic Medium', 'Nimbus Sans Narrow', sans-serif-condensed, sans-serif;
     --body-font: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif;
     --prim: rgb(241, 245, 249);
     --sec: rgb(43, 99, 64);
@@ -59,6 +59,7 @@ h4,
 h5,
 h6 {
     font-family: var(--heading-font);
+    font-weight: 400;
     letter-spacing: -1px;
     margin: 0.1rem 0;
 }
