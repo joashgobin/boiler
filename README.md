@@ -93,6 +93,8 @@ import (
 //go:embed views/*
 var templates embed.FS
 
+type ctx = fiber.Ctx
+
 func main() {
 	isProd := flag.Bool("prod", false, "production mode of app (dev vs. prod)")
 	flag.Parse()
