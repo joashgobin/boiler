@@ -3,3 +3,4 @@
 - Updated heading font to industrial modern font stack
 - Set font to neo-grotesque
 - Tweak 
+- Updated some packages

@@ -4,3 +4,7 @@ to="core/styles/"
 .PHONY: styles
 styles:
 	cp ${from}/mango* ${to}
+
+.PHONY: update
+update:
+	go get -u -v ./...
