@@ -47,8 +47,9 @@ type header struct {
 // ResponseHeader instance MUST NOT be used from concurrently running
 // goroutines.
 type ResponseHeader struct {
-	noCopy noCopy
 	header
+
+	noCopy noCopy
 
 	statusMessage   []byte
 	contentEncoding []byte
@@ -67,8 +68,9 @@ type ResponseHeader struct {
 // RequestHeader instance MUST NOT be used from concurrently running
 // goroutines.
 type RequestHeader struct {
-	noCopy noCopy
 	header
+
+	noCopy noCopy
 
 	method     []byte
 	requestURI []byte
@@ -2049,8 +2051,7 @@ func (h *ResponseHeader) PeekKeys() [][]byte {
 // Any future calls to the Peek* will modify the returned value.
 // Do not store references to returned value. Make copies instead.
 func (h *header) PeekTrailerKeys() [][]byte {
-	h.mulHeader = copyTrailer(h.mulHeader, h.trailer)
-	return h.mulHeader
+	return h.trailer
 }
 
 // Cookie returns cookie for the given key.
@@ -2809,8 +2810,16 @@ func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 
 	b = b[n+1:]
 
-	// parse requestURI
-	n = bytes.LastIndexByte(b, ' ')
+	// Check for extra whitespace after method - only one space should separate method from URI
+	if len(b) > 0 && b[0] == ' ' {
+		if h.secureErrorLogMessage {
+			return 0, errors.New("extra whitespace in request line")
+		}
+		return 0, fmt.Errorf("extra whitespace in request line %q", buf)
+	}
+
+	// parse requestURI - RFC 9112 requires exactly one space between components
+	n = bytes.IndexByte(b, ' ')
 	if n < 0 {
 		return 0, fmt.Errorf("cannot find whitespace in the first line of request %q", buf)
 	} else if n == 0 {
@@ -2818,6 +2827,14 @@ func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 			return 0, errors.New("requestURI cannot be empty")
 		}
 		return 0, fmt.Errorf("requestURI cannot be empty in %q", buf)
+	}
+
+	// Check for extra whitespace - only one space should separate URI from HTTP version
+	if n+1 < len(b) && b[n+1] == ' ' {
+		if h.secureErrorLogMessage {
+			return 0, errors.New("extra whitespace in request line")
+		}
+		return 0, fmt.Errorf("extra whitespace in request line %q", buf)
 	}
 
 	protoStr := b[n+1:]
@@ -3335,14 +3352,19 @@ func appendTrailerBytes(dst []byte, trailer [][]byte, sep []byte) []byte {
 }
 
 func copyTrailer(dst, src [][]byte) [][]byte {
-	if cap(dst) > len(src) {
+	if cap(dst) >= len(src) {
 		dst = dst[:len(src)]
 	} else {
 		dst = append(dst[:0], src...)
 	}
 
 	for i := range dst {
-		dst[i] = make([]byte, len(src[i]))
+		l := len(src[i])
+		if cap(dst[i]) >= l {
+			dst[i] = dst[i][:l]
+		} else {
+			dst[i] = make([]byte, l)
+		}
 		copy(dst[i], src[i])
 	}
 	return dst

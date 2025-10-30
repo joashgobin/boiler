@@ -969,13 +969,10 @@ func (m *jsMinifier) minifyExpr(i js.IExpr, prec js.OpPrec) {
 				expr = &js.BinaryExpr{op, v, &js.LiteralExpr{js.NullToken, nullBytes}}
 			}
 
-			m.minifyExpr(expr.X, precLeft)
-			if expr.Op == js.GtToken && m.prev[len(m.prev)-1] == '-' {
-				// 0 < len(m.prev) always
-				m.write(spaceBytes)
-			} else if expr.Op == js.EqEqEqToken || expr.Op == js.NotEqEqToken {
+			if expr.Op == js.EqEqEqToken || expr.Op == js.NotEqEqToken {
 				if left, ok := expr.X.(*js.UnaryExpr); ok && left.Op == js.TypeofToken {
 					if right, ok := expr.Y.(*js.LiteralExpr); ok && right.TokenType == js.StringToken {
+						// typeof a === "string"  =>  typeof a == "string"
 						if expr.Op == js.EqEqEqToken {
 							expr.Op = js.EqEqToken
 						} else {
@@ -984,6 +981,7 @@ func (m *jsMinifier) minifyExpr(i js.IExpr, prec js.OpPrec) {
 					}
 				} else if right, ok := expr.Y.(*js.UnaryExpr); ok && right.Op == js.TypeofToken {
 					if left, ok := expr.X.(*js.LiteralExpr); ok && left.TokenType == js.StringToken {
+						// "string" === typeof a  =>  "string" == typeof a
 						if expr.Op == js.EqEqEqToken {
 							expr.Op = js.EqEqToken
 						} else {
@@ -991,6 +989,47 @@ func (m *jsMinifier) minifyExpr(i js.IExpr, prec js.OpPrec) {
 						}
 					}
 				}
+			} else if expr.Op == js.EqToken {
+				if left, ok := expr.X.(*js.Var); ok {
+					if right, ok := expr.Y.(*js.BinaryExpr); ok {
+						var y js.IExpr
+						var varLeft bool
+						if v, ok := right.X.(*js.Var); ok && v == left {
+							y = right.Y
+							varLeft = true
+						} else if v, ok := right.Y.(*js.Var); ok && v == left {
+							y = right.X
+						}
+						if y != nil {
+							if lit, ok := y.(*js.LiteralExpr); ok && (right.Op == js.AddToken || varLeft && right.Op == js.SubToken) && lit.TokenType == js.IntegerToken && len(lit.Data) == 1 && lit.Data[0] == '1' {
+								if right.Op == js.AddToken {
+									// a=a+1  =>  ++a
+									m.write(plusPlusBytes)
+									m.minifyExpr(left, js.OpUnary)
+									break
+								} else {
+									// a=a-1  =>  --a
+									m.write(minMinBytes)
+									m.minifyExpr(left, js.OpUnary)
+									break
+								}
+								// TODO: may break implicit "evaluation" of variables? see #863
+								//} else if right.Op == js.AddToken || right.Op == js.SubToken || right.Op == js.MulToken || right.Op == js.DivToken || right.Op == js.ModToken || right.Op == js.ExpToken || right.Op == js.LtLtToken || right.Op == js.GtGtToken || right.Op == js.GtGtGtToken || right.Op == js.BitAndToken || right.Op == js.BitOrToken || right.Op == js.BitXorToken {
+								//	// a=a+b  =>  a+=b
+								//	m.minifyExpr(left, js.OpLHS)
+								//	m.write(right.Op.Bytes())
+								//	m.write(equalBytes)
+								//	m.minifyExpr(y, js.OpAssign)
+								//	break
+							}
+						}
+					}
+				}
+			}
+			m.minifyExpr(expr.X, precLeft)
+			if expr.Op == js.GtToken && m.prev[len(m.prev)-1] == '-' {
+				// 0 < len(m.prev) always
+				m.write(spaceBytes)
 			}
 			m.write(expr.Op.Bytes())
 			if expr.Op == js.AddToken {
@@ -1209,27 +1248,7 @@ func (m *jsMinifier) minifyExpr(i js.IExpr, prec js.OpPrec) {
 		}
 	case *js.CallExpr:
 		if v, ok := expr.X.(*js.Var); ok && v.Decl == js.NoDecl {
-			if bytes.Equal(v.Data, isNaNBytes) {
-				// isNaN(x) => x!=x
-				if len(expr.Args.List) == 1 {
-					groupLen := 0
-					if js.OpEquals < prec {
-						groupLen = 2
-					}
-					if v, ok := expr.Args.List[0].Value.(*js.Var); ok && len(v.Data)+groupLen < 7 {
-						if js.OpEquals < prec {
-							m.write(openParenBytes)
-						}
-						m.minifyExpr(v, js.OpEquals)
-						m.write(notEqualBytes)
-						m.minifyExpr(v, js.OpEquals)
-						if js.OpEquals < prec {
-							m.write(closeParenBytes)
-						}
-						break
-					}
-				}
-			} else if bytes.Equal(v.Data, NumberBytes) {
+			if bytes.Equal(v.Data, NumberBytes) {
 				// Number(x) => +x
 				if len(expr.Args.List) == 1 {
 					if lit, ok := expr.Args.List[0].Value.(*js.LiteralExpr); ok && lit.TokenType == js.TrueToken {
@@ -1313,6 +1332,19 @@ func (m *jsMinifier) minifyExpr(i js.IExpr, prec js.OpPrec) {
 							}
 							break
 						}
+					}
+				} else if bytes.Equal(dot.Y.Data, []byte("sqrt")) {
+					// Math.sqrt(x) => x**.5
+					if len(expr.Args.List) == 1 {
+						if js.OpExp < prec {
+							m.write(openParenBytes)
+						}
+						m.minifyExpr(&js.GroupExpr{expr.Args.List[0].Value}, js.OpUpdate)
+						m.write([]byte("**.5"))
+						if js.OpExp < prec {
+							m.write(closeParenBytes)
+						}
+						break
 					}
 				}
 			}

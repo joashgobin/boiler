@@ -51,6 +51,9 @@ type Client struct {
 	// Text is the textproto.Conn used by the Client. It is exported to allow for clients to add extensions.
 	Text *textproto.Conn
 
+	// ErrorHandlerRegistry manages custom error handlers for SMTP host-command pairs.
+	ErrorHandlerRegistry *ErrorHandlerRegistry
+
 	// auth supported auth mechanisms
 	auth []string
 
@@ -131,6 +134,7 @@ func NewClient(conn net.Conn, host string) (*Client, error) {
 	c := &Client{Text: text, conn: conn, serverName: host, localName: "localhost"}
 	_, c.tls = conn.(*tls.Conn)
 	c.isConnected = true
+	c.ErrorHandlerRegistry = NewErrorHandlerRegistry()
 
 	return c, nil
 }
@@ -195,7 +199,22 @@ func (c *Client) cmd(expectCode int, format string, args ...interface{}) (int, s
 		return 0, "", err
 	}
 	c.Text.StartResponse(id)
+	defer c.Text.EndResponse(id)
 	code, msg, err := c.Text.ReadResponse(expectCode)
+	if err != nil {
+		fmtValues := strings.Split(format, " ")
+		currentCmd := strings.ToLower(fmtValues[0])
+		handler := c.ErrorHandlerRegistry.GetHandler(c.serverName, currentCmd)
+		handledErr := handler.HandleError(c.serverName, currentCmd, c.Text, err)
+		if handledErr != nil {
+			c.mutex.Unlock()
+			return 0, "", handledErr
+		}
+
+		// If the handler successfully recovered, we try reading the response again
+		// This assumes the handler has consumed the problematic data beforehand.
+		code, msg, err = c.Text.ReadResponse(expectCode)
+	}
 
 	logMsg = []interface{}{code, msg}
 	if c.authIsActive && code >= 300 && code <= 400 {
@@ -203,7 +222,6 @@ func (c *Client) cmd(expectCode int, format string, args ...interface{}) (int, s
 	}
 	c.debugLog(log.DirServerToClient, "%d %s", logMsg...)
 
-	c.Text.EndResponse(id)
 	c.mutex.Unlock()
 	return code, msg, err
 }
@@ -248,10 +266,10 @@ func (c *Client) TLSConnectionState() (state tls.ConnectionState, ok bool) {
 
 	tc, ok := c.conn.(*tls.Conn)
 	if !ok {
-		return
+		return state, ok
 	}
 	state, ok = tc.ConnectionState(), true
-	return
+	return state, ok
 }
 
 // Verify checks the validity of an email address on the server.
@@ -350,7 +368,7 @@ func (c *Client) Mail(from string) error {
 	if err := c.hello(); err != nil {
 		return err
 	}
-	cmdStr := "MAIL FROM:<%s>"
+	cmdStr := "MAIL FROM:%s"
 
 	c.mutex.RLock()
 	if c.ext != nil {
@@ -384,33 +402,46 @@ func (c *Client) Rcpt(to string) error {
 	c.mutex.RUnlock()
 
 	if ok && c.dsnrntype != "" {
-		_, _, err := c.cmd(25, "RCPT TO:<%s> NOTIFY=%s", to, c.dsnrntype)
+		_, _, err := c.cmd(25, "RCPT TO:%s NOTIFY=%s", to, c.dsnrntype)
 		return err
 	}
-	_, _, err := c.cmd(25, "RCPT TO:<%s>", to)
+	_, _, err := c.cmd(25, "RCPT TO:%s", to)
 	return err
 }
 
-type dataCloser struct {
-	c *Client
+type DataCloser struct {
+	c    *Client
+	done bool
 	io.WriteCloser
+	response string
 }
 
 // Close releases the lock, closes the WriteCloser, waits for a response, and then returns any error encountered.
-func (d *dataCloser) Close() error {
+func (d *DataCloser) Close() error {
 	d.c.mutex.Lock()
 	_ = d.WriteCloser.Close()
-	_, _, err := d.c.Text.ReadResponse(250)
+	_, resp, err := d.c.Text.ReadResponse(250)
+	d.response = resp
+	d.done = true
 	d.c.mutex.Unlock()
 	return err
 }
 
 // Write writes data to the underlying WriteCloser while ensuring thread-safety by locking and unlocking a mutex.
-func (d *dataCloser) Write(p []byte) (n int, err error) {
+func (d *DataCloser) Write(p []byte) (n int, err error) {
 	d.c.mutex.Lock()
 	n, err = d.WriteCloser.Write(p)
 	d.c.mutex.Unlock()
-	return
+	return n, err
+}
+
+// ServerResponse returns the response that was returned by the server after the DataCloser has
+// been closed. If the DataCloser has not been closed yet, it will return an empty string.
+func (d *DataCloser) ServerResponse() string {
+	if !d.done {
+		return ""
+	}
+	return d.response
 }
 
 // Data issues a DATA command to the server and returns a writer that
@@ -422,7 +453,7 @@ func (c *Client) Data() (io.WriteCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	datacloser := &dataCloser{}
+	datacloser := &DataCloser{}
 
 	c.mutex.Lock()
 	datacloser.c = c

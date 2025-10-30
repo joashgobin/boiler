@@ -114,6 +114,14 @@ type (
 	//   - https://datatracker.ietf.org/doc/html/rfc3207#section-2
 	//   - https://datatracker.ietf.org/doc/html/rfc8314
 	Client struct {
+		// ErrorHandlerRegistry provides access to the smtp.Client's custom error handlers for SMTP
+		// host-command pairs which are based on the smtp.ResponseErrorHandler interface.
+		//
+		// The smtp.ResponseErrorHandler interface defines a method for handling SMTP responses that do not
+		// comply with expected formats or behaviors. It is useful for implementing retry logic, logging,
+		// or error handling logic for non-compliant SMTP responses.
+		ErrorHandlerRegistry *smtp.ErrorHandlerRegistry
+
 		// connTimeout specifies timeout for the connection to the SMTP server.
 		connTimeout time.Duration
 
@@ -270,12 +278,13 @@ var (
 //   - An error if any critical default values are missing or options fail to apply.
 func NewClient(host string, opts ...Option) (*Client, error) {
 	c := &Client{
-		smtpAuthType: SMTPAuthNoAuth,
-		connTimeout:  DefaultTimeout,
-		host:         host,
-		port:         DefaultPort,
-		tlsconfig:    &tls.Config{ServerName: host, MinVersion: DefaultTLSMinVersion},
-		tlspolicy:    DefaultTLSPolicy,
+		ErrorHandlerRegistry: smtp.NewErrorHandlerRegistry(),
+		smtpAuthType:         SMTPAuthNoAuth,
+		connTimeout:          DefaultTimeout,
+		host:                 host,
+		port:                 DefaultPort,
+		tlsconfig:            &tls.Config{ServerName: host, MinVersion: DefaultTLSMinVersion},
+		tlspolicy:            DefaultTLSPolicy,
 	}
 
 	// Set default HELO/EHLO hostname
@@ -540,6 +549,13 @@ func WithSMTPAuthCustom(smtpAuth smtp.Auth) Option {
 //
 // This function configures the Client with the specified username for SMTP authentication.
 //
+// Important:
+//   - Specifying a username with this option alone does NOT enable SMTP authentication.
+//   - To actually perform authentication with the server, you must also configure an
+//     authentication mechanism by using either WithSMTPAuth() or WithSMTPAuthCustom().
+//   - If you only call WithUsername() without setting an SMTP authentication method,
+//     the provided username will be stored but never used.
+//
 // Parameters:
 //   - username: The username to be used for SMTP authentication.
 //
@@ -555,6 +571,13 @@ func WithUsername(username string) Option {
 // WithPassword sets the password that the Client will use for SMTP authentication.
 //
 // This function configures the Client with the specified password for SMTP authentication.
+//
+// Important:
+//   - Specifying a password with this option alone does NOT enable SMTP authentication.
+//   - To actually perform authentication with the server, you must also configure an
+//     authentication mechanism by using either WithSMTPAuth() or WithSMTPAuthCustom().
+//   - If you only call WithPassword() without setting an SMTP authentication method,
+//     the provided password will be stored but never used.
 //
 // Parameters:
 //   - password: The password to be used for SMTP authentication.
@@ -1037,6 +1060,7 @@ func (c *Client) DialToSMTPClientWithContext(ctxDial context.Context) (*smtp.Cli
 	if err != nil {
 		return nil, err
 	}
+	client.ErrorHandlerRegistry = c.ErrorHandlerRegistry
 
 	if c.logger != nil {
 		client.SetLogger(c.logger)
@@ -1207,6 +1231,55 @@ func (c *Client) Send(messages ...*Msg) (returnErr error) {
 	c.sendMutex.Lock()
 	defer c.sendMutex.Unlock()
 	return c.SendWithSMTPClient(c.smtpClient, messages...)
+}
+
+// SendWithSMTPClient attempts to send one or more Msg using a provided smtp.Client with an
+// established connection to the SMTP server. If the smtp.Client has no active connection to
+// the server, SendWithSMTPClient will fail with an error. For each of the provided Msg, it
+// will associate a SendError with the Msg in case of a transmission or delivery error.
+//
+// This method first checks for an active connection to the SMTP server. If the connection is
+// not valid, it returns a SendError. It then iterates over the provided messages, attempting
+// to send each one. If an error occurs during sending, the method records the error and
+// associates it with the corresponding Msg. If multiple errors are encountered, it aggregates
+// them into a single SendError to be returned.
+//
+// Parameters:
+//   - client: A pointer to the smtp.Client that holds the connection to the SMTP server
+//   - messages: A variadic list of pointers to Msg objects to be sent.
+//
+// Returns:
+//   - An error that represents the sending result, which may include multiple SendErrors if
+//     any occurred; otherwise, returns nil.
+func (c *Client) SendWithSMTPClient(client *smtp.Client, messages ...*Msg) (returnErr error) {
+	escSupport := false
+	if client != nil {
+		escSupport, _ = client.Extension("ENHANCEDSTATUSCODES")
+	}
+	if err := c.checkConn(client); err != nil {
+		returnErr = &SendError{
+			Reason: ErrConnCheck, errlist: []error{err}, isTemp: isTempError(err),
+			errcode: errorCode(err), enhancedStatusCode: enhancedStatusCode(err, escSupport),
+		}
+		return returnErr
+	}
+
+	var errs []error
+	defer func() {
+		returnErr = errors.Join(errs...)
+	}()
+
+	for id, message := range messages {
+		if message == nil {
+			continue
+		}
+		if sendErr := c.sendSingleMsg(client, message); sendErr != nil {
+			messages[id].sendError = sendErr
+			errs = append(errs, sendErr)
+		}
+	}
+
+	return returnErr
 }
 
 // auth attempts to authenticate the client using SMTP AUTH mechanisms. It checks the connection,
@@ -1453,6 +1526,9 @@ func (c *Client) sendSingleMsg(client *smtp.Client, message *Msg) error {
 			affectedMsg: message, errcode: errorCode(err),
 			enhancedStatusCode: enhancedStatusCode(err, escSupport),
 		}
+	}
+	if dc, ok := writer.(*smtp.DataCloser); ok {
+		message.serverResponse = dc.ServerResponse()
 	}
 	message.isDelivered = true
 

@@ -30,7 +30,7 @@ func isCacheDisabled(client Client) bool {
 	case *singleClient:
 		return c.DisableCache
 	case *standalone:
-		return c.primary.DisableCache
+		return c.primary.Load().DisableCache
 	case *sentinelClient:
 		return c.mOpt != nil && c.mOpt.DisableCache
 	case *clusterClient:
@@ -302,7 +302,10 @@ func (s *Scanner) scan() iter.Seq[[]string] {
 func (s *Scanner) Iter() iter.Seq[string] {
 	return func(yield func(string) bool) {
 		for vs := range s.scan() {
-			for i := 0; i < len(vs) && yield(vs[i]); i++ {
+			for _, v := range vs {
+				if !yield(v) {
+					return
+				}
 			}
 		}
 	}
@@ -311,7 +314,10 @@ func (s *Scanner) Iter() iter.Seq[string] {
 func (s *Scanner) Iter2() iter.Seq2[string, string] {
 	return func(yield func(string, string) bool) {
 		for vs := range s.scan() {
-			for i := 0; i+1 < len(vs) && yield(vs[i], vs[i+1]); i += 2 {
+			for i := 0; i+1 < len(vs); i += 2 {
+				if !yield(vs[i], vs[i+1]) {
+					return
+				}
 			}
 		}
 	}

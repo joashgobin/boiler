@@ -16,6 +16,8 @@ var (
 	newlineBytes               = []byte("\n")
 	starBytes                  = []byte("*")
 	plusBytes                  = []byte("+")
+	plusPlusBytes              = []byte("++")
+	minMinBytes                = []byte("--")
 	expBytes                   = []byte("**")
 	bitOrBytes                 = []byte("|")
 	colonBytes                 = []byte(":")
@@ -1370,19 +1372,20 @@ func removeUnderscoresAndSuffix(b []byte) ([]byte, bool) {
 	return b, false
 }
 
-func decimalNumber(b []byte, prec int) []byte {
-	var suffix bool
-	b, suffix = removeUnderscoresAndSuffix(b)
+func decimalNumber(num []byte, prec int) []byte {
+	b, suffix := removeUnderscoresAndSuffix(num)
 	if suffix {
 		return append(b, 'n')
 	}
 	return minify.Number(b, prec)
 }
 
-func binaryNumber(b []byte, prec int) []byte {
-	var suffix bool
-	b, suffix = removeUnderscoresAndSuffix(b)
+func binaryNumber(num []byte, prec int) []byte {
+	b, suffix := removeUnderscoresAndSuffix(num)
 	if len(b) <= 2 || 65 < len(b) {
+		if suffix {
+			return append(b, 'n')
+		}
 		return b
 	}
 	var n int64
@@ -1403,10 +1406,12 @@ func binaryNumber(b []byte, prec int) []byte {
 	return minify.Number(b, prec)
 }
 
-func octalNumber(b []byte, prec int) []byte {
-	var suffix bool
-	b, suffix = removeUnderscoresAndSuffix(b)
+func octalNumber(num []byte, prec int) []byte {
+	b, suffix := removeUnderscoresAndSuffix(num)
 	if len(b) <= 2 || 23 < len(b) {
+		if suffix {
+			return append(b, 'n')
+		}
 		return b
 	}
 	var n int64
@@ -1427,10 +1432,12 @@ func octalNumber(b []byte, prec int) []byte {
 	return minify.Number(b, prec)
 }
 
-func hexadecimalNumber(b []byte, prec int) []byte {
-	var suffix bool
-	b, suffix = removeUnderscoresAndSuffix(b)
+func hexadecimalNumber(num []byte, prec int) []byte {
+	b, suffix := removeUnderscoresAndSuffix(num)
 	if len(b) <= 2 || 12 < len(b) || len(b) == 12 && ('D' < b[2] && b[2] <= 'F' || 'd' < b[2]) {
+		if suffix {
+			return append(b, 'n')
+		}
 		return b
 	}
 	var n int64
