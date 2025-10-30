@@ -4,3 +4,4 @@
 - Set font to neo-grotesque
 - Tweak 
 - Updated some packages
+- Removed userRoles from session info middleware
