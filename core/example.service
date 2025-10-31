@@ -15,7 +15,7 @@ WorkingDirectory=/home/<user>/<appName>
 ExecStart=/home/<user>/<appName>/web -prod
 Restart=on-failure
 RestartSec=90
-StartLimitIntervalSec=600
+StartLimitInterval=5min
 StartLimitBurst=5
 
 [Install]
