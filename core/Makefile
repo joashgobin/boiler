@@ -40,7 +40,7 @@ deploy/app: build
 	@-figlet "Deploy app"
 	@echo "• transferring binary to VPS"
 	@echo "${YELLOW}"
-	@rsync -P ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -cP ./bin/linux_amd64/web ${username}@${production_host_ip}:~/${project_name}/
 	@echo "${NC}"
 	@-figlet "Restart app"
 	@echo "• restarting app service"
@@ -53,10 +53,10 @@ deploy/static:
 	@echo "• transferring static files to VPS"
 	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
 	@echo "${YELLOW}"
-	@rsync -rP --exclude='static/gen' ./static ${username}@${production_host_ip}:~/${project_name}/
-	@rsync -rP ./remote ${username}@${production_host_ip}:~/${project_name}/
-	@rsync -P ./Makefile ${username}@${production_host_ip}:~/${project_name}/
-	@-rsync -P ./config.env ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -zrP --exclude='static/gen' ./static ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -zrP ./remote ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -cP ./Makefile ${username}@${production_host_ip}:~/${project_name}/
+	@-rsync -cP ./config.env ${username}@${production_host_ip}:~/${project_name}/
 	@echo "${NC}"
 
 ## build: build local copy
