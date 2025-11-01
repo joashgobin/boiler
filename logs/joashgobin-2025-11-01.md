@@ -4,3 +4,4 @@
 - Added more vendors
 - Updated vendors
 - Updated go version
+- Updated Makefile template

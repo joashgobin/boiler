@@ -123,5 +123,6 @@ prof:
 prof/png:
 	@-figlet "Prof/png"
 	go tool pprof -png http://localhost:<port>/profiler/debug/pprof/heap > prof.png
+	go tool pprof -png http://localhost:<port>/profiler/debug/pprof/heap > static/prof.png
 	sudo cp prof.png /usr/local/share/fiber/${project_name}/static/
 
