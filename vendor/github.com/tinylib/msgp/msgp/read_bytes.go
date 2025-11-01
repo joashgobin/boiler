@@ -358,7 +358,7 @@ func ReadFloat64Bytes(b []byte) (f float64, o []byte, err error) {
 	return
 }
 
-// ReadFloat32Bytes tries to read a float32
+// ReadFloat32Bytes tries to read a float64
 // from 'b' and return the value and the remaining bytes.
 //
 // Possible errors:
@@ -381,7 +381,7 @@ func ReadFloat32Bytes(b []byte) (f float32, o []byte, err error) {
 	return
 }
 
-// ReadBoolBytes tries to read a bool
+// ReadBoolBytes tries to read a float64
 // from 'b' and return the value and the remaining bytes.
 //
 // Possible errors:
@@ -1066,12 +1066,6 @@ func ReadComplex64Bytes(b []byte) (c complex64, o []byte, err error) {
 	return
 }
 
-// ReadTimeUTCBytes does the same as ReadTimeBytes, but returns the value as UTC.
-func ReadTimeUTCBytes(b []byte) (t time.Time, o []byte, err error) {
-	t, o, err = ReadTimeBytes(b)
-	return t.UTC(), o, err
-}
-
 // ReadTimeBytes reads a time.Time
 // extension object from 'b' and returns the
 // remaining bytes.
@@ -1130,7 +1124,7 @@ func ReadTimeBytes(b []byte) (t time.Time, o []byte, err error) {
 			return
 		}
 	default:
-		err = errExt(typ, TimeExtension)
+		err = errExt(int8(b[2]), TimeExtension)
 		return
 	}
 }
@@ -1155,11 +1149,7 @@ func readMapStrIntfBytesDepth(b []byte, old map[string]interface{}, depth int) (
 	if err != nil {
 		return
 	}
-	// Map key, min size is 2 bytes. Value min 1 byte.
-	if int64(len(b)) < int64(sz)*3 {
-		err = ErrShortBytes
-		return
-	}
+
 	if old != nil {
 		for key := range old {
 			delete(old, key)
@@ -1217,11 +1207,6 @@ func readIntfBytesDepth(b []byte, depth int) (i interface{}, o []byte, err error
 		var sz uint32
 		sz, o, err = ReadArrayHeaderBytes(b)
 		if err != nil {
-			return
-		}
-		// Each element will at least be 1 byte.
-		if uint32(len(o)) < sz {
-			err = ErrShortBytes
 			return
 		}
 		j := make([]interface{}, int(sz))

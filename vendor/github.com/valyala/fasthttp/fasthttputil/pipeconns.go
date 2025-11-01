@@ -42,9 +42,9 @@ func NewPipeConns() *PipeConns {
 //
 // PipeConns is NOT safe for concurrent use by multiple goroutines!
 type PipeConns struct {
-	stopCh     chan struct{}
 	c1         pipeConn
 	c2         pipeConn
+	stopCh     chan struct{}
 	stopChLock sync.Mutex
 }
 
@@ -93,9 +93,8 @@ func (pc *PipeConns) Close() error {
 }
 
 type pipeConn struct {
-	localAddr  net.Addr
-	remoteAddr net.Addr
-	b          *byteBuffer
+	b  *byteBuffer
+	bb []byte
 
 	rCh chan *byteBuffer
 	wCh chan *byteBuffer
@@ -107,11 +106,11 @@ type pipeConn struct {
 	readDeadlineCh  <-chan time.Time
 	writeDeadlineCh <-chan time.Time
 
-	bb []byte
-
-	addrLock sync.RWMutex
-
 	readDeadlineChLock sync.Mutex
+
+	localAddr  net.Addr
+	remoteAddr net.Addr
+	addrLock   sync.RWMutex
 }
 
 func (c *pipeConn) Write(p []byte) (int, error) {
@@ -140,10 +139,6 @@ func (c *pipeConn) Write(p []byte) (int, error) {
 	}
 
 	return len(p), nil
-}
-
-func (c *pipeConn) WriteString(s string) (int, error) {
-	return c.Write(s2b(s))
 }
 
 func (c *pipeConn) Read(p []byte) (int, error) {
@@ -229,7 +224,7 @@ func (e *timeoutError) Error() string {
 	return "timeout"
 }
 
-// Timeout implements the Timeout method of the net.Error interface.
+// Only implement the Timeout() function of the net.Error interface.
 // This allows for checks like:
 //
 //	if x, ok := err.(interface{ Timeout() bool }); ok && x.Timeout() {
@@ -340,7 +335,7 @@ func releaseByteBuffer(b *byteBuffer) {
 }
 
 var byteBufferPool = &sync.Pool{
-	New: func() any {
+	New: func() interface{} {
 		return &byteBuffer{
 			b: make([]byte, 1024),
 		}

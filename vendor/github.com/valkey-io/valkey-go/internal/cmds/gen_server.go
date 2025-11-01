@@ -1422,11 +1422,6 @@ func (c Shutdown) Force() ShutdownForce {
 	return (ShutdownForce)(c)
 }
 
-func (c Shutdown) Safe() ShutdownSafe {
-	c.cs.s = append(c.cs.s, "SAFE")
-	return (ShutdownSafe)(c)
-}
-
 func (c Shutdown) Abort() ShutdownAbort {
 	c.cs.s = append(c.cs.s, "ABORT")
 	return (ShutdownAbort)(c)
@@ -1446,11 +1441,6 @@ func (c ShutdownAbort) Build() Completed {
 
 type ShutdownForce Incomplete
 
-func (c ShutdownForce) Safe() ShutdownSafe {
-	c.cs.s = append(c.cs.s, "SAFE")
-	return (ShutdownSafe)(c)
-}
-
 func (c ShutdownForce) Abort() ShutdownAbort {
 	c.cs.s = append(c.cs.s, "ABORT")
 	return (ShutdownAbort)(c)
@@ -1468,29 +1458,12 @@ func (c ShutdownNow) Force() ShutdownForce {
 	return (ShutdownForce)(c)
 }
 
-func (c ShutdownNow) Safe() ShutdownSafe {
-	c.cs.s = append(c.cs.s, "SAFE")
-	return (ShutdownSafe)(c)
-}
-
 func (c ShutdownNow) Abort() ShutdownAbort {
 	c.cs.s = append(c.cs.s, "ABORT")
 	return (ShutdownAbort)(c)
 }
 
 func (c ShutdownNow) Build() Completed {
-	c.cs.Build()
-	return Completed{cs: c.cs, cf: uint16(c.cf), ks: c.ks}
-}
-
-type ShutdownSafe Incomplete
-
-func (c ShutdownSafe) Abort() ShutdownAbort {
-	c.cs.s = append(c.cs.s, "ABORT")
-	return (ShutdownAbort)(c)
-}
-
-func (c ShutdownSafe) Build() Completed {
 	c.cs.Build()
 	return Completed{cs: c.cs, cf: uint16(c.cf), ks: c.ks}
 }
@@ -1505,11 +1478,6 @@ func (c ShutdownSaveModeNosave) Now() ShutdownNow {
 func (c ShutdownSaveModeNosave) Force() ShutdownForce {
 	c.cs.s = append(c.cs.s, "FORCE")
 	return (ShutdownForce)(c)
-}
-
-func (c ShutdownSaveModeNosave) Safe() ShutdownSafe {
-	c.cs.s = append(c.cs.s, "SAFE")
-	return (ShutdownSafe)(c)
 }
 
 func (c ShutdownSaveModeNosave) Abort() ShutdownAbort {
@@ -1532,11 +1500,6 @@ func (c ShutdownSaveModeSave) Now() ShutdownNow {
 func (c ShutdownSaveModeSave) Force() ShutdownForce {
 	c.cs.s = append(c.cs.s, "FORCE")
 	return (ShutdownForce)(c)
-}
-
-func (c ShutdownSaveModeSave) Safe() ShutdownSafe {
-	c.cs.s = append(c.cs.s, "SAFE")
-	return (ShutdownSafe)(c)
 }
 
 func (c ShutdownSaveModeSave) Abort() ShutdownAbort {

@@ -141,7 +141,7 @@ var (
 //   - CompressDefaultCompression
 //   - CompressHuffmanOnly
 func AppendGzipBytesLevel(dst, src []byte, level int) []byte {
-	w := &byteSliceWriter{b: dst}
+	w := &byteSliceWriter{dst}
 	WriteGzipLevel(w, src, level) //nolint:errcheck
 	return w.b
 }
@@ -179,17 +179,17 @@ func WriteGzipLevel(w io.Writer, p []byte, level int) (int, error) {
 
 var (
 	stacklessWriteGzipOnce sync.Once
-	stacklessWriteGzipFunc func(ctx any) bool
+	stacklessWriteGzipFunc func(ctx interface{}) bool
 )
 
-func stacklessWriteGzip(ctx any) {
+func stacklessWriteGzip(ctx interface{}) {
 	stacklessWriteGzipOnce.Do(func() {
 		stacklessWriteGzipFunc = stackless.NewFunc(nonblockingWriteGzip)
 	})
 	stacklessWriteGzipFunc(ctx)
 }
 
-func nonblockingWriteGzip(ctxv any) {
+func nonblockingWriteGzip(ctxv interface{}) {
 	ctx := ctxv.(*compressCtx)
 	zw := acquireRealGzipWriter(ctx.w, ctx.level)
 
@@ -212,7 +212,7 @@ func AppendGzipBytes(dst, src []byte) []byte {
 // WriteGunzip writes ungzipped p to w and returns the number of uncompressed
 // bytes written to w.
 func WriteGunzip(w io.Writer, p []byte) (int, error) {
-	r := &byteSliceReader{b: p}
+	r := &byteSliceReader{p}
 	zr, err := acquireGzipReader(r)
 	if err != nil {
 		return 0, err
@@ -228,7 +228,7 @@ func WriteGunzip(w io.Writer, p []byte) (int, error) {
 
 // AppendGunzipBytes appends gunzipped src to dst and returns the resulting dst.
 func AppendGunzipBytes(dst, src []byte) ([]byte, error) {
-	w := &byteSliceWriter{b: dst}
+	w := &byteSliceWriter{dst}
 	_, err := WriteGunzip(w, src)
 	return w.b, err
 }
@@ -244,7 +244,7 @@ func AppendGunzipBytes(dst, src []byte) ([]byte, error) {
 //   - CompressDefaultCompression
 //   - CompressHuffmanOnly
 func AppendDeflateBytesLevel(dst, src []byte, level int) []byte {
-	w := &byteSliceWriter{b: dst}
+	w := &byteSliceWriter{dst}
 	WriteDeflateLevel(w, src, level) //nolint:errcheck
 	return w.b
 }
@@ -282,17 +282,17 @@ func WriteDeflateLevel(w io.Writer, p []byte, level int) (int, error) {
 
 var (
 	stacklessWriteDeflateOnce sync.Once
-	stacklessWriteDeflateFunc func(ctx any) bool
+	stacklessWriteDeflateFunc func(ctx interface{}) bool
 )
 
-func stacklessWriteDeflate(ctx any) {
+func stacklessWriteDeflate(ctx interface{}) {
 	stacklessWriteDeflateOnce.Do(func() {
 		stacklessWriteDeflateFunc = stackless.NewFunc(nonblockingWriteDeflate)
 	})
 	stacklessWriteDeflateFunc(ctx)
 }
 
-func nonblockingWriteDeflate(ctxv any) {
+func nonblockingWriteDeflate(ctxv interface{}) {
 	ctx := ctxv.(*compressCtx)
 	zw := acquireRealDeflateWriter(ctx.w, ctx.level)
 
@@ -321,7 +321,7 @@ func AppendDeflateBytes(dst, src []byte) []byte {
 // WriteInflate writes inflated p to w and returns the number of uncompressed
 // bytes written to w.
 func WriteInflate(w io.Writer, p []byte) (int, error) {
-	r := &byteSliceReader{b: p}
+	r := &byteSliceReader{p}
 	zr, err := acquireFlateReader(r)
 	if err != nil {
 		return 0, err
@@ -337,7 +337,7 @@ func WriteInflate(w io.Writer, p []byte) (int, error) {
 
 // AppendInflateBytes appends inflated src to dst and returns the resulting dst.
 func AppendInflateBytes(dst, src []byte) ([]byte, error) {
-	w := &byteSliceWriter{b: dst}
+	w := &byteSliceWriter{dst}
 	_, err := WriteInflate(w, src)
 	return w.b, err
 }
@@ -349,11 +349,6 @@ type byteSliceWriter struct {
 func (w *byteSliceWriter) Write(p []byte) (int, error) {
 	w.b = append(w.b, p...)
 	return len(p), nil
-}
-
-func (w *byteSliceWriter) WriteString(s string) (int, error) {
-	w.b = append(w.b, s...)
-	return len(s), nil
 }
 
 type byteSliceReader struct {

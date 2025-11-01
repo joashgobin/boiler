@@ -28,7 +28,7 @@ func ReleaseURI(u *URI) {
 }
 
 var uriPool = &sync.Pool{
-	New: func() any {
+	New: func() interface{} {
 		return &URI{}
 	},
 }
@@ -42,8 +42,6 @@ var uriPool = &sync.Pool{
 type URI struct {
 	noCopy noCopy
 
-	queryArgs Args
-
 	pathOriginal []byte
 	scheme       []byte
 	path         []byte
@@ -51,14 +49,10 @@ type URI struct {
 	hash         []byte
 	host         []byte
 
-	fullURI    []byte
-	requestURI []byte
-
-	username        []byte
-	password        []byte
+	queryArgs       Args
 	parsedQueryArgs bool
 
-	// Path values are sent as-is without normalization.
+	// Path values are sent as-is without normalization
 	//
 	// Disabled path normalization may be useful for proxying incoming requests
 	// to servers that are expecting paths to be forwarded as-is.
@@ -66,6 +60,12 @@ type URI struct {
 	// By default path values are normalized, i.e.
 	// extra slashes are removed, special characters are encoded.
 	DisablePathNormalizing bool
+
+	fullURI    []byte
+	requestURI []byte
+
+	username []byte
+	password []byte
 }
 
 // CopyTo copies uri contents to dst.
@@ -122,7 +122,7 @@ func (u *URI) SetUsernameBytes(username []byte) {
 	u.username = append(u.username[:0], username...)
 }
 
-// Password returns URI password.
+// Password returns URI password
 //
 // The returned bytes are valid until the next URI method call.
 func (u *URI) Password() []byte {
@@ -289,9 +289,6 @@ func (u *URI) parse(host, uri []byte, isTLS bool) error {
 
 	if len(host) == 0 || bytes.Contains(uri, strColonSlashSlash) {
 		scheme, newHost, newURI := splitHostURI(host, uri)
-		if len(scheme) > 0 && !isValidScheme(scheme) {
-			return fmt.Errorf("invalid scheme %q", scheme)
-		}
 		u.SetSchemeBytes(scheme)
 		host = newHost
 		uri = newURI
@@ -301,11 +298,8 @@ func (u *URI) parse(host, uri []byte, isTLS bool) error {
 		u.SetSchemeBytes(strHTTPS)
 	}
 
-	if n := bytes.LastIndexByte(host, '@'); n >= 0 {
+	if n := bytes.IndexByte(host, '@'); n >= 0 {
 		auth := host[:n]
-		if !validUserinfo(auth) {
-			return ErrorInvalidURI
-		}
 		host = host[n+1:]
 
 		if n := bytes.IndexByte(auth, ':'); n >= 0 {
@@ -318,11 +312,11 @@ func (u *URI) parse(host, uri []byte, isTLS bool) error {
 	}
 
 	u.host = append(u.host, host...)
-	parsedHost, err := parseHost(u.host)
-	if err != nil {
+	if parsedHost, err := parseHost(u.host); err != nil {
 		return err
+	} else {
+		u.host = parsedHost
 	}
-	u.host = parsedHost
 	lowercaseBytes(u.host)
 
 	b := uri
@@ -360,48 +354,6 @@ func (u *URI) parse(host, uri []byte, isTLS bool) error {
 	u.hash = append(u.hash, b[fragmentIndex+1:]...)
 
 	return nil
-}
-
-func validUserinfo(userinfo []byte) bool {
-	for _, c := range userinfo {
-		switch {
-		case 'A' <= c && c <= 'Z':
-			continue
-		case 'a' <= c && c <= 'z':
-			continue
-		case '0' <= c && c <= '9':
-			continue
-		}
-		switch c {
-		case '-', '.', '_', ':', '~', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=', '%', '@':
-			continue
-		default:
-			return false
-		}
-	}
-	return true
-}
-
-func isValidScheme(scheme []byte) bool {
-	if len(scheme) == 0 {
-		return false
-	}
-	first := scheme[0]
-	if (first < 'a' || first > 'z') && (first < 'A' || first > 'Z') {
-		return false
-	}
-	for i := 1; i < len(scheme); i++ {
-		c := scheme[i]
-		if ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') {
-			continue
-		}
-		switch c {
-		case '+', '-', '.':
-			continue
-		}
-		return false
-	}
-	return true
 }
 
 // parseHost parses host as an authority without user
@@ -445,28 +397,15 @@ func parseHost(host []byte) ([]byte, error) {
 			}
 			return append(host1, append(host2, host3...)...), nil
 		}
-	} else {
-		if bytes.ContainsAny(host, "[]") {
-			return nil, fmt.Errorf("invalid host %q", host)
-		}
-
-		if i := bytes.LastIndexByte(host, ':'); i != -1 {
-			if bytes.IndexByte(host[:i], ':') != -1 {
-				return nil, fmt.Errorf("invalid host %q with multiple port delimiters", host)
-			}
-
-			colonPort := host[i:]
-			if !validOptionalPort(colonPort) {
-				return nil, fmt.Errorf("invalid port %q after host", colonPort)
-			}
+	} else if i := bytes.LastIndexByte(host, ':'); i != -1 {
+		colonPort := host[i:]
+		if !validOptionalPort(colonPort) {
+			return nil, fmt.Errorf("invalid port %q after host", colonPort)
 		}
 	}
 
 	var err error
 	if host, err = unescape(host, encodeHost); err != nil {
-		return nil, err
-	}
-	if err = validateIPv6Literal(host); err != nil {
 		return nil, err
 	}
 	return host, nil
@@ -597,15 +536,25 @@ func shouldEscape(c byte, mode encoding) bool {
 }
 
 func ishex(c byte) bool {
-	return hex2intTable[c] < 16
+	return ('0' <= c && c <= '9') ||
+		('a' <= c && c <= 'f') ||
+		('A' <= c && c <= 'F')
 }
 
 func unhex(c byte) byte {
-	return hex2intTable[c] & 15
+	switch {
+	case '0' <= c && c <= '9':
+		return c - '0'
+	case 'a' <= c && c <= 'f':
+		return c - 'a' + 10
+	case 'A' <= c && c <= 'F':
+		return c - 'A' + 10
+	}
+	return 0
 }
 
 // validOptionalPort reports whether port is either an empty string
-// or matches /^:\d*$/.
+// or matches /^:\d*$/
 func validOptionalPort(port []byte) bool {
 	if len(port) == 0 {
 		return true
@@ -918,16 +867,15 @@ func splitHostURI(host, uri []byte) ([]byte, []byte, []byte) {
 	uri = uri[n:]
 	n = bytes.IndexByte(uri, '/')
 	nq := bytes.IndexByte(uri, '?')
-	if nq >= 0 && (n < 0 || nq < n) {
+	if nq >= 0 && nq < n {
 		// A hack for urls like foobar.com?a=b/xyz
 		n = nq
-	}
-	nh := bytes.IndexByte(uri, '#')
-	if nh >= 0 && (n < 0 || nh < n) {
-		// A hack for urls like foobar.com#abc.com
-		n = nh
-	}
-	if n < 0 {
+	} else if n < 0 {
+		// A hack for bogus urls like foobar.com?a=b without
+		// slash after host.
+		if nq >= 0 {
+			return scheme, uri[:nq], uri[nq:]
+		}
 		return scheme, uri, strSlash
 	}
 	return scheme, uri[:n], uri[n:]

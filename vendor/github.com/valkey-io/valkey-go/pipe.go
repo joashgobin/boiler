@@ -21,7 +21,7 @@ import (
 )
 
 const LibName = "valkey"
-const LibVer = "1.0.67"
+const LibVer = "1.0.64"
 
 var noHello = regexp.MustCompile("unknown command .?(HELLO|hello).?")
 
@@ -122,12 +122,7 @@ func _newPipe(ctx context.Context, connFn func(context.Context) (net.Conn, error
 		optIn: isOptIn(option.ClientTrackingOptions),
 	}
 	if !nobg {
-		switch queueTypeFromEnv {
-		case queueTypeFlowBuffer:
-			p.queue = newFlowBuffer(option.RingScaleEachConn)
-		default:
-			p.queue = newRing(option.RingScaleEachConn)
-		}
+		p.queue = newRing(option.RingScaleEachConn)
 		p.nsubs = newSubs()
 		p.psubs = newSubs()
 		p.ssubs = newSubs()
@@ -188,9 +183,6 @@ func _newPipe(ctx context.Context, connFn func(context.Context) (net.Conn, error
 	}
 	if option.ClientNoEvict {
 		init = append(init, []string{"CLIENT", "NO-EVICT", "ON"})
-	}
-	if option.Standalone.EnableRedirect {
-		init = append(init, []string{"CLIENT", "CAPA", "redirect"})
 	}
 
 	addClientSetInfoCmds := true
@@ -285,9 +277,6 @@ func _newPipe(ctx context.Context, connFn func(context.Context) (net.Conn, error
 		}
 		if option.ClientNoEvict {
 			init = append(init, []string{"CLIENT", "NO-EVICT", "ON"})
-		}
-		if option.Standalone.EnableRedirect {
-			init = append(init, []string{"CLIENT", "CAPA", "redirect"})
 		}
 
 		addClientSetInfoCmds := true
@@ -392,8 +381,7 @@ func (p *pipe) _background() {
 		default:
 			p.incrWaits()
 			go func() {
-				ch, _ := p.queue.PutOne(context.Background(), cmds.PingCmd) // avoid _backgroundWrite hanging at p.queue.WaitForWrite()
-				<-ch
+				<-p.queue.PutOne(cmds.PingCmd) // avoid _backgroundWrite hanging at p.queue.WaitForWrite()
 				p.decrWaits()
 			}()
 		}
@@ -413,6 +401,7 @@ func (p *pipe) _background() {
 	var (
 		resps []ValkeyResult
 		ch    chan ValkeyResult
+		cond  *sync.Cond
 	)
 
 	// clean up cache and free pending calls
@@ -430,14 +419,16 @@ func (p *pipe) _background() {
 			_, _, _ = p.queue.NextWriteCmd()
 		default:
 		}
-		if _, _, ch, resps = p.queue.NextResultCh(); ch != nil {
+		if _, _, ch, resps, cond = p.queue.NextResultCh(); ch != nil {
 			for i := range resps {
 				resps[i] = resp
 			}
 			ch <- resp
-			p.queue.FinishResult()
+			cond.L.Unlock()
+			cond.Signal()
 		} else {
-			p.queue.FinishResult()
+			cond.L.Unlock()
+			cond.Signal()
 			runtime.Gosched()
 		}
 	}
@@ -495,6 +486,7 @@ func (p *pipe) _backgroundWrite() (err error) {
 func (p *pipe) _backgroundRead() (err error) {
 	var (
 		msg   ValkeyMessage
+		cond  *sync.Cond
 		ones  = make([]Completed, 1)
 		multi []Completed
 		resps []ValkeyResult
@@ -520,7 +512,8 @@ func (p *pipe) _backgroundRead() (err error) {
 				resps[ff] = resp
 			}
 			ch <- resp
-			p.queue.FinishResult()
+			cond.L.Unlock()
+			cond.Signal()
 		}
 	}()
 
@@ -562,9 +555,9 @@ func (p *pipe) _backgroundRead() (err error) {
 		}
 		if ff == len(multi) {
 			ff = 0
-			ones[0], multi, ch, resps = p.queue.NextResultCh() // ch should not be nil; otherwise, it must be a protocol bug
+			ones[0], multi, ch, resps, cond = p.queue.NextResultCh() // ch should not be nil; otherwise, it must be a protocol bug
 			if ch == nil {
-				p.queue.FinishResult()
+				cond.L.Unlock()
 				// Valkey will send sunsubscribe notification proactively in the event of slot migration.
 				// We should ignore them and go fetch the next message.
 				// We also treat all the other unsubscribe notifications just like sunsubscribe,
@@ -645,7 +638,8 @@ func (p *pipe) _backgroundRead() (err error) {
 		}
 		if ff++; ff == len(multi) {
 			ch <- resp
-			p.queue.FinishResult()
+			cond.L.Unlock()
+			cond.Signal()
 		}
 	}
 }
@@ -957,12 +951,7 @@ func (p *pipe) Do(ctx context.Context, cmd Completed) (resp ValkeyResult) {
 	return resp
 
 queue:
-	ch, err := p.queue.PutOne(ctx, cmd)
-	if err != nil {
-		p.decrWaits()
-		return newErrResult(err)
-	}
-
+	ch := p.queue.PutOne(cmd)
 	if ctxCh := ctx.Done(); ctxCh == nil {
 		resp = <-ch
 	} else {
@@ -1068,16 +1057,7 @@ func (p *pipe) DoMulti(ctx context.Context, multi ...Completed) *valkeyresults {
 	return resp
 
 queue:
-	ch, err := p.queue.PutMulti(ctx, multi, resp.s)
-	if err != nil {
-		p.decrWaits()
-		errResult := newErrResult(err)
-		for i := 0; i < len(resp.s); i++ {
-			resp.s[i] = errResult
-		}
-		return resp
-	}
-
+	ch := p.queue.PutMulti(multi, resp.s)
 	if ctxCh := ctx.Done(); ctxCh == nil {
 		<-ch
 	} else {
@@ -1096,9 +1076,9 @@ abort:
 		p.decrWaitsAndIncrRecvs()
 	}(resp, ch)
 	resp = resultsp.Get(len(multi), len(multi))
-	errResult := newErrResult(ctx.Err())
+	err := newErrResult(ctx.Err())
 	for i := 0; i < len(resp.s); i++ {
-		resp.s[i] = errResult
+		resp.s[i] = err
 	}
 	return resp
 }
@@ -1664,7 +1644,7 @@ func (p *pipe) Close() {
 		}
 		if block == 1 && (stopping1 || stopping2) { // make sure there is no block cmd
 			p.incrWaits()
-			ch, _ := p.queue.PutOne(context.Background(), cmds.PingCmd)
+			ch := p.queue.PutOne(cmds.PingCmd)
 			select {
 			case <-ch:
 				p.decrWaits()

@@ -2,3 +2,4 @@
 
 - Added some tools
 - Added more vendors
+- Updated vendors

@@ -41,13 +41,12 @@ func NewWriter(dstW io.Writer, newWriter NewWriterFunc) Writer {
 type writer struct {
 	dstW io.Writer
 	zw   Writer
+	xw   xWriter
 
 	err error
-	xw  xWriter
+	n   int
 
-	p []byte
-	n int
-
+	p  []byte
 	op op
 }
 
@@ -62,13 +61,6 @@ const (
 
 func (w *writer) Write(p []byte) (int, error) {
 	w.p = p
-	err := w.do(opWrite)
-	w.p = nil
-	return w.n, err
-}
-
-func (w *writer) WriteString(s string) (int, error) {
-	w.p = s2b(s)
 	err := w.do(opWrite)
 	w.p = nil
 	return w.n, err
@@ -109,17 +101,17 @@ var errHighLoad = errors.New("cannot compress data due to high load")
 
 var (
 	stacklessWriterFuncOnce sync.Once
-	stacklessWriterFuncFunc func(ctx any) bool
+	stacklessWriterFuncFunc func(ctx interface{}) bool
 )
 
-func stacklessWriterFunc(ctx any) bool {
+func stacklessWriterFunc(ctx interface{}) bool {
 	stacklessWriterFuncOnce.Do(func() {
 		stacklessWriterFuncFunc = NewFunc(writerFunc)
 	})
 	return stacklessWriterFuncFunc(ctx)
 }
 
-func writerFunc(ctx any) {
+func writerFunc(ctx interface{}) {
 	w := ctx.(*writer)
 	switch w.op {
 	case opWrite:

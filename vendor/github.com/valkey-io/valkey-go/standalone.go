@@ -3,7 +3,6 @@ package valkey
 import (
 	"context"
 	"math/rand/v2"
-	"sync/atomic"
 	"time"
 
 	"github.com/valkey-io/valkey-go/internal/cmds"
@@ -13,25 +12,20 @@ func newStandaloneClient(opt *ClientOption, connFn connFn, retryer retryHandler)
 	if len(opt.InitAddress) == 0 {
 		return nil, ErrNoAddr
 	}
-
 	p := connFn(opt.InitAddress[0], opt)
 	if err := p.Dial(); err != nil {
 		return nil, err
 	}
 	s := &standalone{
-		toReplicas:     opt.SendToReplicas,
-		replicas:       make([]*singleClient, len(opt.Standalone.ReplicaAddress)),
-		enableRedirect: opt.Standalone.EnableRedirect,
-		connFn:         connFn,
-		opt:            opt,
-		retryer:        retryer,
+		toReplicas: opt.SendToReplicas,
+		primary:    newSingleClientWithConn(p, cmds.NewBuilder(cmds.NoSlot), !opt.DisableRetry, opt.DisableCache, retryer, false),
+		replicas:   make([]*singleClient, len(opt.Standalone.ReplicaAddress)),
 	}
-	s.primary.Store(newSingleClientWithConn(p, cmds.NewBuilder(cmds.NoSlot), !opt.DisableRetry, opt.DisableCache, retryer, false))
-
+	opt.ReplicaOnly = true
 	for i := range s.replicas {
 		replicaConn := connFn(opt.Standalone.ReplicaAddress[i], opt)
 		if err := replicaConn.Dial(); err != nil {
-			s.primary.Load().Close() // close primary if any replica fails
+			s.primary.Close() // close primary if any replica fails
 			for j := 0; j < i; j++ {
 				s.replicas[j].Close()
 			}
@@ -43,18 +37,13 @@ func newStandaloneClient(opt *ClientOption, connFn connFn, retryer retryHandler)
 }
 
 type standalone struct {
-	retryer        retryHandler
-	toReplicas     func(Completed) bool
-	primary        atomic.Pointer[singleClient]
-	connFn         connFn
-	opt            *ClientOption
-	redirectCall   call
-	replicas       []*singleClient
-	enableRedirect bool
+	toReplicas func(Completed) bool
+	primary    *singleClient
+	replicas   []*singleClient
 }
 
 func (s *standalone) B() Builder {
-	return s.primary.Load().B()
+	return s.primary.B()
 }
 
 func (s *standalone) pick() int {
@@ -64,218 +53,81 @@ func (s *standalone) pick() int {
 	return rand.IntN(len(s.replicas))
 }
 
-func (s *standalone) redirectToPrimary(addr string) error {
-	// Create a new connection to the redirect address
-	redirectOpt := *s.opt
-	redirectOpt.InitAddress = []string{addr}
-	redirectConn := s.connFn(addr, &redirectOpt)
-	if err := redirectConn.Dial(); err != nil {
-		return err
-	}
-
-	// Create a new primary client with the redirect connection
-	newPrimary := newSingleClientWithConn(redirectConn, cmds.NewBuilder(cmds.NoSlot), !s.opt.DisableRetry, s.opt.DisableCache, s.retryer, false)
-
-	// Atomically swap the primary and close the old one
-	oldPrimary := s.primary.Swap(newPrimary)
-	go func(oldPrimary *singleClient) {
-		time.Sleep(time.Second * 5)
-		oldPrimary.Close()
-	}(oldPrimary)
-
-	return nil
-}
-
-func (s *standalone) handleRedirect(ctx context.Context, err error) (error, bool) {
-	if ret, yes := IsValkeyErr(err); yes {
-		if addr, ok := ret.IsRedirect(); ok {
-			return s.redirectCall.Do(ctx, func() error {
-				return s.redirectToPrimary(addr)
-			}), ok
-		}
-	}
-	return nil, false
-}
-
 func (s *standalone) Do(ctx context.Context, cmd Completed) (resp ValkeyResult) {
-	attempts := 1
-
-	if s.enableRedirect {
-		cmd = cmd.Pin()
+	if s.toReplicas(cmd) {
+		return s.replicas[s.pick()].Do(ctx, cmd)
 	}
-
-retry:
-	if s.toReplicas != nil && s.toReplicas(cmd) {
-		resp = s.replicas[s.pick()].Do(ctx, cmd)
-	} else {
-		resp = s.primary.Load().Do(ctx, cmd)
-	}
-
-	if s.enableRedirect {
-		if err, ok := s.handleRedirect(ctx, resp.Error()); ok {
-			if err == nil || s.retryer.WaitOrSkipRetry(ctx, attempts, cmd, resp.Error()) {
-				attempts++
-				goto retry
-			}
-		}
-		if resp.NonValkeyError() == nil {
-			cmds.PutCompletedForce(cmd)
-		}
-	}
-
-	return resp
+	return s.primary.Do(ctx, cmd)
 }
 
 func (s *standalone) DoMulti(ctx context.Context, multi ...Completed) (resp []ValkeyResult) {
-	attempts := 1
-
-	if s.enableRedirect {
-		for i := range multi {
-			multi[i] = multi[i].Pin()
-		}
-	}
-
-retry:
 	toReplica := true
 	for _, cmd := range multi {
-		if s.toReplicas == nil || !s.toReplicas(cmd) {
+		if !s.toReplicas(cmd) {
 			toReplica = false
 			break
 		}
 	}
 	if toReplica {
-		resp = s.replicas[s.pick()].DoMulti(ctx, multi...)
-	} else {
-		resp = s.primary.Load().DoMulti(ctx, multi...)
+		return s.replicas[s.pick()].DoMulti(ctx, multi...)
 	}
-
-	if s.enableRedirect {
-		for i, result := range resp {
-			if err, ok := s.handleRedirect(ctx, result.Error()); ok {
-				if err == nil || s.retryer.WaitOrSkipRetry(ctx, attempts, multi[i], result.Error()) {
-					attempts++
-					goto retry
-				}
-				break
-			}
-		}
-		for i, result := range resp {
-			if result.NonValkeyError() == nil {
-				cmds.PutCompletedForce(multi[i])
-			}
-		}
-	}
-
-	return resp
+	return s.primary.DoMulti(ctx, multi...)
 }
 
 func (s *standalone) Receive(ctx context.Context, subscribe Completed, fn func(msg PubSubMessage)) error {
-	if s.toReplicas != nil && s.toReplicas(subscribe) {
+	if s.toReplicas(subscribe) {
 		return s.replicas[s.pick()].Receive(ctx, subscribe, fn)
 	}
-	return s.primary.Load().Receive(ctx, subscribe, fn)
+	return s.primary.Receive(ctx, subscribe, fn)
 }
 
 func (s *standalone) Close() {
-	s.primary.Load().Close()
+	s.primary.Close()
 	for _, replica := range s.replicas {
 		replica.Close()
 	}
 }
 
 func (s *standalone) DoCache(ctx context.Context, cmd Cacheable, ttl time.Duration) (resp ValkeyResult) {
-	attempts := 1
-
-	if s.enableRedirect {
-		cmd = cmd.Pin()
-	}
-
-retry:
-	resp = s.primary.Load().DoCache(ctx, cmd, ttl)
-
-	if s.enableRedirect {
-		if err, ok := s.handleRedirect(ctx, resp.Error()); ok {
-			if err == nil || s.retryer.WaitOrSkipRetry(ctx, attempts, Completed(cmd), resp.Error()) {
-				attempts++
-				goto retry
-			}
-		}
-		if resp.NonValkeyError() == nil {
-			cmds.PutCacheableForce(cmd)
-		}
-	}
-	return
+	return s.primary.DoCache(ctx, cmd, ttl)
 }
 
 func (s *standalone) DoMultiCache(ctx context.Context, multi ...CacheableTTL) (resp []ValkeyResult) {
-	attempts := 1
-
-	if s.enableRedirect {
-		for i := range multi {
-			multi[i].Cmd = multi[i].Cmd.Pin()
-		}
-	}
-
-retry:
-	resp = s.primary.Load().DoMultiCache(ctx, multi...)
-
-	if s.enableRedirect {
-		for i, result := range resp {
-			if err, ok := s.handleRedirect(ctx, result.Error()); ok {
-				if err == nil || s.retryer.WaitOrSkipRetry(ctx, attempts, Completed(multi[i].Cmd), result.Error()) {
-					attempts++
-					goto retry
-				}
-				break
-			}
-		}
-		for i, result := range resp {
-			if result.NonValkeyError() == nil {
-				cmds.PutCacheableForce(multi[i].Cmd)
-			}
-		}
-	}
-	return
+	return s.primary.DoMultiCache(ctx, multi...)
 }
 
 func (s *standalone) DoStream(ctx context.Context, cmd Completed) ValkeyResultStream {
-	var stream ValkeyResultStream
-	if s.toReplicas != nil && s.toReplicas(cmd) {
-		stream = s.replicas[s.pick()].DoStream(ctx, cmd)
-	} else {
-		stream = s.primary.Load().DoStream(ctx, cmd)
+	if s.toReplicas(cmd) {
+		return s.replicas[s.pick()].DoStream(ctx, cmd)
 	}
-	return stream
+	return s.primary.DoStream(ctx, cmd)
 }
 
 func (s *standalone) DoMultiStream(ctx context.Context, multi ...Completed) MultiValkeyResultStream {
-	var stream MultiValkeyResultStream
 	toReplica := true
 	for _, cmd := range multi {
-		if s.toReplicas == nil || !s.toReplicas(cmd) {
+		if !s.toReplicas(cmd) {
 			toReplica = false
 			break
 		}
 	}
 	if toReplica {
-		stream = s.replicas[s.pick()].DoMultiStream(ctx, multi...)
-	} else {
-		stream = s.primary.Load().DoMultiStream(ctx, multi...)
+		return s.replicas[s.pick()].DoMultiStream(ctx, multi...)
 	}
-	return stream
+	return s.primary.DoMultiStream(ctx, multi...)
 }
 
 func (s *standalone) Dedicated(fn func(DedicatedClient) error) (err error) {
-	return s.primary.Load().Dedicated(fn)
+	return s.primary.Dedicated(fn)
 }
 
 func (s *standalone) Dedicate() (client DedicatedClient, cancel func()) {
-	return s.primary.Load().Dedicate()
+	return s.primary.Dedicate()
 }
 
 func (s *standalone) Nodes() map[string]Client {
 	nodes := make(map[string]Client, len(s.replicas)+1)
-	for addr, client := range s.primary.Load().Nodes() {
+	for addr, client := range s.primary.Nodes() {
 		nodes[addr] = client
 	}
 	for _, replica := range s.replicas {
