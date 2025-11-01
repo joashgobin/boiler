@@ -656,7 +656,7 @@ exec bash
 		Max:        100,
 		Expiration: 30 * time.Second,
 		KeyGenerator: func(c *fiber.Ctx) string {
-			return c.Get("x-forwarded-for")
+			return c.Get("X-Forwarded-For", c.IP())
 		},
 		LimitReached: func(c *fiber.Ctx) error {
 			return c.SendStatus(429)
