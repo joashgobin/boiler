@@ -8,3 +8,4 @@
 - Updated prof tooling
 - Remove rate limiting for localhost
 - Constraint-less rate limiting
+- Updated rate limiting
