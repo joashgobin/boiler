@@ -5,3 +5,4 @@
 - Updated vendors
 - Updated go version
 - Updated Makefile template
+- Updated prof tooling
