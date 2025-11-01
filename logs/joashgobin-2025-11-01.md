@@ -11,3 +11,4 @@
 - Updated rate limiting
 - Use x-forwarded-for or default as ip for rate limiting
 - Removed limiter middleware
+- Tweaked Makefile
