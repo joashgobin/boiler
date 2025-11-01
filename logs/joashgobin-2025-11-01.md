@@ -6,3 +6,4 @@
 - Updated go version
 - Updated Makefile template
 - Updated prof tooling
+- Remove rate limiting for localhost
