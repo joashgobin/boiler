@@ -170,11 +170,11 @@ html {
     scroll-behavior: smooth;
 }
 
-html.is-animating img {
+html.is-animating main img {
     transform: translateX(6rem);
 }
 
-html.is-leaving img {
+html.is-leaving main img {
     transform: translateX(6rem);
 }
 
