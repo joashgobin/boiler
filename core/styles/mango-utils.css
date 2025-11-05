@@ -54,12 +54,6 @@
     align-content: center;
 }
 
-.circle {
-    border-radius: 100%;
-    object-fit: cover;
-    aspect-ratio: 1/1;
-}
-
 .bg {
     background-image: url("/static/img/double-bubble.png");
     background-blend-mode: multiply;
