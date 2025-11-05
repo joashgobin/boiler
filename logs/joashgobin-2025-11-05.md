@@ -2,3 +2,4 @@
 
 - Updated Makefile
 - Updated circle class to take up full parent width
+- Reformat

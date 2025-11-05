@@ -148,7 +148,7 @@ section {
     padding: 1.5rem 1rem;
 }
 
-section>div{
+section>div {
     width: 100%;
     max-width: var(--measure);
     justify-self: center;
