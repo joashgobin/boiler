@@ -31,7 +31,7 @@ deploy/nginx:
 
 ## deploy/first: upload first version of app to VPS
 .PHONY: deploy/first
-deploy/first: deploy/static deploy/db deploy/app
+deploy/first: deploy/folder deploy/static deploy/db deploy/app
 	@echo "• installed app on VPS"
 
 ## deploy/app: upload only app
@@ -44,19 +44,22 @@ deploy/app: build
 	@echo "${NC}"
 	@-figlet "Restart app"
 	@echo "• restarting app service"
-	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service && sudo mkdir -p /usr/local/share/fiber/${project_name}/ && sleep 5 && sudo cp -r ~/${project_name}/static/ /usr/local/share/fiber/${project_name}/"
+	@ssh -t ${username}@${production_host_ip} "cd ~/${project_name}/ && sudo systemctl link remote/${project_name}.service && sudo systemctl daemon-reload && sudo systemctl enable ${project_name}.service && sudo systemctl restart ${project_name}.service"
+
+## deploy/folder: create app folder
+.PHONY: deploy/folder
+deploy/folder:
+	@-figlet "Deploy folder"
+	@echo "• setting up project folder on VPS"
+	@ssh -t ${username}@${production_host_ip} "mkdir -p ~/${project_name}/static && sudo gpasswd -a www-data ${username} && sudo chmod g+x ~/${project_name}/static"
 
 ## deploy/static: upload only static files
 .PHONY: deploy/static
 deploy/static:
 	@-figlet "Deploy static"
 	@echo "• transferring static files to VPS"
-	@ssh ${username}@${production_host_ip} "mkdir -p ~/${project_name}"
 	@echo "${YELLOW}"
-	@rsync -zrP --exclude='static/gen' ./static ${username}@${production_host_ip}:~/${project_name}/
-	@rsync -zrP ./remote ${username}@${production_host_ip}:~/${project_name}/
-	@rsync -cP ./Makefile ${username}@${production_host_ip}:~/${project_name}/
-	@-rsync -cP ./config.env ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -zrP --exclude='static/gen' ./static ./remote ./Makefile ./config.env ${username}@${production_host_ip}:~/${project_name}/
 	@echo "${NC}"
 
 ## build: build local copy
