@@ -51,7 +51,7 @@ deploy/app: build
 deploy/folder:
 	@-figlet "Deploy folder"
 	@echo "• setting up project folder on VPS"
-	@ssh -t ${username}@${production_host_ip} "mkdir -p ~/${project_name}/static && sudo gpasswd -a www-data ${username} && sudo chmod g+x ~/${project_name}/static"
+	@ssh -t ${username}@${production_host_ip} "mkdir -p ~/${project_name}/static && sudo gpasswd -a www-data ${username} && sudo chmod g+x ~/${project_name}/static && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
 
 ## deploy/static: upload only static files
 .PHONY: deploy/static
