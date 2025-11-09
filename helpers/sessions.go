@@ -151,9 +151,12 @@ func (flash *FlashModel) Push(c *fiber.Ctx, messages ...any) error {
 	} else {
 		message = messages[0].(string)
 	}
+
 	sess.Set("flashMessage", message)
+
+	// skip clearing flash message via locals
 	sess.Set("delayFlashClear", true)
-	// sess.Set("flashTime", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
 	if err := sess.Save(); err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
