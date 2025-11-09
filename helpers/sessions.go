@@ -200,31 +200,13 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 		}
 
 		// clear flash message if flash message is present
-		log.Info("delay flash clear:", sess.Get("delayFlashClear"))
+		// log.Info("delay flash clear:", sess.Get("delayFlashClear"))
 		if sess.Get("delayFlashClear") != nil {
 			sess.Delete("delayFlashClear")
 			c.Locals("flash", sess.Get("flashMessage"))
 			if err := sess.Save(); err != nil {
 				log.Infof("error resetting flash: %v", err)
 			}
-			/*
-				flashData := sess.Get("flashMessage")
-				log.Info(flashData)
-				sess.Delete("clearNextFlash")
-				if flashData == nil {
-					sess.Set("flashMessage", "")
-					if err := sess.Save(); err != nil {
-						return c.SendStatus(fiber.StatusInternalServerError)
-					}
-				}
-				flashMessage, ok := flashData.(string)
-				if ok && len(flashMessage) > 0 {
-					sess.Set("flashMessage", "")
-					if err := sess.Save(); err != nil {
-						return c.SendStatus(fiber.StatusInternalServerError)
-					}
-				}
-			*/
 		} else {
 			c.Locals("flash", nil)
 		}
