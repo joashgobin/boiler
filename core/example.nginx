@@ -29,6 +29,9 @@ server {
     }
 
     location /static/ {
+        limit_req zone=<appName> burst=20 nodelay;
+        limit_req_status 429;
+
         alias /home/<user>/<appName>/static/;
         expires 1y;
         access_log off;
