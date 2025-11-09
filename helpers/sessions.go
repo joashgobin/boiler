@@ -153,6 +153,7 @@ func (flash *FlashModel) Push(c *fiber.Ctx, messages ...any) error {
 		message = messages[0].(string)
 	}
 	sess.Set("flashMessage", message)
+	sess.Set("delayFlashClear", true)
 	sess.Set("flashTime", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	if err := sess.Save(); err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
@@ -197,6 +198,37 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 		if err != nil {
 			return err
 		}
+
+		// clear flash message if flash message is present
+		log.Info("delay flash clear:", sess.Get("delayFlashClear"))
+		if sess.Get("delayFlashClear") != nil {
+			sess.Delete("delayFlashClear")
+			c.Locals("flash", sess.Get("flashMessage"))
+			if err := sess.Save(); err != nil {
+				log.Infof("error resetting flash: %v", err)
+			}
+			/*
+				flashData := sess.Get("flashMessage")
+				log.Info(flashData)
+				sess.Delete("clearNextFlash")
+				if flashData == nil {
+					sess.Set("flashMessage", "")
+					if err := sess.Save(); err != nil {
+						return c.SendStatus(fiber.StatusInternalServerError)
+					}
+				}
+				flashMessage, ok := flashData.(string)
+				if ok && len(flashMessage) > 0 {
+					sess.Set("flashMessage", "")
+					if err := sess.Save(); err != nil {
+						return c.SendStatus(fiber.StatusInternalServerError)
+					}
+				}
+			*/
+		} else {
+			c.Locals("flash", nil)
+		}
+
 		// add session to locals
 		c.Locals("session", sess)
 

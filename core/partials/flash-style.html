@@ -6,12 +6,15 @@
         background-color: black;
         color: white;
         padding: 0.5rem;
-        animation: shift-up 3s ease-out 1;
-        display: none;
         font-size: 1.4rem;
         z-index: 1000;
         border-radius: 1rem;
         width: 100vw;
+        animation: none;
+    }
+
+    #flash.animate {
+        animation: shift-up 3s ease-out 1;
     }
 
     @keyframes shift-up {

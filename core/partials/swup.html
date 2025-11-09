@@ -1,7 +1,9 @@
 <script src="/static/script/swup.js"></script>
+<script src="/static/script/swup-forms-plugin.js"></script>
 <script>
     const swup = new Swup({
-        cache: false
+        cache: false,
+        plugins: [new SwupFormsPlugin()]
     });
 
     swup.hooks.on('page:view', (visit) => {
