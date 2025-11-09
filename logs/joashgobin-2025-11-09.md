@@ -8,3 +8,4 @@
 - Updated containers for swup JS
 - Updated session info middleware
 - Tweak
+- Modified ensure fiber form fields function
