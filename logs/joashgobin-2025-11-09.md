@@ -9,3 +9,4 @@
 - Updated session info middleware
 - Tweak
 - Modified ensure fiber form fields function
+- Reduce heading line height
