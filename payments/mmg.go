@@ -768,8 +768,8 @@ func decrypt(ciphertext []byte, privateKey *rsa.PrivateKey) (map[string]interfac
 }
 
 type MMGInterface interface {
-	RegisterMerchant(merchantNumber int, merchantName string)
-	AddProduct(productCode, itemDescription string)
+	RegisterMerchant(merchantNumber int, merchantName string) error
+	AddProduct(productCode, itemDescription string) error
 	AddProducts(productMap map[string]string)
 	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
 	LoadHistory(merchantNumber int)
@@ -785,6 +785,11 @@ type MMGModel struct {
 }
 
 var _ MMGInterface = (*MMGModel)(nil)
+
+type MMGMerchant struct {
+	Name   string
+	Number int
+}
 
 func (m *MMGModel) AddProducts(productMap map[string]string) {
 	for productCode, productDescription := range productMap {
@@ -833,12 +838,52 @@ func (m *MMGModel) LoadHistory(merchantNumber int) {
 	m.loadMMGTransactionHistory(merchantNumber)
 }
 
-func (m *MMGModel) AddProduct(productCode, itemDescription string) {
-	m.Products[productCode] = itemDescription
+func (m *MMGModel) AddProduct(productCode, itemDescription string) error {
+	// m.Products[productCode] = itemDescription
+
+	query := `
+	INSERT INTO products (code,description)
+	VALUES (?,?)
+	`
+
+	result, err := m.DB.Exec(query, productCode, itemDescription)
+	if err != nil {
+		return fmt.Errorf("add product exec error: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("add product rows error: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("add product error: product already added")
+	}
+
+	return nil
 }
 
-func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) {
-	m.Merchants[merchantNumber] = merchantName
+func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) error {
+	// m.Merchants[merchantNumber] = merchantName
+
+	query := `
+	INSERT INTO merchants (name,number)
+	VALUES (?,?)
+	`
+
+	result, err := m.DB.Exec(query, merchantName, merchantNumber)
+	if err != nil {
+		return fmt.Errorf("register merchant exec error: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("register merchant rows error: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("register merchant error: merchant already registered")
+	}
+
+	return nil
 }
 
 func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string {
@@ -911,10 +956,8 @@ func NewMMG(db *sql.DB, wg *sync.WaitGroup, appName string) *MMGModel {
 
 	// create database
 	helpers.RunMigration(strings.ReplaceAll(`
--- Select database
 USE <appName>;
 
--- Create transactions table
 CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
     timestamp DATETIME NOT NULL,
@@ -931,6 +974,19 @@ CREATE TABLE IF NOT EXISTS transactions (
 	internalid VARCHAR(40),
     expiration_date DATETIME
 );
+
+CREATE TABLE IF NOT EXISTS merchants (
+    id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+	number INTEGER NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(100) NOT NULL UNIQUE,
+	description VARCHAR(300) NOT NULL
+);
+
 	`, "<appName>", appName), db)
 
 	return &MMGModel{DB: db, WaitGroup: wg}
