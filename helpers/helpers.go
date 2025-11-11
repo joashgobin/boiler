@@ -717,8 +717,37 @@ func ConvertPNGToJPG(inputPath, outputPath string) {
 }
 
 func ShuffleSlice[T any](items *[]T) {
-	rand.Seed(time.Now().UnixNano())
+	// rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(*items), func(i, j int) {
 		(*items)[i], (*items)[j] = (*items)[j], (*items)[i]
 	})
+}
+
+func ValidateConfig(config interface{}) error {
+	// First verify it's a struct
+	configType := reflect.TypeOf(config)
+	if configType.Kind() != reflect.Struct {
+		return errors.New("config must be a struct")
+	}
+
+	// Get the value to examine fields
+	configValue := reflect.ValueOf(config)
+
+	// Iterate through all fields
+	for i := 0; i < configValue.NumField(); i++ {
+		field := configValue.Field(i)
+		fieldName := configType.Field(i).Name
+
+		// Check if field is exported (starts with capital letter)
+		if !field.IsValid() {
+			continue
+		}
+
+		// Check if field is zero-valued
+		if field.IsZero() {
+			return fmt.Errorf("%s is not properly initialized", fieldName)
+		}
+	}
+
+	return nil
 }
