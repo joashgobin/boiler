@@ -775,13 +775,12 @@ type MMGInterface interface {
 	LoadHistory(merchantNumber int)
 	GetUserProducts(userEmail string) []string
 	GetProductDescription(productCode string) string
+	GetMerchant(merchantNumber int) MMGMerchant
 }
 
 type MMGModel struct {
 	DB        *sql.DB
 	WaitGroup *sync.WaitGroup
-	Merchants map[int]string
-	Products  map[string]string
 }
 
 var _ MMGInterface = (*MMGModel)(nil)
@@ -791,6 +790,23 @@ type MMGMerchant struct {
 	Number int
 }
 
+func (m *MMGModel) GetMerchant(merchantNumber int) MMGMerchant {
+	query := `
+	SELECT name FROM merchants
+	WHERE number = ?
+	`
+
+	var merchant MMGMerchant
+	merchant.Number = merchantNumber
+
+	row := m.DB.QueryRow(query, merchantNumber)
+	err := row.Scan(&merchant.Name)
+	if err != nil {
+		return MMGMerchant{Name: "John Doe", Number: 1234567}
+	}
+	return merchant
+}
+
 func (m *MMGModel) AddProducts(productMap map[string]string) {
 	for productCode, productDescription := range productMap {
 		m.AddProduct(productCode, productDescription)
@@ -798,11 +814,17 @@ func (m *MMGModel) AddProducts(productMap map[string]string) {
 }
 
 func (m *MMGModel) GetProductDescription(productCode string) string {
-	value, exists := m.Products[productCode]
-	if exists {
-		return value
+	query := `
+	SELECT description FROM products WHERE code = ?
+	`
+	row := m.DB.QueryRow(query, productCode)
+
+	var description string
+	err := row.Scan(&description)
+	if err != nil {
+		return ""
 	}
-	return ""
+	return description
 }
 
 func (m *MMGModel) GetUserProducts(userEmail string) []string {
@@ -887,15 +909,7 @@ func (m *MMGModel) RegisterMerchant(merchantNumber int, merchantName string) err
 }
 
 func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string {
-	_, exists := m.Merchants[merchantNumber]
-	if !exists {
-		return "/"
-	}
-	_, exists = m.Products[productCode]
-	if !exists {
-		return "/"
-	}
-	_, url := initiateCheckout(userEmail, merchantNumber, m.Merchants[merchantNumber], productCode, cost)
+	_, url := initiateCheckout(userEmail, merchantNumber, m.GetMerchant(merchantNumber).Name, productCode, cost)
 	// insertPendingPurchase(m.DB, internalTransactionID, itemDescription, productCode, userEmail)
 	return url
 }
