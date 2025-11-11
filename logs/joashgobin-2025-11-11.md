@@ -1,0 +1,3 @@
+# Tuesday (November 11, 2025)
+
+- Updated MMG code to reflect Go's repository patten

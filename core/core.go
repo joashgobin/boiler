@@ -618,7 +618,7 @@ exec bash
 		Shelf:     &helpers.ShelfModel{DB: db},
 		Flash:     &helpers.FlashModel{Store: store},
 		Bank:      helpers.NewBank(storage, config.AppName),
-		MMG:       &payments.MMGModel{DB: db, Merchants: map[int]string{}, Products: map[string]string{}},
+		MMG:       payments.NewMMG(db, &wg, config.AppName),
 		Anchor:    ":" + config.Port,
 		QR:        helpers.NewQR(),
 		Mail:      mailModel,
@@ -631,7 +631,6 @@ exec bash
 	}
 
 	// run special migrations
-	payments.UseMMG(db, config.AppName)
 	helpers.InitShelf(db, config.AppName)
 	models.InitUsers(db, config.AppName)
 
