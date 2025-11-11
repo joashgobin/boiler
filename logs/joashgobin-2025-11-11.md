@@ -4,3 +4,4 @@
 - Added function to validate config
 - Added product and merchant tables for MMG
 - Updated product and merchant get functions
+- Updated get product and merchant functions

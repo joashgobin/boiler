@@ -774,7 +774,7 @@ type MMGInterface interface {
 	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
 	LoadHistory(merchantNumber int)
 	GetUserProducts(userEmail string) []string
-	GetProductDescription(productCode string) string
+	GetProduct(productCode string) MMGProduct
 	GetMerchant(merchantNumber int) MMGMerchant
 }
 
@@ -788,6 +788,11 @@ var _ MMGInterface = (*MMGModel)(nil)
 type MMGMerchant struct {
 	Name   string
 	Number int
+}
+
+type MMGProduct struct {
+	Code        string
+	Description string
 }
 
 func (m *MMGModel) GetMerchant(merchantNumber int) MMGMerchant {
@@ -813,18 +818,21 @@ func (m *MMGModel) AddProducts(productMap map[string]string) {
 	}
 }
 
-func (m *MMGModel) GetProductDescription(productCode string) string {
+func (m *MMGModel) GetProduct(productCode string) MMGProduct {
 	query := `
 	SELECT description FROM products WHERE code = ?
 	`
-	row := m.DB.QueryRow(query, productCode)
 
+	var product MMGProduct
+	product.Code = productCode
+
+	row := m.DB.QueryRow(query, productCode)
 	var description string
 	err := row.Scan(&description)
 	if err != nil {
-		return ""
+		return MMGProduct{Code: "UNKNOWN", Description: "An Unknown Product"}
 	}
-	return description
+	return product
 }
 
 func (m *MMGModel) GetUserProducts(userEmail string) []string {
