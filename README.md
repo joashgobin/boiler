@@ -180,7 +180,7 @@ Add the following to your *views/layouts/main.html* file:
         }
     </script>
     <link rel="preload" as="style" href="{{min "mango-simplified.css"}}">
-    <link rel="stylesheet" media="none" onload="this.media='all';showBody()" href="{{min "mango-final.css"}}">
+    <link rel="stylesheet" media="none" onload="this.media='all';showBody()" href="{{min "mango-simplified.css"}}">
 
     {{template "views/partials/meta" .}}
     {{template "views/partials/flash-style" .}}
