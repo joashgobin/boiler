@@ -9,3 +9,4 @@
 - Update
 - Fix
 - Updated max width
+- Updated transition-main for swup
