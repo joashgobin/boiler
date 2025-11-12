@@ -6,3 +6,4 @@
 - Removed max width for li
 - Updated version for go
 - Updated README
+- Update
