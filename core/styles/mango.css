@@ -98,7 +98,7 @@ h4,
 h5,
 h6,
 figcaption {
-    max-inline-size: calc(var(--measure)*3/4);
+    max-inline-size: var(--measure);
 }
 
 header {

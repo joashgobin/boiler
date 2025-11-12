@@ -8,3 +8,4 @@
 - Updated README
 - Update
 - Fix
+- Updated max width
