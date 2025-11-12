@@ -110,7 +110,7 @@ func main() {
 	}
     app, base := core.NewApp(config)
 
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("/", func(c *ctx) error {
 		return c.SendString("Welcome!")
 	})
 

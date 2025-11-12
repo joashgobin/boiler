@@ -13,6 +13,9 @@ import (
 )
 
 func GetEmbedFiles(fs *embed.FS, path string) ([]string, error) {
+	if fs == nil {
+		return []string{}, fmt.Errorf("get files from FS error: embedded file system not found")
+	}
 	entries, err := fs.ReadDir(filepath.Clean(path))
 	if err != nil {
 		return nil, err

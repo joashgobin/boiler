@@ -5,3 +5,4 @@
 - Updated text max width
 - Removed max width for li
 - Updated version for go
+- Updated README
