@@ -4,7 +4,7 @@ This project is focused on providing boilerplate for a Gofiber app.
 ## Basic app
 Add the following to your **go.mod** file:
 ```
-go 1.25.1
+go 1.25.3
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
