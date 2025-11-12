@@ -40,17 +40,12 @@
     transition: transform 340ms;
 }
 
-.transition-main {
-    opacity: 1;
-    transition: opacity 200ms ease-in-out;
+html.is-changing .transition-main {
+  transition: opacity 0.25s;
+  opacity: 1;
 }
-
-html.is-leaving .transition-main {
-    opacity: 0;
-}
-
 html.is-animating .transition-main {
-    opacity: 0;
+  opacity: 0;
 }
 
 html.is-animating :is(.button, .card) {
