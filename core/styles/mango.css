@@ -197,6 +197,8 @@ textarea {
     field-sizing: content;
 }
 
+select,
+option,
 input,
 textarea {
     border-radius: 1rem;
