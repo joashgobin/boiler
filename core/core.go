@@ -31,6 +31,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
@@ -639,6 +640,9 @@ exec bash
 	}))
 
 	app.Use(recover.New())
+	app.Use(idempotency.New(idempotency.Config{
+		Storage: storage,
+	}))
 
 	app.Use(pprof.New(pprof.Config{Prefix: "/profiler"}))
 	app.Get("/metrics", monitor.New())
