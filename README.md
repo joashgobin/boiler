@@ -224,10 +224,10 @@ Add the following to your *views/layouts/main.html* file:
         {{template "views/partials/flash-body" .}}
         {{embed}}
     </main>
-    {{template "views/partials/modal-logic" .}}
-    {{template "views/partials/swup" .}}
     <footer class="cols bs cp">
     </footer>
+    {{template "views/partials/modal-logic" .}}
+    {{template "views/partials/swup" .}}
 </body>
 
 </html>
