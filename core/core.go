@@ -343,6 +343,9 @@ exec bash
 			}
 			return value
 		},
+		"prod": func() bool {
+			return config.IsProduction
+		},
 		"svg": func(iconName string) ht.HTML {
 			return ht.HTML(`
 			<script

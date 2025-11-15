@@ -40,6 +40,11 @@
     transition: transform 340ms;
 }
 
+.transition-main {
+    transition: opacity 0.25s ease-in-out;
+    opacity: 1;
+}
+
 html.is-changing .transition-main {
     transition: opacity 0.25s ease-in-out;
     opacity: 1;
