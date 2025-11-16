@@ -434,6 +434,15 @@ exec bash
 		"replace": func(str, before, after string) string {
 			return strings.ReplaceAll(str, before, after)
 		},
+		"trimPrefix": func(str, prefix string) string {
+			return strings.TrimPrefix(str, prefix)
+		},
+		"trimSuffix": func(str, suffix string) string {
+			return strings.TrimSuffix(str, suffix)
+		},
+		"trimSpace": func(str string) string {
+			return strings.TrimSpace(str)
+		},
 		"Condense": func(str string) string {
 			return helpers.ReplaceSpecial(str)
 		},
