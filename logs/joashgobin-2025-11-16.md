@@ -5,3 +5,4 @@
 - Added more string functions
 - Updated Get function for Flash
 - Added more padding classes
+- Added function to get users

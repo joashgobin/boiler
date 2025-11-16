@@ -25,6 +25,7 @@ type UserModelInterface interface {
 	AssignRole(email, role string) error
 	RemoveRole(email, role string) error
 	ParseFromCSV(path string) error
+	GetAll(limit int) []User
 }
 
 type User struct {
@@ -38,6 +39,28 @@ type User struct {
 
 type UserModel struct {
 	DB *sql.DB
+}
+
+func (m *UserModel) GetAll(limit int) []User {
+	var users []User
+	query := `
+	SELECT id,name,email,roles,created FROM users
+	LIMIT ?
+	`
+	rows, err := m.DB.Query(query, limit)
+	if err != nil {
+		log.Errorf("get all users exec error: %v", err)
+		return users
+	}
+	for rows.Next() {
+		var user User
+		err = rows.Scan(&user.ID, &user.Name, &user.Email, &user.Roles, &user.Created)
+		if err != nil {
+			log.Errorf("get all users scan error: %v", err)
+		}
+		users = append(users, user)
+	}
+	return users
 }
 
 func (m *UserModel) ParseFromCSV(path string) error {
