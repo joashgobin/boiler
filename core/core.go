@@ -422,6 +422,12 @@ exec bash
 		"add": func(a, b int) int {
 			return a + b
 		},
+		"mod": func(a, b int) int {
+			return a % b
+		},
+		"slice": func(a ...any) []any {
+			return a
+		},
 		"split": func(str, delim string) []string {
 			return strings.Split(str, delim)
 		},
