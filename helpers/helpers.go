@@ -3,9 +3,7 @@ package helpers
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"image"
@@ -176,15 +174,6 @@ func GetMimeType(path string) string {
 	}
 }
 
-func FingerprintFromBuffer(content []byte) string {
-	hash := sha256.Sum256(content)
-	return hex.EncodeToString(hash[:])
-}
-
-func GetHash(content string) string {
-	hashBytes := sha256.Sum256([]byte(content))
-	return hex.EncodeToString(hashBytes[:])
-}
 
 func ParseBodyForKey(bodyData []byte, key string) map[string]string {
 	body := string(bodyData)
