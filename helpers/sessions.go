@@ -21,7 +21,7 @@ type FlashInterface interface {
 	Retain(keys ...string) fiber.Handler
 	Require(keys ...string) fiber.Handler
 	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
-	Get(c *fiber.Ctx, key string) any
+	Get(c *fiber.Ctx, key string, defaultValue ...any) any
 	// GetUser(c *fiber.Ctx) interface{}
 	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
@@ -79,19 +79,21 @@ type FlashModel struct {
 	Store *session.Store
 }
 
-func (flash *FlashModel) Get(c *fiber.Ctx, key string) any {
+func (flash *FlashModel) Get(c *fiber.Ctx, key string, defaultValue ...any) any {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
 		// panic(err)
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
 		return nil
 	}
 	value := sess.Get(key)
-	/*
-		str, ok := value.(string)
-		if ok {
-			return str
+	if value == nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
 		}
-	*/
+	}
 	return value
 }
 
