@@ -100,6 +100,22 @@
     padding: 2.0rem;
 }
 
+.pad-4 {
+    padding: 2.5rem;
+}
+
+.pad_2 {
+    padding: 0.2rem;
+}
+
+.pad_4 {
+    padding: 0.4rem;
+}
+
+.pad_5 {
+    padding: 0.5rem;
+}
+
 .no-pad {
     padding: 0;
 }

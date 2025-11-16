@@ -4,3 +4,4 @@
 - Added test file
 - Added more string functions
 - Updated Get function for Flash
+- Added more padding classes
