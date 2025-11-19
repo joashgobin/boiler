@@ -4,6 +4,7 @@
     margin-bottom: 0.2rem;
     box-shadow: var(--shadow), var(--highlight);
     transition: transform 240ms;
+    align-self: stretch;
 }
 
 .card:nth-child(even) {

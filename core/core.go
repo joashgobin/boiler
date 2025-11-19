@@ -69,6 +69,7 @@ type AppConfig struct {
 	Templates    *embed.FS
 	StaticFiles  *embed.FS
 	SiteInfo     *map[string]string
+	FuncMap      map[string]interface{}
 	IsProduction bool
 }
 
@@ -497,6 +498,11 @@ exec bash
 			return ht.HTML(links)
 		},
 	})
+
+	// add other func map
+	if config.FuncMap != nil {
+		engine.AddFuncMap(config.FuncMap)
+	}
 
 	if err := engine.Load(); err != nil {
 		log.Errorf("failed to load templates: %v", err)
