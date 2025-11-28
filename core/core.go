@@ -33,7 +33,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/monitor"
+	// "github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -669,7 +669,7 @@ exec bash
 	}))
 
 	app.Use(pprof.New(pprof.Config{Prefix: "/profiler"}))
-	app.Get("/metrics", monitor.New())
+	// app.Get("/metrics", monitor.New())
 
 	app.Use(helpers.SessionInfoMiddleware(store))
 
