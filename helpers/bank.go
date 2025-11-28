@@ -59,19 +59,19 @@ func (b *Bank) SetBytes(key string, value []byte, exp time.Duration) {
 	b.storage.Set(b.prefix+key, value, exp)
 }
 
-func SliceToBytes[T any](data []T) []byte {
-	jsonStr, err := json.Marshal(data)
+func SliceToBytes[T any](data *[]T) []byte {
+	jsonStr, err := json.Marshal(*data)
 	if err != nil {
 		return []byte{}
 	}
 	return jsonStr
 }
 
-func BytesToSlice[T any](bytes []byte) []T {
+func BytesToSlice[T any](bytes []byte) *[]T {
 	var decoded []T
 	err := json.Unmarshal(bytes, &decoded)
 	if err != nil {
-		return []T{}
+		return &[]T{}
 	}
-	return decoded
+	return &decoded
 }

@@ -174,7 +174,6 @@ func GetMimeType(path string) string {
 	}
 }
 
-
 func ParseBodyForKey(bodyData []byte, key string) map[string]string {
 	body := string(bodyData)
 	// Split the body into individual key-value pairs
