@@ -196,7 +196,7 @@ func (flash *FlashModel) ClearOld(c *fiber.Ctx) {
 	}
 }
 
-func SessionInfoMiddleware(store *session.Store) fiber.Handler {
+func SessionLocalsMiddleware(store *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, err := store.Get(c)
 		if err != nil {
@@ -231,20 +231,40 @@ func SessionInfoMiddleware(store *session.Store) fiber.Handler {
 	}
 }
 
-func (flash *FlashModel) Retain(keys ...string) fiber.Handler {
+func SessionOldValuesMiddleware(store *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		sess, err := flash.Store.Get(c)
+		if c.Method() != "POST" {
+			return c.Next()
+		}
+		sess, err := store.Get(c)
 		if err != nil {
 			log.Errorf("error getting session: %v", err)
 		}
-		oldValues := make(map[string]string, 1)
-		for _, key := range keys {
-			oldValues[key] = c.FormValue(key)
-		}
+		oldValues := MapFromFormBody(c, true)
 		sess.Set("old", oldValues)
 		if err := sess.Save(); err != nil {
 			log.Errorf("error saving session: %v", err)
 		}
+		return c.Next()
+	}
+}
+
+func (flash *FlashModel) Retain(keys ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		/*
+			sess, err := flash.Store.Get(c)
+			if err != nil {
+				log.Errorf("error getting session: %v", err)
+			}
+			oldValues := make(map[string]string, 1)
+			for _, key := range keys {
+				oldValues[key] = c.FormValue(key)
+			}
+			sess.Set("old", oldValues)
+			if err := sess.Save(); err != nil {
+				log.Errorf("error saving session: %v", err)
+			}
+		*/
 		return c.Next()
 	}
 }

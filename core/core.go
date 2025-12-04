@@ -671,7 +671,8 @@ exec bash
 	app.Use(pprof.New(pprof.Config{Prefix: "/profiler"}))
 	// app.Get("/metrics", monitor.New())
 
-	app.Use(helpers.SessionInfoMiddleware(store))
+	app.Use(helpers.SessionLocalsMiddleware(store))
+	app.Use(helpers.SessionOldValuesMiddleware(store))
 
 	environment := "dev"
 	if config.IsProduction {
