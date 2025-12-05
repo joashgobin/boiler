@@ -65,6 +65,8 @@
     --space: 0.5rem;
     display: grid;
     gap: var(--space);
+    justify-items: center;
+    align-content: center;
 }
 
 .stack.top {
@@ -73,11 +75,6 @@
 
 .stack.bottom {
     align-content: end;
-}
-
-.stack.middle {
-    justify-items: center;
-    align-content: center;
 }
 
 .stack.left {
