@@ -27,7 +27,7 @@ github.com/go-sql-driver/mysql
 ## explicit; go 1.18
 github.com/go-viper/mapstructure/v2
 github.com/go-viper/mapstructure/v2/internal/errors
-# github.com/gofiber/fiber/v2 v2.52.9
+# github.com/gofiber/fiber/v2 v2.52.10
 ## explicit; go 1.20
 github.com/gofiber/fiber/v2
 github.com/gofiber/fiber/v2/internal/memory
