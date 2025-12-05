@@ -227,3 +227,8 @@ html.is-leaving input[type="submit"] {
 small {
     font-size: 1.05rem;
 }
+
+svg {
+    width: 100%;
+    height: 100%;
+}

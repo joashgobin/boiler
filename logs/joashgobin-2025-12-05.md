@@ -2,3 +2,4 @@
 
 - Updated gofiber
 - Update README
+- Updated icon rendering

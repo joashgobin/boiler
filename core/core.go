@@ -359,12 +359,17 @@ exec bash
 			`)
 		},
 		"icon": func(iconName ...string) ht.HTML {
-			dim := "20px"
+			width := "20px"
+			height := "20px"
 			if len(iconName) > 1 {
-				dim = iconName[1]
+				width = iconName[1]
+				height = iconName[1]
+			}
+			if len(iconName) > 2 {
+				height = iconName[2]
 			}
 			return ht.HTML(`
-			<div style="width:` + dim + `;height:` + dim + `;display:flex;align-items:center;justify-content:center;">
+			<div style="width:` + width + `;height:` + height + `;display:flex;align-items:center;justify-content:center;">
 			<script
     class="script-tag"
     data-svg-src="/static/img/bootstrap-icons/` + iconName[0] + `.svg"
