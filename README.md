@@ -195,6 +195,7 @@ Add the following to your *views/layouts/main.html* file:
     {{template "views/partials/meta" .}}
     {{template "views/partials/flash-style" .}}
     {{template "views/partials/modal-style" .}}
+    {{template "views/partials/svg-pop" .}}
     {{favicon}}
     {{preset "htmx"}}
 

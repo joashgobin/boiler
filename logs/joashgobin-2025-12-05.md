@@ -3,3 +3,4 @@
 - Updated gofiber
 - Update README
 - Updated icon rendering
+- Updated template
