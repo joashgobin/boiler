@@ -181,13 +181,7 @@ Add the following to your *views/layouts/main.html* file:
     </script>
     <link rel="preload" as="style" href="{{min "mango-simplified.css"}}">
     <link rel="stylesheet" media="none" onload="this.media='all';showBody()" href="{{min "mango-simplified.css"}}">
-
-    {{template "views/partials/meta" .}}
-    {{template "views/partials/flash-style" .}}
-    {{template "views/partials/modal-style" .}}
-    {{favicon}}
     <style>
-
     body {
         opacity: 0;
         transition: opacity 300ms ease-in-out;
@@ -196,17 +190,23 @@ Add the following to your *views/layouts/main.html* file:
     body.loaded{
         opacity: 1;
     }
-
     </style>
+
+    {{template "views/partials/meta" .}}
+    {{template "views/partials/flash-style" .}}
+    {{template "views/partials/modal-style" .}}
+    {{favicon}}
+    {{preset "htmx"}}
+
 </head>
 
 <body>
     <div class="img-bg"></div>
     {{template "views/partials/modal-body" .}}
-    <header class="flex bs cp">
+    <header class="cluster bs cp">
         <a href="/" class="grow"><strong>My App</strong></a>
         <nav>
-            <ul class="flex right sm">
+            <ul class="cluster right sm">
                 {{if .user}}
                 <li><a href="/admin/">Dashboard</a></li>
                 <form method="post" action="/logout">
@@ -224,7 +224,7 @@ Add the following to your *views/layouts/main.html* file:
         {{template "views/partials/flash-body" .}}
         {{embed}}
     </main>
-    <footer class="cols bs cp">
+    <footer class="grid bs cp">
     </footer>
     {{template "views/partials/modal-logic" .}}
     {{template "views/partials/swup" .}}
