@@ -285,7 +285,8 @@ func ReplaceSpecial(text string) string {
 	return strings.ToLower(re.ReplaceAllString(text, "-"))
 }
 
-func ConvertInlineWebp(srcPath string, fromDir, toDir string) string {
+func ConvertInlineWebp(srcPath string, toDir string) string {
+	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
 	srcContent, err := os.ReadFile(srcPath)
 	if err != nil {
@@ -339,8 +340,7 @@ func ConvertInlineWebp(srcPath string, fromDir, toDir string) string {
 	if err := webp.Encode(output, img, options); err != nil {
 		return ""
 	}
-	elapsed := time.Since(start)
-	log.Infof("(%v) converted image (%s) to webp: %s", elapsed, srcPath, outputPath)
+	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
 	return outputPath
 }
 

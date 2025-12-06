@@ -96,7 +96,7 @@ func (base Base) Serve(app *fiber.App) {
 		// height := c.Query("height", "100px")
 		path := c.Query("path")
 		finalPath := path
-		return c.SendString("<img class='gen-image' src='" + finalPath + "' width=100% height=100%>")
+		return c.SendString("<img class='gen-image' src='/" + finalPath + "' width=100% height=100%>")
 	})
 
 	go func() {
@@ -373,10 +373,18 @@ exec bash
 				path = args[0]
 			}
 
-			outputPath := helpers.ConvertInlineWebp(path, filepath.Dir(path), "static/gen/img")
+			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
+			return ht.HTML(outputPath)
+		},
+		"lazy": func(args ...string) ht.HTML {
+			path := "static/img/pepe.jpg"
+			if len(args) > 0 {
+				path = args[0]
+			}
+
+			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
 			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`
-
 			return ht.HTML(htmxString)
 		},
 		"icon": func(iconName ...string) ht.HTML {
