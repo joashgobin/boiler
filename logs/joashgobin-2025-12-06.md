@@ -6,3 +6,4 @@
 - Changed strategy for determining file hash
 - Removed img-bg from template
 - Set image opacity when loaded via htmx
+- Updated img returned by /image

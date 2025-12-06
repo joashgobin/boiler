@@ -94,9 +94,8 @@ func (base Base) Serve(app *fiber.App) {
 	app.Get("/image", func(c *fiber.Ctx) error {
 		// width := c.Query("width", "100px")
 		// height := c.Query("height", "100px")
-		path := c.Query("path")
-		finalPath := path
-		return c.SendString("<img style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='/" + finalPath + "' width=100% height=100%>")
+		finalPath := c.Query("path")
+		return c.SendString("<img alt='" + finalPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='/" + finalPath + "' width=100% height=100%>")
 	})
 
 	go func() {
