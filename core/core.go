@@ -96,7 +96,7 @@ func (base Base) Serve(app *fiber.App) {
 		// height := c.Query("height", "100px")
 		path := c.Query("path")
 		finalPath := path
-		return c.SendString("<img class='gen-image' src='/" + finalPath + "' width=100% height=100%>")
+		return c.SendString("<img style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='/" + finalPath + "' width=100% height=100%>")
 	})
 
 	go func() {
