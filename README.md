@@ -202,7 +202,6 @@ Add the following to your *views/layouts/main.html* file:
 </head>
 
 <body>
-    <div class="img-bg"></div>
     {{template "views/partials/modal-body" .}}
     <header class="cluster bs cp">
         <a href="/" class="grow"><strong>My App</strong></a>
