@@ -285,16 +285,20 @@ func ReplaceSpecial(text string) string {
 	return strings.ToLower(re.ReplaceAllString(text, "-"))
 }
 
+func GetFileHash(srcPath string) string {
+	fileInfo, err := os.Stat(srcPath)
+	if err != nil {
+		log.Errorf("error getting file hash: %v", err)
+		return ""
+	}
+	return GetHash(fmt.Sprintf("%s-%s-%d", srcPath, fileInfo.ModTime().String(), fileInfo.Size()))
+}
+
 func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
-	srcContent, err := os.ReadFile(srcPath)
-	if err != nil {
-		log.Errorf("error converting to webp: %v", err)
-		return ""
-	}
 
-	hashString := FingerprintFromBuffer(srcContent)
+	hashString := GetFileHash(srcPath)
 	outputPath := fmt.Sprintf("%s.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), hashString)
@@ -345,12 +349,8 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 }
 
 func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDir string) error {
-	srcContent, err := os.ReadFile(srcPath)
-	if err != nil {
-		return err
-	}
-
-	hashString := FingerprintFromBuffer(srcContent)
+	start := time.Now()
+	hashString := GetFileHash(srcPath)
 	outputPath := fmt.Sprintf("%s.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), hashString)
@@ -394,7 +394,7 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 	if err := webp.Encode(output, img, options); err != nil {
 		return err
 	}
-	log.Infof("converted image (%s) to webp: %s", srcPath, outputPath)
+	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
 	if fileListPtr != nil {
 		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
 	}

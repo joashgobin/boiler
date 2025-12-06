@@ -377,6 +377,7 @@ exec bash
 			return ht.HTML(outputPath)
 		},
 		"lazy": func(args ...string) ht.HTML {
+			// start := time.Now()
 			path := "static/img/pepe.jpg"
 			if len(args) > 0 {
 				path = args[0]
@@ -385,6 +386,7 @@ exec bash
 			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
 			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`
+			// fmt.Println(time.Since(start))
 			return ht.HTML(htmxString)
 		},
 		"icon": func(iconName ...string) ht.HTML {
