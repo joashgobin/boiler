@@ -90,6 +90,22 @@ func (base Base) Serve(app *fiber.App) {
 		return sm
 	}))
 
+	app.Get("/image", func(c *fiber.Ctx) error {
+		/*
+			TODO: Add and use base.Images.Optimize()
+			to create optimized version of an image
+			Return img element with src based on id
+			create using the "gen" function in the
+			template engine
+		*/
+		// width := c.Query("width", "100px")
+		// height := c.Query("height", "100px")
+		classes := c.Query("classes", "round")
+		path := c.Query("path", "pepe.jpg")
+		finalPath := "static/img/" + path
+		return c.SendString("<img src='" + finalPath + "' class='" + classes + "'>")
+	})
+
 	go func() {
 		if err := app.Listen(base.Anchor); err != nil {
 			log.Panic(err)
@@ -357,6 +373,37 @@ exec bash
     hx-trigger="load">
 </script>
 			`)
+		},
+		"gen": func(args ...string) ht.HTML {
+			/*
+				TODO: Create optimized versions of an image
+				only when "gen" is used in the template engine
+				Return id to be used with base's "/image" route
+				Use base.Images.Reference() to get the optimized
+				version's id
+			*/
+			id := "hello"
+			classes := "round"
+			/*
+				path := "pepe.jpg"
+				if len(args) > 0 {
+					path = args[0]
+				}
+				if len(args) > 1 {
+					classes = args[1]
+				}
+				finalPath := "static/img/" + path
+			*/
+
+			/*
+				imgString := `
+				<img src='` + finalPath + `' class='` + classes + `'>
+				`
+			*/
+			htmxString := `<div hx-get="/image?id=` + id + `&classes='` + classes + `'" hx-trigger="load">
+            </div>`
+
+			return ht.HTML(htmxString)
 		},
 		"icon": func(iconName ...string) ht.HTML {
 			width := "20px"

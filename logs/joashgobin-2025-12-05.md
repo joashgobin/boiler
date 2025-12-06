@@ -7,3 +7,4 @@
 - Updated stack layout
 - Update
 - Updated htmx preset
+- Testing automatic image generation endpoint
