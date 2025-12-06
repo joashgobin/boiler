@@ -285,6 +285,65 @@ func ReplaceSpecial(text string) string {
 	return strings.ToLower(re.ReplaceAllString(text, "-"))
 }
 
+func ConvertInlineWebp(srcPath string, fromDir, toDir string) string {
+	start := time.Now()
+	srcContent, err := os.ReadFile(srcPath)
+	if err != nil {
+		log.Errorf("error converting to webp: %v", err)
+		return ""
+	}
+
+	hashString := FingerprintFromBuffer(srcContent)
+	outputPath := fmt.Sprintf("%s.%s.webp",
+		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+			filepath.Ext(srcPath)), hashString)
+
+	if FileExists(outputPath) {
+		// log.Info("skipping ", outputPath)
+		return outputPath
+	}
+	file, err := os.Open(srcPath)
+	if err != nil {
+		log.Errorf("error converting to webp: %v", err)
+		return ""
+	}
+
+	var img image.Image
+
+	switch filepath.Ext(srcPath) {
+	case ".png":
+		img, err = png.Decode(file)
+		if err != nil {
+			log.Errorf("error converting to webp: %v", err)
+			return ""
+		}
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(file)
+		if err != nil {
+			log.Errorf("error converting to webp: %v", err)
+			return ""
+		}
+	}
+
+	output, err := os.Create(outputPath)
+	if err != nil {
+		log.Errorf("error creating output path: %v", err)
+		return ""
+	}
+	defer output.Close()
+	options, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, 75)
+	if err != nil {
+		log.Errorf("error encoding: %v", err)
+		return ""
+	}
+	if err := webp.Encode(output, img, options); err != nil {
+		return ""
+	}
+	elapsed := time.Since(start)
+	log.Infof("(%v) converted image (%s) to webp: %s", elapsed, srcPath, outputPath)
+	return outputPath
+}
+
 func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDir string) error {
 	srcContent, err := os.ReadFile(srcPath)
 	if err != nil {
@@ -298,7 +357,9 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 
 	if FileExists(outputPath) {
 		// log.Info("skipping ", outputPath)
-		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
+		if fileListPtr != nil {
+			(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
+		}
 		return nil
 	}
 	file, err := os.Open(srcPath)
@@ -334,7 +395,9 @@ func ConvertToWebp(srcPath string, fileListPtr *map[string]string, fromDir, toDi
 		return err
 	}
 	log.Infof("converted image (%s) to webp: %s", srcPath, outputPath)
-	(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
+	if fileListPtr != nil {
+		(*fileListPtr)[strings.TrimPrefix(srcPath, "static/")] = outputPath
+	}
 	return nil
 }
 

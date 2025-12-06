@@ -33,6 +33,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+
 	// "github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -91,19 +92,11 @@ func (base Base) Serve(app *fiber.App) {
 	}))
 
 	app.Get("/image", func(c *fiber.Ctx) error {
-		/*
-			TODO: Add and use base.Images.Optimize()
-			to create optimized version of an image
-			Return img element with src based on id
-			create using the "gen" function in the
-			template engine
-		*/
 		// width := c.Query("width", "100px")
 		// height := c.Query("height", "100px")
-		classes := c.Query("classes", "round")
-		path := c.Query("path", "pepe.jpg")
-		finalPath := "static/img/" + path
-		return c.SendString("<img src='" + finalPath + "' class='" + classes + "'>")
+		path := c.Query("path")
+		finalPath := path
+		return c.SendString("<img class='gen-image' src='" + finalPath + "' width=100% height=100%>")
 	})
 
 	go func() {
@@ -375,32 +368,13 @@ exec bash
 			`)
 		},
 		"gen": func(args ...string) ht.HTML {
-			/*
-				TODO: Create optimized versions of an image
-				only when "gen" is used in the template engine
-				Return id to be used with base's "/image" route
-				Use base.Images.Reference() to get the optimized
-				version's id
-			*/
-			id := "hello"
-			classes := "round"
-			/*
-				path := "pepe.jpg"
-				if len(args) > 0 {
-					path = args[0]
-				}
-				if len(args) > 1 {
-					classes = args[1]
-				}
-				finalPath := "static/img/" + path
-			*/
+			path := "static/img/pepe.jpg"
+			if len(args) > 0 {
+				path = args[0]
+			}
 
-			/*
-				imgString := `
-				<img src='` + finalPath + `' class='` + classes + `'>
-				`
-			*/
-			htmxString := `<div hx-get="/image?id=` + id + `&classes='` + classes + `'" hx-trigger="load">
+			outputPath := helpers.ConvertInlineWebp(path, filepath.Dir(path), "static/gen/img")
+			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`
 
 			return ht.HTML(htmxString)
