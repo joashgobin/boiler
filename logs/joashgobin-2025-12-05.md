@@ -6,3 +6,4 @@
 - Updated template
 - Updated stack layout
 - Update
+- Updated htmx preset
