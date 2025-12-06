@@ -285,7 +285,7 @@ func ReplaceSpecial(text string) string {
 	return strings.ToLower(re.ReplaceAllString(text, "-"))
 }
 
-func ConvertInlineWebp(srcPath string, toDir string) string {
+func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
 	srcContent, err := os.ReadFile(srcPath)
