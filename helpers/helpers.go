@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Kagami/go-avif"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -292,6 +293,56 @@ func GetFileHash(srcPath string) string {
 		return ""
 	}
 	return GetHash(fmt.Sprintf("%s-%s-%d", srcPath, fileInfo.ModTime().String(), fileInfo.Size()))
+}
+
+func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
+	fromDir := filepath.Dir(srcPath)
+	start := time.Now()
+
+	hashString := GetFileHash(srcPath)
+	outputPath := fmt.Sprintf("%s.%s.avif",
+		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+			filepath.Ext(srcPath)), hashString)
+
+	if FileExists(outputPath) {
+		// log.Info("skipping ", outputPath)
+		return outputPath
+	}
+	file, err := os.Open(srcPath)
+	if err != nil {
+		log.Errorf("error converting to avif: %v", err)
+		return ""
+	}
+
+	var img image.Image
+
+	switch filepath.Ext(srcPath) {
+	case ".png":
+		img, err = png.Decode(file)
+		if err != nil {
+			log.Errorf("error converting to avif: %v", err)
+			return ""
+		}
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(file)
+		if err != nil {
+			log.Errorf("error converting to avif: %v", err)
+			return ""
+		}
+	}
+
+	output, err := os.Create(outputPath)
+	if err != nil {
+		log.Errorf("error creating output path: %v", err)
+		return ""
+	}
+	defer output.Close()
+
+	if err := avif.Encode(output, img, nil); err != nil {
+		return ""
+	}
+	log.Infof("(%v) converted image (%s) to avif: %s", time.Since(start), srcPath, outputPath)
+	return outputPath
 }
 
 func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {

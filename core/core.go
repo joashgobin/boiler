@@ -372,7 +372,7 @@ exec bash
 				path = args[0]
 			}
 
-			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
+			outputPath := helpers.ConvertInlineAVIF(path, "static/gen/img")
 			return ht.HTML(outputPath)
 		},
 		"lazy": func(args ...string) ht.HTML {
@@ -382,7 +382,7 @@ exec bash
 				path = args[0]
 			}
 
-			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
+			outputPath := helpers.ConvertInlineAVIF(path, "static/gen/img")
 			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`
 			// fmt.Println(time.Since(start))

@@ -164,6 +164,12 @@ make deploy/app
 - Panic recovery
 - Algorithmic layouts via mango CSS
 
+## Dependencies
+AVIF conversion is done using libaom-dev:
+```sh
+sudo apt-get install libaom-dev
+```
+
 ## Template
 Add the following to your *views/layouts/main.html* file:
 ```html
