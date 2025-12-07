@@ -183,9 +183,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	// log.Info("fingerprints:", fingerprints)
 
 	// convert all images to webp
-	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
-	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
-	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".png", &optimizations)
+	helpers.ConvertInFolderToAVIF("static/img", "static/gen/img", ".jpeg", &optimizations)
+	helpers.ConvertInFolderToAVIF("static/img", "static/gen/img", ".jpg", &optimizations)
+	helpers.ConvertInFolderToAVIF("static/img", "static/gen/img", ".png", &optimizations)
 	// fmt.Println(optimizations)
 
 	showElapsed("app resource optimization time", start)
