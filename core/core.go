@@ -183,9 +183,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	// log.Info("fingerprints:", fingerprints)
 
 	// convert all images to webp
-	helpers.ConvertInFolderToAVIF("static/img", "static/gen/img", ".jpeg", &optimizations)
-	helpers.ConvertInFolderToAVIF("static/img", "static/gen/img", ".jpg", &optimizations)
-	helpers.ConvertInFolderToAVIF("static/img", "static/gen/img", ".png", &optimizations)
+	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpeg", &optimizations)
+	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".jpg", &optimizations)
+	helpers.ConvertInFolderToWebp("static/img", "static/gen/img", ".png", &optimizations)
 	// fmt.Println(optimizations)
 
 	showElapsed("app resource optimization time", start)
@@ -372,7 +372,7 @@ exec bash
 				path = args[0]
 			}
 
-			outputPath := helpers.ConvertInlineAVIF(path, "static/gen/img")
+			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
 			return ht.HTML(outputPath)
 		},
 		"lazy": func(args ...string) ht.HTML {
@@ -382,7 +382,7 @@ exec bash
 				path = args[0]
 			}
 
-			outputPath := helpers.ConvertInlineAVIF(path, "static/gen/img")
+			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
 			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`
 			// fmt.Println(time.Since(start))

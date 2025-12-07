@@ -2,3 +2,4 @@
 
 - Implemented inline avif conversions
 - Added functions to convert folder items into avid
+- Revert to webp usage
