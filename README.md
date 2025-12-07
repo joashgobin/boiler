@@ -165,6 +165,11 @@ make deploy/app
 - Algorithmic layouts via mango CSS
 
 ## Dependencies
+The notable dependencies are:
+- Valkey
+- MySQL
+- libaom-dev
+
 AVIF conversion is done using libaom-dev:
 ```sh
 sudo apt-get install libaom-dev
