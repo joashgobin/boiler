@@ -366,26 +366,15 @@ exec bash
 </script>
 			`)
 		},
-		"gen": func(args ...string) ht.HTML {
-			path := "static/img/pepe.jpg"
-			if len(args) > 0 {
-				path = args[0]
-			}
-
-			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
+		"gen": func(imgPath string) ht.HTML {
+			outputPath := helpers.ConvertInlineWebp(imgPath, "static/gen/img")
 			return ht.HTML(outputPath)
 		},
-		"lazy": func(args ...string) ht.HTML {
-			// start := time.Now()
-			path := "static/img/pepe.jpg"
-			if len(args) > 0 {
-				path = args[0]
-			}
+		"lazy": func(imgPath string) ht.HTML {
+			outputPath := helpers.ConvertInlineWebp(imgPath, "static/gen/img")
 
-			outputPath := helpers.ConvertInlineWebp(path, "static/gen/img")
 			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`
-			// fmt.Println(time.Since(start))
 			return ht.HTML(htmxString)
 		},
 		"icon": func(iconName ...string) ht.HTML {

@@ -3,6 +3,7 @@ module github.com/joashgobin/boiler
 go 1.25.5
 
 require (
+	github.com/Kagami/go-avif v0.1.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/fiber/v2 v2.52.10
@@ -18,12 +19,12 @@ require (
 	github.com/yeqown/go-qrcode/writer/standard v1.3.0
 	go.rumenx.com/sitemap v1.0.1
 	golang.org/x/crypto v0.43.0
+	golang.org/x/image v0.33.0
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
-	github.com/Kagami/go-avif v0.1.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -53,13 +54,12 @@ require (
 	github.com/yeqown/reedsolomon v1.0.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20231108232855-2478ac86f678 // indirect
-	golang.org/x/image v0.10.0 // indirect
-	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/telemetry v0.0.0-20250908211612-aef8a434d053 // indirect
-	golang.org/x/text v0.30.0 // indirect
-	golang.org/x/tools v0.37.0 // indirect
+	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	golang.org/x/vuln v1.1.4 // indirect

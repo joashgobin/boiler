@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net/url"
 	"os"
@@ -21,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/image/draw"
 
 	"github.com/Kagami/go-avif"
 	"github.com/go-sql-driver/mysql"
@@ -350,9 +353,19 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	start := time.Now()
 
 	hashString := GetFileHash(srcPath)
-	outputPath := fmt.Sprintf("%s.%s.webp",
+	outputPath := fmt.Sprintf("%s_600x.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), hashString)
+
+	/*
+		if len(dimensions) > 0 {
+			outputPath = fmt.Sprintf("%s_%dx.%s.webp",
+				strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+					filepath.Ext(srcPath)), dimensions[0], hashString)
+		}
+	*/
+
+	// fmt.Println("converting", outputPath)
 
 	if FileExists(outputPath) {
 		// log.Info("skipping ", outputPath)
@@ -381,6 +394,15 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 		}
 	}
 
+	// resizing attempt on final image
+	width := 600
+	ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+	height := int(math.Round(float64(width) * ratio))
+
+	// create final image with new size
+	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
+	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+
 	output, err := os.Create(outputPath)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
@@ -392,7 +414,7 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 		log.Errorf("error encoding: %v", err)
 		return ""
 	}
-	if err := webp.Encode(output, img, options); err != nil {
+	if err := webp.Encode(output, finalImg, options); err != nil {
 		return ""
 	}
 	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
