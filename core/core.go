@@ -366,12 +366,12 @@ exec bash
 </script>
 			`)
 		},
-		"gen": func(imgPath string) ht.HTML {
-			outputPath := helpers.ConvertInlineWebp(imgPath, "static/gen/img")
+		"gen": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(outputPath)
 		},
-		"lazy": func(imgPath string) ht.HTML {
-			outputPath := helpers.ConvertInlineWebp(imgPath, "static/gen/img")
+		"lazy": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
 
 			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
             </div>`

@@ -5,3 +5,4 @@
 - Revert to webp usage
 - Updated README
 - Added default image size of 600px width for webp files
+- Updated logic for image generation with resizing

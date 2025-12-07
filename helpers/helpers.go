@@ -349,13 +349,17 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 }
 
 func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
+	width := 600
+	if len(dimensions) > 0 {
+		width = dimensions[0]
+	}
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
 
 	hashString := GetFileHash(srcPath)
-	outputPath := fmt.Sprintf("%s_600x.%s.webp",
+	outputPath := fmt.Sprintf("%s_%dx.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)), hashString)
+			filepath.Ext(srcPath)), width, hashString)
 
 	/*
 		if len(dimensions) > 0 {
@@ -395,7 +399,6 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	}
 
 	// resizing attempt on final image
-	width := 600
 	ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
 	height := int(math.Round(float64(width) * ratio))
 
