@@ -62,7 +62,6 @@ h6 {
     font-weight: 400;
     font-family: var(--heading-font);
     letter-spacing: -1px;
-    margin: 0.1rem 0;
     line-height: 1.1;
 }
 
@@ -86,9 +85,7 @@ h6 {
     font-style: italic;
 }
 
-p {
-    margin: 0.1rem 0;
-}
+p {}
 
 p,
 h1,
