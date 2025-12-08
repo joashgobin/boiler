@@ -30,6 +30,30 @@ func NewSafeImage(img image.Image, from, to string) *SafeImage {
 	return &SafeImage{image: img, from: from, to: to}
 }
 
+func (si *SafeImage) SaveAVIF() string {
+	si.mu.Lock()
+	defer si.mu.Unlock()
+
+	output, err := os.Create(si.from)
+	if err != nil {
+		log.Errorf("error creating output path: %v", err)
+		return ""
+	}
+	defer output.Close()
+
+	if err := avif.Encode(output, si.image, nil); err != nil {
+		log.Errorf("error encoding safe image to avif: %v", err)
+		return ""
+	}
+
+	err = os.Rename(si.from, si.to)
+	if err != nil {
+		log.Errorf("error renaming safe image for avif: %v", err)
+		return ""
+	}
+	return si.to
+}
+
 func (si *SafeImage) SaveWebp() string {
 	si.mu.Lock()
 	defer si.mu.Unlock()
@@ -59,13 +83,21 @@ func (si *SafeImage) SaveWebp() string {
 }
 
 func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
+	width := 600
+	if len(dimensions) > 0 {
+		width = dimensions[0]
+	}
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
 
 	hashString := GetFileHash(srcPath)
-	outputPath := fmt.Sprintf("%s.%s.avif",
+
+	tempPath := fmt.Sprintf("%s_%dx_%v.%s.avif.%d.lock",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)), hashString)
+			filepath.Ext(srcPath)), width, time.Now().Format(time.RFC3339), hashString, os.Getpid())
+	outputPath := fmt.Sprintf("%s_%dx.%s.avif",
+		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+			filepath.Ext(srcPath)), width, hashString)
 
 	if FileExists(outputPath) {
 		// log.Info("skipping ", outputPath)
@@ -94,16 +126,17 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 		}
 	}
 
-	output, err := os.Create(outputPath)
-	if err != nil {
-		log.Errorf("error creating output path: %v", err)
-		return ""
-	}
-	defer output.Close()
+	// resizing attempt on final image
+	ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+	height := int(math.Round(float64(width) * ratio))
 
-	if err := avif.Encode(output, img, nil); err != nil {
-		return ""
-	}
+	// create final image with new size
+	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
+	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+
+	safeImage := NewSafeImage(finalImg, tempPath, outputPath)
+	safeImage.SaveAVIF()
+
 	log.Infof("(%v) converted image (%s) to avif: %s", time.Since(start), srcPath, outputPath)
 	return outputPath
 }

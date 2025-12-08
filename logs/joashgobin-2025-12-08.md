@@ -4,3 +4,4 @@
 - Moved image related functions to a separate go file
 - Removed margins from p and headings
 - Fixed paths for gen and lazy functions
+- Added avif option for conversions
