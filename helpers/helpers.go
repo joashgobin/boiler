@@ -298,6 +298,45 @@ func GetFileHash(srcPath string) string {
 	return GetHash(fmt.Sprintf("%s-%s-%d", srcPath, fileInfo.ModTime().String(), fileInfo.Size()))
 }
 
+type SafeImage struct {
+	mu    sync.Mutex
+	image image.Image
+	from  string
+	to    string
+}
+
+func NewSafeImage(img image.Image, from, to string) *SafeImage {
+	return &SafeImage{image: img, from: from, to: to}
+}
+
+func (si *SafeImage) SaveWebp() string {
+	si.mu.Lock()
+	defer si.mu.Unlock()
+
+	output, err := os.Create(si.from)
+	if err != nil {
+		log.Errorf("error creating output path: %v", err)
+		return ""
+	}
+	defer output.Close()
+	options, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, 75)
+	if err != nil {
+		log.Errorf("error setting safe image webp options: %v", err)
+		return ""
+	}
+	if err := webp.Encode(output, si.image, options); err != nil {
+		log.Errorf("error encoding safe image to webp: %v", err)
+		return ""
+	}
+
+	err = os.Rename(si.from, si.to)
+	if err != nil {
+		log.Errorf("error renaming safe image for webp: %v", err)
+		return ""
+	}
+	return si.to
+}
+
 func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
@@ -357,19 +396,13 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	start := time.Now()
 
 	hashString := GetFileHash(srcPath)
+
+	tempPath := fmt.Sprintf("%s_%dx_%v.%s.webp.%d.lock",
+		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+			filepath.Ext(srcPath)), width, time.Now().Format(time.RFC3339), hashString, os.Getpid())
 	outputPath := fmt.Sprintf("%s_%dx.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), width, hashString)
-
-	/*
-		if len(dimensions) > 0 {
-			outputPath = fmt.Sprintf("%s_%dx.%s.webp",
-				strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-					filepath.Ext(srcPath)), dimensions[0], hashString)
-		}
-	*/
-
-	// fmt.Println("converting", outputPath)
 
 	if FileExists(outputPath) {
 		// log.Info("skipping ", outputPath)
@@ -406,20 +439,9 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
 
-	output, err := os.Create(outputPath)
-	if err != nil {
-		log.Errorf("error creating output path: %v", err)
-		return ""
-	}
-	defer output.Close()
-	options, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, 75)
-	if err != nil {
-		log.Errorf("error encoding: %v", err)
-		return ""
-	}
-	if err := webp.Encode(output, finalImg, options); err != nil {
-		return ""
-	}
+	safeImage := NewSafeImage(finalImg, tempPath, outputPath)
+	safeImage.SaveWebp()
+
 	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
 	return outputPath
 }
