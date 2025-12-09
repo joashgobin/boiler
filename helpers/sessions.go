@@ -23,6 +23,7 @@ type FlashInterface interface {
 	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string, defaultValue ...any) any
 	Prefetch(c *fiber.Ctx, urls ...string)
+	KeepCached(c *fiber.Ctx, maxAge int)
 	// GetUser(c *fiber.Ctx) interface{}
 	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
@@ -42,6 +43,10 @@ func GetUser[T any](c *fiber.Ctx, flash FlashInterface) T {
 
 func (flash *FlashModel) Prefetch(c *fiber.Ctx, urls ...string) {
 	c.Locals("prefetch", urls)
+}
+
+func (flash *FlashModel) KeepCached(c *fiber.Ctx, maxAge int) {
+	c.Set("Cache-Control", fmt.Sprintf("private,max-age=%d", maxAge))
 }
 
 func (flash *FlashModel) GetUser(c *fiber.Ctx) interface{} {
@@ -203,6 +208,8 @@ func (flash *FlashModel) ClearOld(c *fiber.Ctx) {
 
 func SessionLocalsMiddleware(store *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		c.Set("Cache-Control", "private,max-age=0")
+
 		sess, err := store.Get(c)
 		if err != nil {
 			return err
