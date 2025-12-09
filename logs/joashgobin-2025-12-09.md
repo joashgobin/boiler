@@ -6,3 +6,4 @@
 - Do not compress files in static dev folder
 - Added prefetching
 - Fiber app now manages the html cache time
+- Updated README

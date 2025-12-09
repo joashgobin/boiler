@@ -149,6 +149,8 @@ make deploy/app
 ## Features
 - Favicon generation
 - Image optimization with fingerprinting
+- HTML file prefetching
+- Route-specific cache control
 - CSS minification with fingerprinting
 - Efficient caching
 - Deployments to VPS:
