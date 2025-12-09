@@ -215,14 +215,17 @@
 .darken {
     background-color: hsl(from var(--bg-color) h s l / 0.85);
     background-blend-mode: darken;
+    background-size: cover;
 }
 
 .darken-2 {
     background-color: hsl(from var(--bg-color) h s l / 0.9);
     background-blend-mode: darken;
+    background-size: cover;
 }
 
 .darken-3 {
     background-color: hsl(from var(--bg-color) h s l / 0.95);
     background-blend-mode: darken;
+    background-size: cover;
 }

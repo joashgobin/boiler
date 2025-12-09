@@ -7,3 +7,4 @@
 - Added prefetching
 - Fiber app now manages the html cache time
 - Updated README
+- Modified darken tokens
