@@ -6,3 +6,4 @@
 - Fixed paths for gen and lazy functions
 - Added avif option for conversions
 - Added alias functions for gen and lazy
+- Use regular img tag instead of htmx
