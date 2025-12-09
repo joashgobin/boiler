@@ -643,7 +643,7 @@ exec bash
 
 	// serve static files when in development
 	app.Static("/static/", "./static", fiber.Static{
-		Compress:      true,
+		Compress:      false,
 		ByteRange:     true,
 		Browse:        true,
 		Index:         "index.html",

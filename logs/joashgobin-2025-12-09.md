@@ -3,3 +3,4 @@
 - Generate intermediate 1200px wide version of image for faster generation
 - Refactored message for intermediate image generation
 - Tweak
+- Do not compress files in static dev folder
