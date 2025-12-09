@@ -263,7 +263,7 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	if !FileExists(intermediatePath) {
 		tempPath := GetTempName(intermediatePath)
 
-		log.Infof("generating intermediate file: %s => %s", tempPath, intermediatePath)
+		log.Infof("generating intermediate file: %s", intermediatePath)
 
 		file, err := os.Open(srcPath)
 		if err != nil {
