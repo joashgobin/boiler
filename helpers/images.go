@@ -22,19 +22,17 @@ import (
 type SafeImage struct {
 	mu    sync.Mutex
 	image image.Image
-	from  string
-	to    string
 }
 
-func NewSafeImage(img image.Image, from, to string) *SafeImage {
-	return &SafeImage{image: img, from: from, to: to}
+func NewSafeImage(img image.Image) *SafeImage {
+	return &SafeImage{image: img}
 }
 
-func (si *SafeImage) SaveAVIF() string {
+func (si *SafeImage) SaveAVIF(from, to string) string {
 	si.mu.Lock()
 	defer si.mu.Unlock()
 
-	output, err := os.Create(si.from)
+	output, err := os.Create(from)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
 		return ""
@@ -46,19 +44,69 @@ func (si *SafeImage) SaveAVIF() string {
 		return ""
 	}
 
-	err = os.Rename(si.from, si.to)
+	err = os.Rename(from, to)
 	if err != nil {
 		log.Errorf("error renaming safe image for avif: %v", err)
 		return ""
 	}
-	return si.to
+	return to
 }
 
-func (si *SafeImage) SaveWebp() string {
+func (si *SafeImage) SaveJPEG(from, to string) string {
 	si.mu.Lock()
 	defer si.mu.Unlock()
 
-	output, err := os.Create(si.from)
+	output, err := os.Create(from)
+	if err != nil {
+		log.Errorf("error creating output path: %v", err)
+		return ""
+	}
+	defer output.Close()
+
+	err = jpeg.Encode(output, si.image, &jpeg.Options{Quality: 90})
+	if err != nil {
+		log.Errorf("error encoding safe image to jpeg: %v", err)
+		return ""
+	}
+
+	err = os.Rename(from, to)
+	if err != nil {
+		log.Errorf("error renaming safe image for jpeg: %v", err)
+		return ""
+	}
+	return to
+}
+
+func (si *SafeImage) SavePNG(from, to string) string {
+	si.mu.Lock()
+	defer si.mu.Unlock()
+
+	output, err := os.Create(from)
+	if err != nil {
+		log.Errorf("error creating output path: %v", err)
+		return ""
+	}
+	defer output.Close()
+
+	err = png.Encode(output, si.image)
+	if err != nil {
+		log.Errorf("error encoding safe image to png: %v", err)
+		return ""
+	}
+
+	err = os.Rename(from, to)
+	if err != nil {
+		log.Errorf("error renaming safe image for png: %v", err)
+		return ""
+	}
+	return to
+}
+
+func (si *SafeImage) SaveWebp(from, to string) string {
+	si.mu.Lock()
+	defer si.mu.Unlock()
+
+	output, err := os.Create(from)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
 		return ""
@@ -74,16 +122,18 @@ func (si *SafeImage) SaveWebp() string {
 		return ""
 	}
 
-	err = os.Rename(si.from, si.to)
+	err = os.Rename(from, to)
 	if err != nil {
 		log.Errorf("error renaming safe image for webp: %v", err)
 		return ""
 	}
-	return si.to
+	return to
 }
 
 func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 	width := 600
+	intermediateWidth := 1200
+
 	if len(dimensions) > 0 {
 		width = dimensions[0]
 	}
@@ -92,9 +142,54 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 
 	hashString := GetFileHash(srcPath)
 
-	tempPath := fmt.Sprintf("%s_%dx_%v.%s.avif.%d.lock",
+	intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)), width, time.Now().Format(time.RFC3339), hashString, os.Getpid())
+			filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
+
+	// use intermediate if present
+	if !FileExists(intermediatePath) {
+		tempPath := GetTempName(intermediatePath)
+
+		log.Infof("generating intermediate file: %s => %s", tempPath, intermediatePath)
+
+		file, err := os.Open(srcPath)
+		if err != nil {
+			log.Errorf("error converting to avif: %v", err)
+			return ""
+		}
+
+		var img image.Image
+
+		switch filepath.Ext(srcPath) {
+		case ".png":
+			img, err = png.Decode(file)
+			if err != nil {
+				log.Errorf("error converting to avif: %v", err)
+				return ""
+			}
+		case ".jpg", ".jpeg":
+			img, err = jpeg.Decode(file)
+			if err != nil {
+				log.Errorf("error converting to avif: %v", err)
+				return ""
+			}
+		}
+
+		ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+		height := int(math.Round(float64(intermediateWidth) * ratio))
+		finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
+		draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+
+		safeImage := NewSafeImage(finalImg)
+
+		switch filepath.Ext(srcPath) {
+		case ".png":
+			safeImage.SavePNG(tempPath, intermediatePath)
+		case ".jpg", ".jpeg":
+			safeImage.SaveJPEG(tempPath, intermediatePath)
+		}
+	}
+
 	outputPath := fmt.Sprintf("%s_%dx.%s.avif",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), width, hashString)
@@ -103,7 +198,10 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 		// log.Info("skipping ", outputPath)
 		return outputPath
 	}
-	file, err := os.Open(srcPath)
+
+	tempPath := GetTempName(outputPath)
+
+	file, err := os.Open(intermediatePath)
 	if err != nil {
 		log.Errorf("error converting to avif: %v", err)
 		return ""
@@ -134,15 +232,21 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
 
-	safeImage := NewSafeImage(finalImg, tempPath, outputPath)
-	safeImage.SaveAVIF()
+	safeImage := NewSafeImage(finalImg)
+	safeImage.SaveAVIF(tempPath, outputPath)
 
 	log.Infof("(%v) converted image (%s) to avif: %s", time.Since(start), srcPath, outputPath)
 	return outputPath
 }
 
+func GetTempName(name string) string {
+	return fmt.Sprintf("%s.%s.%d.lock", name, time.Now().Format(time.RFC3339), os.Getpid())
+}
+
 func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	width := 600
+	intermediateWidth := 1200
+
 	if len(dimensions) > 0 {
 		width = dimensions[0]
 	}
@@ -151,9 +255,54 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 
 	hashString := GetFileHash(srcPath)
 
-	tempPath := fmt.Sprintf("%s_%dx_%v.%s.webp.%d.lock",
+	intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)), width, time.Now().Format(time.RFC3339), hashString, os.Getpid())
+			filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
+
+	// use intermediate if present
+	if !FileExists(intermediatePath) {
+		tempPath := GetTempName(intermediatePath)
+
+		log.Infof("generating intermediate file: %s => %s", tempPath, intermediatePath)
+
+		file, err := os.Open(srcPath)
+		if err != nil {
+			log.Errorf("error converting to webp: %v", err)
+			return ""
+		}
+
+		var img image.Image
+
+		switch filepath.Ext(srcPath) {
+		case ".png":
+			img, err = png.Decode(file)
+			if err != nil {
+				log.Errorf("error converting to webp: %v", err)
+				return ""
+			}
+		case ".jpg", ".jpeg":
+			img, err = jpeg.Decode(file)
+			if err != nil {
+				log.Errorf("error converting to webp: %v", err)
+				return ""
+			}
+		}
+
+		ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+		height := int(math.Round(float64(intermediateWidth) * ratio))
+		finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
+		draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+
+		safeImage := NewSafeImage(finalImg)
+
+		switch filepath.Ext(srcPath) {
+		case ".png":
+			safeImage.SavePNG(tempPath, intermediatePath)
+		case ".jpg", ".jpeg":
+			safeImage.SaveJPEG(tempPath, intermediatePath)
+		}
+	}
+
 	outputPath := fmt.Sprintf("%s_%dx.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), width, hashString)
@@ -162,7 +311,10 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 		// log.Info("skipping ", outputPath)
 		return outputPath
 	}
-	file, err := os.Open(srcPath)
+
+	tempPath := GetTempName(outputPath)
+
+	file, err := os.Open(intermediatePath)
 	if err != nil {
 		log.Errorf("error converting to webp: %v", err)
 		return ""
@@ -193,8 +345,8 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
 
-	safeImage := NewSafeImage(finalImg, tempPath, outputPath)
-	safeImage.SaveWebp()
+	safeImage := NewSafeImage(finalImg)
+	safeImage.SaveWebp(tempPath, outputPath)
 
 	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
 	return outputPath

@@ -13,8 +13,11 @@
 
 .card.no-pad {
     padding: 0;
-    overflow: hidden;
     padding-bottom: 2rem;
+}
+
+.card.card.no-pad>img {
+    border-radius: 1rem 1rem 0 0;
 }
 
 .card.no-pad>* {
