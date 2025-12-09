@@ -5,3 +5,4 @@
 - Removed margins from p and headings
 - Fixed paths for gen and lazy functions
 - Added avif option for conversions
+- Added alias functions for gen and lazy
