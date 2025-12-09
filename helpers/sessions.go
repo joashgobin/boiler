@@ -22,6 +22,7 @@ type FlashInterface interface {
 	Require(keys ...string) fiber.Handler
 	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string, defaultValue ...any) any
+	Prefetch(c *fiber.Ctx, urls ...string)
 	// GetUser(c *fiber.Ctx) interface{}
 	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
@@ -37,6 +38,10 @@ func GetUser[T any](c *fiber.Ctx, flash FlashInterface) T {
 	}
 	var emptyUser T
 	return emptyUser
+}
+
+func (flash *FlashModel) Prefetch(c *fiber.Ctx, urls ...string) {
+	c.Locals("prefetch", urls)
 }
 
 func (flash *FlashModel) GetUser(c *fiber.Ctx) interface{} {

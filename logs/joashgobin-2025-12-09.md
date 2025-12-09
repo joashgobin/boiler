@@ -4,3 +4,4 @@
 - Refactored message for intermediate image generation
 - Tweak
 - Do not compress files in static dev folder
+- Added prefetching
