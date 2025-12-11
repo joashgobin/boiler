@@ -335,12 +335,23 @@ exec bash
 			return t.UTC().Format("2006")
 		},
 		"gfont": func(fontName string, selector string) ht.HTML {
-			return ht.HTML(`<style>
-@import url('https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap');
-` + selector + `{
-	font-family: ` + fontName + `, sans-serif;
-}
-</style>`)
+			/*
+							return ht.HTML(`<style>
+				@import url('https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap');
+				` + selector + `{
+					font-family: ` + fontName + `, sans-serif;
+				}
+				</style>`)
+			*/
+			return ht.HTML(`
+			<link rel="preconnect" href="https://fonts.googleapis.com">
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+			<link href="https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+				<style>
+				` + selector + `{
+					font-family: "` + fontName + `", sans-serif;
+				}
+				</style>`)
 		},
 		"role": func(roles interface{}, role string) bool {
 			if roles == nil {
