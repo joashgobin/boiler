@@ -335,14 +335,6 @@ exec bash
 			return t.UTC().Format("2006")
 		},
 		"gfont": func(fontName string, selector string) ht.HTML {
-			/*
-							return ht.HTML(`<style>
-				@import url('https://fonts.googleapis.com/css2?family=` + strings.ReplaceAll(fontName, " ", "+") + `&display=swap');
-				` + selector + `{
-					font-family: ` + fontName + `, sans-serif;
-				}
-				</style>`)
-			*/
 			return ht.HTML(`
 			<link rel="preconnect" href="https://fonts.googleapis.com">
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -352,6 +344,35 @@ exec bash
 					font-family: "` + fontName + `", sans-serif;
 				}
 				</style>`)
+		},
+		"gfonts": func(args ...string) ht.HTML {
+			if len(args)%2 != 0 {
+				return ht.HTML("<!-- (gfonts) Please specify font-selectors pairs -->")
+			}
+			selectorsQueue := `<style>`
+			start := `
+			<link rel="preconnect" href="https://fonts.googleapis.com">
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+			<link href="https://fonts.googleapis.com/css2`
+			for i := 0; i < len(args); i += 2 {
+				fontName := args[i]
+				selectors := args[i+1]
+				if i == 0 {
+					start += "?family="
+				} else {
+					start += "&family="
+				}
+				selectorsQueue += selectors + `{ font-family: "` + fontName + `",sans-serif; } `
+				start += strings.ReplaceAll(fontName, " ", "+")
+			}
+
+			end := `&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+				`
+			selectorsQueue += `</style>`
+			start += end
+			start += selectorsQueue
+			return ht.HTML(start)
 		},
 		"role": func(roles interface{}, role string) bool {
 			if roles == nil {
