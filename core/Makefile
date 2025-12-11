@@ -59,7 +59,7 @@ deploy/static:
 	@-figlet "Deploy static"
 	@echo "• transferring static files to VPS"
 	@echo "${YELLOW}"
-	@rsync -zrP --exclude='static/gen' ./static ./remote ./Makefile ./config.env ${username}@${production_host_ip}:~/${project_name}/
+	@rsync -uzrP --exclude='static/gen' ./static ./remote ./Makefile ./config.env ${username}@${production_host_ip}:~/${project_name}/
 	@echo "${NC}"
 
 ## build: build local copy
