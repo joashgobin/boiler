@@ -408,6 +408,14 @@ exec bash
 			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(outputPath)
 		},
+		"preload": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			return ht.HTML("<link rel='preload' href='" + outputPath + "' as='image' fetchpriority='high'>")
+		},
+		"preloads": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			return ht.HTML("<link rel='preload' href='" + outputPath + "' as='image' fetchpriority='high'>")
+		},
 		"lazy": func(imgPath string, dimensions ...int) ht.HTML {
 			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
 
