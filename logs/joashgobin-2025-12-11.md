@@ -2,3 +2,4 @@
 
 - Removed smooth scrolling
 - Update static files via rsync
+- Updated db connections

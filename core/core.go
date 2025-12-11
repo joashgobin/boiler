@@ -713,6 +713,10 @@ exec bash
 		return app, Base{}
 	}
 
+	// set db connections
+	db.SetMaxIdleConns(2)
+	db.SetMaxOpenConns(20)
+
 	var wg sync.WaitGroup
 
 	// create email model
