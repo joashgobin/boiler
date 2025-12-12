@@ -5,3 +5,4 @@
 - Updated db connections
 - Removed requirement
 - Added status make target
+- Removed cp command
