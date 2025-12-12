@@ -4,3 +4,4 @@
 - Update static files via rsync
 - Updated db connections
 - Removed requirement
+- Added status make target

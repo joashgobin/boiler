@@ -11,6 +11,11 @@ help:
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 
+## status: see the status of the remote app
+.PHONY: status
+status:
+	@ssh ${username}@${production_host_ip} "service <appName> status"
+
 ## deploy: upload updated version of app to VPS
 .PHONY: deploy
 deploy: deploy/static deploy/app
