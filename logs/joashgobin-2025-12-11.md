@@ -6,3 +6,4 @@
 - Removed requirement
 - Added status make target
 - Removed cp command
+- Added app name to valkey session key
