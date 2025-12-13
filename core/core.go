@@ -368,7 +368,7 @@ exec bash
 				start += strings.ReplaceAll(fontName, " ", "+")
 			}
 
-			end := `&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+			end := `&display=swap&text=abcdefghijklmnopqrstuvwxyz1234567890" rel="stylesheet" media="print" onload="this.media='all'">
 				`
 			selectorsQueue += `</style>`
 			start += end
