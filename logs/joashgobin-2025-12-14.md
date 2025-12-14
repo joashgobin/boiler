@@ -4,3 +4,4 @@
 - Added inuse for pprof
 - Tweak
 - Updated makefile
+- Remove app name from session token name

@@ -20,7 +20,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/gofiber/fiber/v2/utils"
 	"github.com/gofiber/template/html/v2"
 	"github.com/joashgobin/boiler/core/models"
 	"github.com/joashgobin/boiler/email"
@@ -623,9 +622,6 @@ exec bash
 		// KeyLookup:      "cookie:__Host-session", // Recommended to use the __Host- prefix when serving the app over TLS
 		KeyLookup:    "cookie:" + config.AppName + "_fiber_session",
 		CookieSecure: true,
-		KeyGenerator: func() string {
-			return config.AppName + "-session-" + utils.UUIDv4()
-		},
 		// CookieHTTPOnly: true,
 		CookieHTTPOnly: false,
 		CookieSameSite: "Lax",
