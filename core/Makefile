@@ -124,7 +124,7 @@ nginx:
 .PHONY: prof
 prof:
 	@-figlet "Prof"
-	go tool pprof http://localhost:<port>/profiler/debug/pprof/heap
+	go tool pprof -http=":8000" http://localhost:<port>/profiler/debug/pprof/profile?seconds=30
 
 ## prof/png: output png of pprof
 .PHONY: prof/png
