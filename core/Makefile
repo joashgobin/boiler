@@ -124,11 +124,11 @@ nginx:
 .PHONY: prof
 prof:
 	@-figlet "Prof"
-	go tool pprof http://localhost:<port>/profiler/debug/pprof/heap
+	go tool pprof -inuse_space http://localhost:<port>/profiler/debug/pprof/heap
 
 ## prof/png: output png of pprof
 .PHONY: prof/png
 prof/png:
 	@-figlet "Prof/png"
-	@-go tool pprof -png http://localhost:<port>/profiler/debug/pprof/heap > static/gen/prof.png
+	@-go tool pprof -inuse_space -png http://localhost:<port>/profiler/debug/pprof/heap > static/gen/prof.png
 
