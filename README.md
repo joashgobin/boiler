@@ -2,7 +2,7 @@
 This project is focused on providing boilerplate for a Gofiber app.
 
 ## Basic app
-Add the following to your **go.mod** file:
+Create a go module and add the following to your **go.mod** file:
 ```
 go 1.25.3
 
@@ -24,61 +24,6 @@ go get github.com/joashgobin/boiler/email
 
 Create a *main.go* file and paste the following code:
 
-```go
-package main
-
-import (
-    "flag"
-
-	"github.com/joashgobin/boiler/core"
-)
-
-func main() {
-	isProd := flag.Bool("prod", false, "production mode of app (dev vs. prod)")
-	flag.Parse()
-
-	config := core.AppConfig{
-		User:      "myname",
-		IP:        "myapp.example.com",
-		Port:      "9911",
-		AppName:   "appname",
-		Templates: nil,
-		SiteInfo:  &map[string]string{},
-		IsProduction: *isProd,
-	}
-	app, base := core.NewApp(config)
-
-	base.Serve(app)
-}
-
-```
-
-
-Note the following:
-- User - the username of the linux user that will be used to log into the VPS the app is being deployed to
-- IP - the domain name at which the app will be accessed via the internet when deployed
-- Port - the port number the app will run on
-- AppName - the name of the app will be used to create the database for the base app
-- Templates - the set of view files to be embedded
-- SiteInfo - general site information to be accessed in the templates using the "Get" function
-
-We can then embed the view files into the app using go embed:
-```sh
-mkdir -p views/layouts
-touch views/layouts/main.html
-touch views/index.html
-touch views/scripts.html
-```
-
-We now need to create the database for our app. Rename the Makefile and run the database migration:
-```sh
-cp Makefile.example Makefile
-cp .gitignore.example .gitignore
-cp .air.toml.example .air.toml
-sudo make up
-```
-
-Update the main.go file:
 ```go
 package main
 
@@ -116,6 +61,41 @@ func main() {
 
 	base.Serve(app)
 }
+```
+
+
+Note the following:
+- User - the username of the linux user that will be used to log into the VPS the app is being deployed to
+- IP - the domain name at which the app will be accessed via the internet when deployed
+- Port - the port number the app will run on
+- AppName - the name of the app will be used to create the database for the base app
+- Templates - the set of view files to be embedded
+- SiteInfo - general site information to be accessed in the templates using the "Get" function
+
+We can then embed the view files into the app using go embed:
+```sh
+mkdir -p views/layouts
+touch views/layouts/main.html
+touch views/index.html
+touch views/scripts.html
+```
+
+Run the program:
+```sh
+go run main.go
+```
+
+We now need to create the database for our app. Rename the Makefile and run the database migration:
+```sh
+cp Makefile.example Makefile
+cp .gitignore.example .gitignore
+cp .air.toml.example .air.toml
+sudo make up
+```
+
+Re-run the program:
+```sh
+go run main.go
 ```
 
 If this is your first app using this project as your starter, run the command to create the fiber user:
