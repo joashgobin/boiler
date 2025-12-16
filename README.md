@@ -190,6 +190,7 @@ Add the following to your *views/layouts/main.html* file:
     {{template "views/partials/modal-style" .}}
     {{template "views/partials/svg-pop" .}}
     {{template "views/partials/prefetch" .}}
+    {{template "views/partials/website-preset" .}}
     {{favicon}}
     {{preset "htmx"}}
 
