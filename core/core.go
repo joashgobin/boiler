@@ -424,7 +424,7 @@ exec bash
 				            </div>`
 							return ht.HTML(htmxString)
 			*/
-			return ht.HTML("<img alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
+			return ht.HTML("<img loading='lazy' decode='async' alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
 		},
 		"lazys": func(imgPath string, dimensions ...int) ht.HTML {
 			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
@@ -434,7 +434,7 @@ exec bash
 				            </div>`
 							return ht.HTML(htmxString)
 			*/
-			return ht.HTML("<img alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
+			return ht.HTML("<img loading='lazy' decode='async' alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
 		},
 		"icon": func(iconName ...string) ht.HTML {
 			width := "20px"
