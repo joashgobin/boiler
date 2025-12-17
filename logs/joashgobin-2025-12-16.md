@@ -4,3 +4,4 @@
 - Changed instructions
 - Moved some styles into website preset partial
 - Use PNG as favicon
+- Update
