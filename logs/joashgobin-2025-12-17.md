@@ -2,3 +2,4 @@
 
 - Use lock files to track favicon versions
 - Favicon function inserts hash for favicon file
+- Version the site manifest as well
