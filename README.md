@@ -138,6 +138,7 @@ make deploy/app
     - Static file transfer
     - Binary transfer and service setup
     - Nginx configuration and certbot certification
+- Brotli compression of resources via Nginx
 - User profile creation and management
 - Low memory usage
 - Rate limiting
