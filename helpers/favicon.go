@@ -96,8 +96,9 @@ func generateBrowserConfigXML(dstPath, tileColor string) {
 	}
 }
 
-func generateImage(img *image.Image, dstPath string, width, height int) {
-	if FileExists(dstPath) {
+func generateImage(img *image.Image, hash, dstPath string, width, height int) {
+	favLockPath := fmt.Sprintf("%s.%s.fav.lock", dstPath, hash)
+	if FileExists(favLockPath) {
 		return
 	}
 	newImg := imaging.Clone(*img)
@@ -108,25 +109,27 @@ func generateImage(img *image.Image, dstPath string, width, height int) {
 		fmt.Printf("[ERROR] Failed to save image(%s):\n%v", filepath.Base(dstPath), err)
 		os.Exit(1)
 	}
+	TouchFile(favLockPath)
 }
 
 func generateFaviconImages(targetImg, outputDir string) {
+	hash := GetFileHash(targetImg)
 	src, err := imaging.Open(targetImg)
 	if err != nil {
 		fmt.Printf("[ERROR] Failed to open image:\n%v", err)
 		os.Exit(1)
 	}
 
-	generateImage(&src, filepath.Join(outputDir, "android-chrome-192x192.png"), 192, 192)
-	generateImage(&src, filepath.Join(outputDir, "android-chrome-512x512.png"), 512, 512)
-	generateImage(&src, filepath.Join(outputDir, "apple-touch-icon.png"), 180, 180)
-	generateImage(&src, filepath.Join(outputDir, "favicon-16x16.png"), 16, 16)
-	generateImage(&src, filepath.Join(outputDir, "favicon-32x32.png"), 32, 32)
-	generateImage(&src, filepath.Join(outputDir, "favicon.png"), 48, 48)
-	generateImage(&src, filepath.Join(outputDir, "mstile-70x70.png"), 70, 70)
-	generateImage(&src, filepath.Join(outputDir, "mstile-150x150.png"), 150, 150)
-	generateImage(&src, filepath.Join(outputDir, "mstile-310x150.png"), 310, 150)
-	generateImage(&src, filepath.Join(outputDir, "mstile-310x310.png"), 310, 310)
+	generateImage(&src, hash, filepath.Join(outputDir, "android-chrome-192x192.png"), 192, 192)
+	generateImage(&src, hash, filepath.Join(outputDir, "android-chrome-512x512.png"), 512, 512)
+	generateImage(&src, hash, filepath.Join(outputDir, "apple-touch-icon.png"), 180, 180)
+	generateImage(&src, hash, filepath.Join(outputDir, "favicon-16x16.png"), 16, 16)
+	generateImage(&src, hash, filepath.Join(outputDir, "favicon-32x32.png"), 32, 32)
+	generateImage(&src, hash, filepath.Join(outputDir, "favicon.png"), 48, 48)
+	generateImage(&src, hash, filepath.Join(outputDir, "mstile-70x70.png"), 70, 70)
+	generateImage(&src, hash, filepath.Join(outputDir, "mstile-150x150.png"), 150, 150)
+	generateImage(&src, hash, filepath.Join(outputDir, "mstile-310x150.png"), 310, 150)
+	generateImage(&src, hash, filepath.Join(outputDir, "mstile-310x310.png"), 310, 310)
 }
 
 func GenerateFavicon(targetImg, outputDir string) {
