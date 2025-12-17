@@ -610,13 +610,13 @@ func ConvertPNGToJPG(inputPath, outputPath string) {
 	}
 	pngBytes, err := os.ReadFile(inputPath)
 	if err != nil {
-		log.Errorf("Error reading PNG file: %v", err)
+		log.Errorf("error reading PNG file: %v", err)
 		return
 	}
 	// Decode the PNG image
 	img, err := png.Decode(bytes.NewReader(pngBytes))
 	if err != nil {
-		log.Errorf("failed to decode PNG: %v", err)
+		log.Errorf("error encoding PNG: %v", err)
 		return
 	}
 
@@ -625,12 +625,41 @@ func ConvertPNGToJPG(inputPath, outputPath string) {
 
 	// Encode as JPG with default quality
 	if err := jpeg.Encode(buf, img, &jpeg.Options{Quality: 95}); err != nil {
-		log.Errorf("failed to encode JPG: %v", err)
+		log.Errorf("error encoding JPG: %v", err)
 		return
 	}
 
 	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
-		log.Fatalf("Failed to write JPG file: %v", err)
+		log.Fatalf("error writing JPG file: %v", err)
+		return
+	}
+}
+
+func ConvertJPGToPNG(inputPath, outputPath string) {
+	if FileExists(outputPath) {
+		return
+	}
+
+	jpgBytes, err := os.ReadFile(inputPath)
+	if err != nil {
+		log.Errorf("error reading JPG file: %v", err)
+		return
+	}
+
+	img, err := jpeg.Decode(bytes.NewReader(jpgBytes))
+	if err != nil {
+		log.Errorf("error decoding JPG: %v", err)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	if err := png.Encode(buf, img); err != nil {
+		log.Errorf("error encoding PNG: %v", err)
+		return
+	}
+
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		log.Errorf("failed to write PNG file: %v", err)
 		return
 	}
 }

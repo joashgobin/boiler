@@ -308,8 +308,8 @@ exec bash
 
 	if !fiber.IsChild() {
 		// generate favicon
-		helpers.ConvertPNGToJPG("static/img/favicon.png", "static/img/favicon.jpg")
-		helpers.GenerateFavicon("static/img/favicon.jpg", "static/gen/img/")
+		// helpers.ConvertJPGToPNG("static/img/favicon.jpg", "static/img/favicon.png")
+		helpers.GenerateFavicon("static/img/favicon.png", "static/gen/img/")
 	}
 	showElapsed("app favicon generation time", start)
 
