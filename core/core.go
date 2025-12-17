@@ -573,12 +573,12 @@ exec bash
 		},
 		"favicon": func() ht.HTML {
 			links := `
-		<link rel="apple-touch-icon" sizes="180x180" href="/static/gen/img/apple-touch-icon.png">
-		<link rel="icon" type="image/png" sizes="32x32" href="/static/gen/img/favicon-32x32.png">
-		<link rel="icon" type="image/png" sizes="16x16" href="/static/gen/img/favicon-16x16.png">
+		<link rel="apple-touch-icon" sizes="180x180" href="/static/gen/img/apple-touch-icon.png?v=(())">
+		<link rel="icon" type="image/png" sizes="32x32" href="/static/gen/img/favicon-32x32.png?v=(())">
+		<link rel="icon" type="image/png" sizes="16x16" href="/static/gen/img/favicon-16x16.png?v=(())">
 		<link rel="manifest" href="/static/gen/img/site.webmanifest">
 			`
-			return ht.HTML(links)
+			return ht.HTML(strings.ReplaceAll(links, "(())", optimizations["img/favicon.png"]))
 		},
 	})
 
