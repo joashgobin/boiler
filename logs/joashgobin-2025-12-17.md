@@ -4,3 +4,4 @@
 - Favicon function inserts hash for favicon file
 - Version the site manifest as well
 - Updated README
+- Mentioned gzip
