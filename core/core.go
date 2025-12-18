@@ -91,14 +91,10 @@ func (base Base) Serve(app *fiber.App) {
 		return sm
 	}))
 
-	/*
-		app.Get("/image", func(c *fiber.Ctx) error {
-			// width := c.Query("width", "100px")
-			// height := c.Query("height", "100px")
-			finalPath := c.Query("path")
-			return c.SendString("<img alt='" + finalPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + finalPath + "' width=100% height=100%>")
-		})
-	*/
+	app.Get("/image", func(c *fiber.Ctx) error {
+		finalPath := c.Query("path")
+		return c.SendString("<img alt='" + finalPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + finalPath + "' width=100% height=100%>")
+	})
 
 	go func() {
 		if err := app.Listen(base.Anchor); err != nil {
@@ -416,24 +412,24 @@ exec bash
 			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML("<link rel='preload' href='" + outputPath + "' as='image' fetchpriority='high'>")
 		},
+		"him": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
+				            </div>`
+			return ht.HTML(htmxString)
+		},
+		"hims": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
+				            </div>`
+			return ht.HTML(htmxString)
+		},
 		"lazy": func(imgPath string, dimensions ...int) ht.HTML {
 			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
-
-			/*
-							htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
-				            </div>`
-							return ht.HTML(htmxString)
-			*/
 			return ht.HTML("<img loading='lazy' decode='async' alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
 		},
 		"lazys": func(imgPath string, dimensions ...int) ht.HTML {
 			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
-
-			/*
-							htmxString := `<div hx-get="/image?path=` + outputPath + `" hx-trigger="load" hx-swap="outerHTML">
-				            </div>`
-							return ht.HTML(htmxString)
-			*/
 			return ht.HTML("<img loading='lazy' decode='async' alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
 		},
 		"icon": func(iconName ...string) ht.HTML {

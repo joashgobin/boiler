@@ -5,3 +5,4 @@
 - Version the site manifest as well
 - Updated README
 - Mentioned gzip
+- Added functions for htmx image lazy loading
