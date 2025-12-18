@@ -6,3 +6,4 @@
 - Updated README
 - Mentioned gzip
 - Added functions for htmx image lazy loading
+- Modified lazy loading via htmx
