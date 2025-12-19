@@ -3,3 +3,4 @@
 - Updated boilerplate
 - Added endpoint for QR code for website URL
 - Updated instructions
+- Updated README

@@ -162,6 +162,7 @@ The notable dependencies are:
 AVIF conversion is done using libaom-dev:
 ```sh
 sudo apt-get install libaom-dev
+sudo apt-get install libwebp-dev
 ```
 
 ## Template Engine Functions
