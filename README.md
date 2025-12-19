@@ -158,7 +158,13 @@ AVIF conversion is done using libaom-dev:
 sudo apt-get install libaom-dev
 ```
 
-## Template
+## Template Engine Functions
+Some functions like the "icon" function require htmx. Add the following to "views/scripts.html":
+```
+htmx.process(document.body);
+```
+
+## Swup JS/HTMX Template
 Add the following to your *views/layouts/main.html* file:
 ```html
 <!DOCTYPE html>
@@ -175,7 +181,7 @@ Add the following to your *views/layouts/main.html* file:
     </script>
     <link rel="preload" as="style" href="{{min "mango-simplified.css"}}">
     <link rel="stylesheet" media="none" onload="this.media='all';showBody()" href="{{min "mango-simplified.css"}}">
-    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" media="none" onload="this.media='all'" href='{{min "main.css"}}'>
     <style>
     body {
         opacity: 0;
@@ -185,6 +191,13 @@ Add the following to your *views/layouts/main.html* file:
     body.loaded{
         opacity: 1;
     }
+
+    :root{
+        --prim: white;
+        --sec: steelblue;
+        --accent: crimson;
+    }
+
     </style>
 
     {{template "views/partials/meta" .}}

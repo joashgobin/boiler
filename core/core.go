@@ -91,6 +91,10 @@ func (base Base) Serve(app *fiber.App) {
 		return sm
 	}))
 
+	app.Get("/qr-code", func(c *fiber.Ctx) error {
+		return base.QR.Send(c, base.URL())
+	})
+
 	app.Get("/image", func(c *fiber.Ctx) error {
 		finalPath := c.Query("path")
 		return c.SendString("<img alt='" + finalPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + finalPath + "' width=100%>")
