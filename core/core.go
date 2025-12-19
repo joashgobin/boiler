@@ -240,6 +240,10 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 		if !helpers.FileExists("config.env") {
 			helpers.FileSubstitute(filepath.Dir(coreDir)+"/air/config.env", "config.env", map[string]string{})
 		}
+
+		if !helpers.FileExists("static/main.css") {
+			helpers.TouchFile("static/main.css")
+		}
 	}
 
 	if !fiber.IsChild() {
