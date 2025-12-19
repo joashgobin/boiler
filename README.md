@@ -98,6 +98,12 @@ Re-run the program:
 go run main.go
 ```
 
+You should use air to run the app:
+```
+go install github.com/air-verse/air@latest
+air
+```
+
 If this is your first app using this project as your starter, run the command to create the fiber user:
 ```sh
 sudo make user
