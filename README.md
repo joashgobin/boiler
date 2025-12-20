@@ -1,6 +1,19 @@
 # Boiler
 This project is focused on providing boilerplate for a Gofiber app.
 
+## Dependencies
+The notable dependencies are:
+- Valkey
+- MySQL
+- libaom-dev
+- libwebp-dev
+
+AVIF and WEBP conversions are done using libaom-dev and libwebp-dev:
+```sh
+sudo apt-get install libaom-dev
+sudo apt-get install libwebp-dev
+```
+
 ## Basic app
 Create a go module and add the following to your **go.mod** file:
 ```
@@ -152,18 +165,6 @@ make deploy/app
 - Sitemap generation
 - Panic recovery
 - Algorithmic layouts via mango CSS
-
-## Dependencies
-The notable dependencies are:
-- Valkey
-- MySQL
-- libaom-dev
-
-AVIF conversion is done using libaom-dev:
-```sh
-sudo apt-get install libaom-dev
-sudo apt-get install libwebp-dev
-```
 
 ## Template Engine Functions
 Some functions like the "icon" function require htmx. Add the following to "views/scripts.html":
