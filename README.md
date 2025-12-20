@@ -121,6 +121,7 @@ If this is your first app using this project as your starter, run the command to
 ```sh
 sudo make user
 ```
+>MySQL requires a strong password. I recommend {Firstfancyword}{Secondfancyword}__123 as a template
 
 ## Deployment to VPS
 Upload the first version of the app to the VPS:
