@@ -74,7 +74,7 @@ func ExtractClassNames(fs *embed.FS, filePath string, classes *[]string) error {
 
 func SaveCSSClasses(fs *embed.FS, targetFile string, cssFiles ...string) error {
 	if fs == nil {
-		return nil
+		return fmt.Errorf("files not embedded")
 	}
 	tempExt := fmt.Sprintf(".%d.lock", os.Getpid())
 	tempFile := targetFile + tempExt

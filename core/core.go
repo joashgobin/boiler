@@ -318,7 +318,7 @@ exec bash
 	showElapsed("app favicon generation time", start)
 
 	// create template engine
-	engine := html.New("./views/", ".html")
+	engine := html.New("./views", ".html")
 	if config.Templates != nil {
 		engine = html.NewFileSystem(http.FS(*config.Templates), ".html")
 	}
