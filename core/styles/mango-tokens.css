@@ -229,3 +229,11 @@
     background-blend-mode: darken;
     background-size: cover;
 }
+
+.c-grad {
+    background-image: radial-gradient(circle at bottom, hsl(from var(--bg-color) h s l / 0.3), var(--black) 30%);
+}
+
+.grad {
+    background-image: linear-gradient(to bottom, var(--black) 80%, hsl(from var(--bg-color) h s l / 0.2));
+}
