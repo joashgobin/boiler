@@ -699,3 +699,12 @@ func ValidateConfig(config interface{}) error {
 
 	return nil
 }
+
+func Cast[T any](value any) T {
+	var def T
+	newValue, ok := value.(T)
+	if !ok {
+		return def
+	}
+	return newValue
+}
