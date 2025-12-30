@@ -708,3 +708,23 @@ func Cast[T any](value any) T {
 	}
 	return newValue
 }
+
+func To[T any](value any) T {
+	var def T
+	newValue, ok := value.(T)
+	if !ok {
+		return def
+	}
+	return newValue
+}
+
+func ToSlice[T any](input any) []T {
+	switch v := input.(type) {
+	case T:
+		return []T{v}
+	case []T:
+		return v
+	default:
+		return []T{}
+	}
+}
