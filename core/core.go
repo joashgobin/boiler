@@ -679,7 +679,7 @@ exec bash
 
 	// configure fiber logger format
 	app.Use(logger.New(logger.Config{
-		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n",
+		Format: "[${ip}]:${port} ${latency} -> ${status} - ${method} ${path}\n",
 	}))
 	f, err := os.OpenFile(config.AppName+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	iw := io.MultiWriter(os.Stdout, f)
