@@ -190,7 +190,8 @@ textarea {
 select,
 option,
 input,
-textarea {
+textarea,
+button {
     border-radius: 1rem;
     border: 1px solid grey;
     font-size: inherit;

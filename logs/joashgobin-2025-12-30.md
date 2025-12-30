@@ -2,3 +2,4 @@
 
 - Added functions for casting
 - Url unescape map keys for form body
+- Updated font size for buttons
