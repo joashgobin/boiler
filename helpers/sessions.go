@@ -12,23 +12,20 @@ import (
 
 type FlashInterface interface {
 	Push(c *fiber.Ctx, messages ...any) error
-	// Retain(c *fiber.Ctx, keys []string)
-	// RequireFields(c *fiber.Ctx, redirectRoute string, fields []string) (string, error)
 	ClearOld(c *fiber.Ctx)
 	Redirect(c *fiber.Ctx, route string, messages ...any) error
-	// RetainKeys(keys []string) fiber.Handler
-	// RequireKeys(keys []string, redirectRoute string) fiber.Handler
 	Retain(keys ...string) fiber.Handler
 	Require(keys ...string) fiber.Handler
 	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
 	Get(c *fiber.Ctx, key string, defaultValue ...any) any
-	Prefetch(c *fiber.Ctx, urls ...string)
-	KeepCached(c *fiber.Ctx, maxAge int)
-	// GetUser(c *fiber.Ctx) interface{}
+	GetString(c *fiber.Ctx, key string, defaultValue ...string) string
+	GetInt(c *fiber.Ctx, key string, defaultValue ...int) int
 	Set(c *fiber.Ctx, key string, value any) error
 	SetMany(c *fiber.Ctx, pairs map[string]any) error
 	DeleteSession(c *fiber.Ctx)
 	UploadImage(c *fiber.Ctx, imageFormName string) (string, error)
+	Prefetch(c *fiber.Ctx, urls ...string)
+	KeepCached(c *fiber.Ctx, maxAge int)
 }
 
 func GetUser[T any](c *fiber.Ctx, flash FlashInterface) T {
@@ -105,6 +102,56 @@ func (flash *FlashModel) Get(c *fiber.Ctx, key string, defaultValue ...any) any 
 		}
 	}
 	return value
+}
+
+func (flash *FlashModel) GetString(c *fiber.Ctx, key string, defaultValue ...string) string {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return ""
+	}
+	value := sess.Get(key)
+	if value == nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return ""
+	}
+	castedValue, ok := value.(string)
+	if !ok {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return ""
+	}
+	return castedValue
+}
+
+func (flash *FlashModel) GetInt(c *fiber.Ctx, key string, defaultValue ...int) int {
+	sess, err := flash.Store.Get(c)
+	if err != nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return 0
+	}
+	value := sess.Get(key)
+	if value == nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return 0
+	}
+	castedValue, ok := value.(int)
+	if !ok {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return 0
+	}
+	return castedValue
 }
 
 func (flash *FlashModel) Set(c *fiber.Ctx, key string, value any) error {
