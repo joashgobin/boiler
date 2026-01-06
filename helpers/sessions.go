@@ -11,9 +11,9 @@ import (
 )
 
 type FlashInterface interface {
-	Push(c *fiber.Ctx, messages ...any) error
+	Push(c *fiber.Ctx, message string, args ...any) error
 	ClearOld(c *fiber.Ctx)
-	Redirect(c *fiber.Ctx, route string, messages ...any) error
+	Redirect(c *fiber.Ctx, route string, message string, args ...any) error
 	Retain(keys ...string) fiber.Handler
 	Require(keys ...string) fiber.Handler
 	RequireRedirect(redirectRoute string, keys ...string) fiber.Handler
