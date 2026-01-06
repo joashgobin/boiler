@@ -188,27 +188,21 @@ func (flash *FlashModel) RequireFields(c *fiber.Ctx, redirectRoute string, field
 }
 */
 
-func (flash *FlashModel) Redirect(c *fiber.Ctx, route string, messages ...any) error {
-	var message string
-	if len(messages) > 1 {
-		message = fmt.Sprintf(messages[0].(string), messages[1:]...)
-	} else {
-		message = messages[0].(string)
+func (flash *FlashModel) Redirect(c *fiber.Ctx, route string, message string, args ...any) error {
+	if len(args) > 0 {
+		message = fmt.Sprintf(message, args...)
 	}
 	flash.Push(c, message)
 	return c.Redirect(route + "?show=retained")
 }
 
-func (flash *FlashModel) Push(c *fiber.Ctx, messages ...any) error {
+func (flash *FlashModel) Push(c *fiber.Ctx, message string, args ...any) error {
 	sess, err := flash.Store.Get(c)
 	if err != nil {
 		return err
 	}
-	var message string
-	if len(messages) > 1 {
-		message = fmt.Sprintf(messages[0].(string), messages[1:]...)
-	} else {
-		message = messages[0].(string)
+	if len(args) > 0 {
+		message = fmt.Sprintf(message, args...)
 	}
 
 	sess.Set("flashMessage", message)
