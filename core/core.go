@@ -35,6 +35,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
 	// "github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -80,6 +81,11 @@ func (base *Base) URL() string {
 	} else {
 		return "http://localhost:" + base.port
 	}
+}
+
+func (base *Base) Render(c *fiber.Ctx, cmp templ.Component, input ...fiber.Map) error {
+	c.Set("Content-Type", "text/html")
+	return cmp.Render(c.Context(), c.Response().BodyWriter())
 }
 
 func (base Base) Serve(app *fiber.App) {
