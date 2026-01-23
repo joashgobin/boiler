@@ -1,0 +1,3 @@
+# Friday (January 23, 2026)
+
+- Added reveal hooks for html elements using htmx

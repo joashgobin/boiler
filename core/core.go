@@ -344,6 +344,21 @@ exec bash
 		"humanYear": func(t time.Time) string {
 			return t.UTC().Format("2006")
 		},
+		"rev": func() ht.HTMLAttr {
+			return ht.HTMLAttr("class='rev' hx-trigger='revealed'")
+		},
+		"intersect": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			return ht.HTML(`
+<img class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
+			`)
+		},
+		"intersects": func(imgPath string, dimensions ...int) ht.HTML {
+			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			return ht.HTML(`
+<img class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
+			`)
+		},
 		"gfont": func(fontName string, selector string) ht.HTML {
 			return ht.HTML(`
 			<link rel="preconnect" href="https://fonts.googleapis.com">

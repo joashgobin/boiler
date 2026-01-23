@@ -29,6 +29,10 @@ func ExternalPresets() map[string]string {
 	</style>
 	`
 
+	presets["class-tools"] = `
+	<script defer src="/static/script/class-tools.js"></script>
+	`
+
 	presets["htmx-preload"] = `<script defer src="/static/script/htmx.min.js"></script>
     <script defer src="/static/script/preload.min.js"></script>`
 
