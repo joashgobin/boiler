@@ -2,3 +2,4 @@
 
 - Added reveal hooks for html elements using htmx
 - Updated website preset
+- Updated function

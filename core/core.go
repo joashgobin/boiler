@@ -344,7 +344,10 @@ exec bash
 		"humanYear": func(t time.Time) string {
 			return t.UTC().Format("2006")
 		},
-		"rev": func() ht.HTMLAttr {
+		"rev": func(classes ...string) ht.HTMLAttr {
+			if len(classes) > 0 {
+				return ht.HTMLAttr("class='rev " + classes[0] + "' hx-trigger='revealed'")
+			}
 			return ht.HTMLAttr("class='rev' hx-trigger='revealed'")
 		},
 		"intersect": func(imgPath string, dimensions ...int) ht.HTML {
