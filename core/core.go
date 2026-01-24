@@ -353,13 +353,13 @@ exec bash
 		"intersect": func(imgPath string, dimensions ...int) ht.HTML {
 			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(`
-<img class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
+<img alt="` + outputPath + `" class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
 			`)
 		},
 		"intersects": func(imgPath string, dimensions ...int) ht.HTML {
 			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(`
-<img class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
+<img alt="` + outputPath + `" class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
 			`)
 		},
 		"gfont": func(fontName string, selector string) ht.HTML {
