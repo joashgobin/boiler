@@ -64,15 +64,16 @@ type Base struct {
 }
 
 type AppConfig struct {
-	User         string
-	IP           string
-	Port         string
-	AppName      string
-	Templates    *embed.FS
-	StaticFiles  *embed.FS
-	SiteInfo     *map[string]string
-	FuncMap      map[string]interface{}
-	IsProduction bool
+	User              string
+	IP                string
+	Port              string
+	AppName           string
+	Templates         *embed.FS
+	StaticFiles       *embed.FS
+	SiteInfo          *map[string]string
+	FuncMap           map[string]interface{}
+	IsProduction      bool
+	ReduceMemoryUsage bool
 }
 
 func (base *Base) URL() string {
@@ -646,6 +647,7 @@ exec bash
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       30 * time.Second,
+		ReduceMemoryUsage: config.ReduceMemoryUsage,
 	})
 
 	// initialize fiber session middleware
@@ -799,7 +801,7 @@ exec bash
 	}
 	if !fiber.IsChild() {
 		elapsed := time.Since(start)
-		log.Infof("(%s) app startup time: %v\n", environment, elapsed)
+		log.Infof("(%s - RM: %v) app startup time: %v\n", environment, config.ReduceMemoryUsage, elapsed)
 	}
 
 	// return configured fiber app and database connection pool
