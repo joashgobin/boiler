@@ -641,6 +641,7 @@ exec bash
 		Views:             engine,
 		ViewsLayout:       "views/layouts/main",
 		PassLocalsToViews: true,
+		CaseSensitive:     true,
 		Prefork:           true, //config.IsProduction,
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      10 * time.Second,

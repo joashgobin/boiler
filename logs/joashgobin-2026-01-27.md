@@ -2,3 +2,4 @@
 
 - Use green tea garbage collector
 - Testing timeouts
+- Add case sensitivity
