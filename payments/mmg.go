@@ -730,8 +730,10 @@ func generateURL(token []byte, msisdn, clientID string) string {
 	// fmt.Printf("TOKEN: %s\n\n", tokenStr)
 
 	fmt.Printf("-- CHECKOUT URL --\n")
-	return fmt.Sprintf("https://gtt-uat-checkout.qpass.com:8743/checkout-endpoint/home?token=%s&merchantId=%s&X-Client-ID=%s\n",
+	link := fmt.Sprintf("https://mmgpg.mmgtest.net/mmg-pg/web/payments?token=%s&merchantId=%s&X-Client-ID=%s\n",
 		tokenStr, msisdn, clientID)
+	fmt.Println(link)
+	return link
 }
 
 func encrypt(data interface{}, publicKey *rsa.PublicKey) ([]byte, error) {
@@ -772,6 +774,7 @@ type MMGInterface interface {
 	AddProduct(productCode, itemDescription string) error
 	AddProducts(productMap map[string]string)
 	Checkout(userEmail string, merchantNumber int, productCode string, cost float64) string
+	CheckoutOneTime(userEmail string, merchantNumber int, productDescription string, cost float64) string
 	LoadHistory(merchantNumber int)
 	GetUserProducts(userEmail string) []string
 	GetProduct(productCode string) MMGProduct
@@ -922,6 +925,12 @@ func (m *MMGModel) Checkout(userEmail string, merchantNumber int, productCode st
 	return url
 }
 
+func (m *MMGModel) CheckoutOneTime(userEmail string, merchantNumber int, productDescription string, cost float64) string {
+	_, url := initiateCheckout(userEmail, merchantNumber, m.GetMerchant(merchantNumber).Name, productDescription, cost)
+	// insertPendingPurchase(m.DB, internalTransactionID, itemDescription, productCode, userEmail)
+	return url
+}
+
 func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescription string, productCode, userEmail string) {
 	query := `
 		INSERT INTO purchases (timestamp, user, internalid, description, status, productcode)
@@ -944,12 +953,12 @@ func insertPendingPurchase(db *sql.DB, internalTransactionID string, itemDescrip
 }
 
 func initiateCheckout(userEmail string, merchantNumber int, merchantName, productCode string, cost float64) (string, string) {
-	config, err := loadConfig(fmt.Sprintf("merchants/%d.cfg", merchantNumber))
+	config, err := loadConfig(fmt.Sprintf("merchants/%d/setup.cfg", merchantNumber))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	publicKey, err := loadPublicKey(fmt.Sprintf("merchants/%s-keys/%s.public.pem", config.MerchantMsisdn, config.MerchantMsisdn))
+	publicKey, err := loadPublicKey(fmt.Sprintf("merchants/%s/keys/%s.public.pem", config.MerchantMsisdn, config.MerchantMsisdn))
 	if err != nil {
 		log.Fatal(err)
 	}
