@@ -28,7 +28,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/session"
 
-	"github.com/joashgobin/boiler/email"
+	// "github.com/joashgobin/boiler/email"
 	"github.com/joashgobin/boiler/helpers"
 )
 
@@ -294,7 +294,7 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 }
 
 func getEnvironmentData(merchantNumber int) (map[string]string, error) {
-	data, err := os.ReadFile("merchants/" + strconv.Itoa(merchantNumber) + ".postman_environment")
+	data, err := os.ReadFile(getEnvFilePath(merchantNumber, "UAT"))
 	if err != nil {
 		fmt.Printf("error reading file: %v\n", err)
 		return nil, err
@@ -428,8 +428,8 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			// in case resource token is empty
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
-				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty",
-					fmt.Sprintf("Merchant: %d", merchantNumber), "", m.WaitGroup)
+				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty",
+				// 		fmt.Sprintf("Merchant: %d", merchantNumber), "", m.WaitGroup)
 				m.LoadNewResourceToken(merchantNumber)
 
 				// send request
@@ -447,9 +447,9 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			if strings.Contains(string(body), "clientAuthorisationError") {
 
 				// log error and notify admin via email
-				log.Error("failed to use valid resource token")
-				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
-					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
+				log.Error("failed to use valid resource token: %v", res)
+				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
+				// fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
 
 				// request new resource token
 				m.LoadNewResourceToken(merchantNumber)
@@ -464,8 +464,8 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			if strings.Contains(string(body), "Authentication failed") {
 
 				// notify admin via email
-				email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
-					fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
+				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
+				// fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
 				return
 			}
 
@@ -473,14 +473,68 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 		}, m.WaitGroup)
 }
 
+func getEnvFilePath(merchantNumber int, substr string) string {
+	merchantFolderPath := fmt.Sprintf("merchants/%d/", merchantNumber)
+	configFiles, err := os.ReadDir(merchantFolderPath)
+	if err != nil {
+		log.Errorf("read merchant config error: %v", err)
+		return ""
+	}
+	envFilePath := ""
+	for _, file := range configFiles {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") && strings.Contains(file.Name(), substr) {
+			// fmt.Println(file.Name())
+			envFilePath = merchantFolderPath + file.Name()
+			break
+		}
+	}
+
+	if envFilePath == "" {
+		log.Errorf("read merchant config error: could not find postman env JSON file")
+		return ""
+	}
+	return envFilePath
+}
+
+func getEnvFileString(merchantNumber int) string {
+	envStr := ""
+	envFilePath := getEnvFilePath(merchantNumber, "UAT")
+	envFile, err := os.ReadFile(envFilePath)
+	if err != nil {
+		return ""
+	}
+	envStr = string(envFile)
+	return envStr
+}
+
+func extractEnvMap(envStr string) *map[string]string {
+	mapRE := `"key":\s+"(.+)",\s+"value":\s+"(.+)",`
+	matches := regexp.MustCompile(mapRE).FindAllStringSubmatch(envStr, -1)
+	envMap := make(map[string]string, len(matches))
+	for _, match := range matches {
+		// fmt.Println(match[1], ":", match[2])
+		envMap[match[1]] = match[2]
+	}
+	return &envMap
+}
+
 func (m *MMGModel) LoadNewResourceToken(merchantNumber int) {
-	url := "https://gtt-uat-oauth2-service-api.qpass.com:9143/oauth2-endpoint/oauth/resourcetoken"
+	log.Infof("loading new resource token for %d...", merchantNumber)
 	method := "POST"
+
+	// get env values
+	envStr := getEnvFileString(merchantNumber)
+	envMap := extractEnvMap(envStr)
+
+	url := (*envMap)["BASE_URL_MWALLET"]
+
+	// build request payload
 	var payloadBuilder strings.Builder
 	payloadBuilder.WriteString("grant_type=password")
-	payloadBuilder.WriteString("&api_key=" + helpers.Getenv("MMG_API_ALT"))
+
+	payloadBuilder.WriteString("&api_key=" + (*envMap)["x-api-token"]) //+ helpers.Getenv("MMG_API_ALT"))
 	payloadBuilder.WriteString("&username=" + strconv.Itoa(merchantNumber))
-	payloadBuilder.WriteString("&password=" + helpers.Getenv("MMG_PASSWORD"))
+	payloadBuilder.WriteString("&password=" + (*envMap)["PASSWORD"])
 	payload := strings.NewReader(payloadBuilder.String())
 	// log.Infof("payload: %s", &payloadBuilder)
 
@@ -488,31 +542,30 @@ func (m *MMGModel) LoadNewResourceToken(merchantNumber int) {
 	req, err := http.NewRequest(method, url, payload)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("load new resource token request error: %v", err)
 		return
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Cookie", "TS01e7487e=01d0cb83601844ab4044ae5123cd771d7be13b17ff6e839eb176bdd1b5105c71df1d40d5f9740a326566896199238d4c0a47f4bd4a")
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("load new resource token request error: %v", err)
 		return
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("load new resource token read response error: %v", err)
 		return
 	}
 
-	fmt.Println(string(body))
+	log.Infof("response body: %v", string(body))
 	token, err := extractResourceTokenFromBody(body)
 
 	if err != nil {
 		log.Error("failed to extract resource token")
-		email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Response: %s<br>Merchant: %d", string(body), merchantNumber), "", m.WaitGroup)
+		// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Response: %s<br>Merchant: %d", string(body), merchantNumber), "", m.WaitGroup)
 		return
 	}
 	log.Infof("new resource token: %s", token)
