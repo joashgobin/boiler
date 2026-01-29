@@ -119,7 +119,7 @@ USE <appName>;
 
 -- Create table
 CREATE TABLE IF NOT EXISTS shelf (
-    name VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(1000) NOT NULL UNIQUE,
     value LONGTEXT NOT NULL
 );
 	`, "<appName>", appName), db)
