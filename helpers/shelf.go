@@ -84,7 +84,7 @@ func SetShelf(db *sql.DB, key string, value string) {
 		`
 	result, err := db.Exec(query, key, value)
 	if err != nil {
-		log.Errorf("failed to insert/update key: %v", key)
+		log.Errorf("failed to insert/update key (%v): %v", key, err)
 		return
 	}
 	rowsAffected, err := result.RowsAffected()
@@ -120,7 +120,7 @@ USE <appName>;
 -- Create table
 CREATE TABLE IF NOT EXISTS shelf (
     name VARCHAR(100) NOT NULL UNIQUE,
-    value VARCHAR(100) NOT NULL
+    value LONGTEXT NOT NULL
 );
 	`, "<appName>", appName), db)
 }

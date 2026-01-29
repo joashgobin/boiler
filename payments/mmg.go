@@ -526,7 +526,7 @@ func (m *MMGModel) LoadNewResourceToken(merchantNumber int) {
 	envStr := getEnvFileString(merchantNumber)
 	envMap := extractEnvMap(envStr)
 
-	url := (*envMap)["BASE_URL_MWALLET"]
+	url := (*envMap)["BASE_URL_MWALLET"] + "/e-commerce-login/mer"
 
 	// build request payload
 	var payloadBuilder strings.Builder
