@@ -113,6 +113,7 @@ type TokenParams struct {
 }
 
 func getTransactionMeta(data []byte) (string, error) {
+	log.Infof("get transaction meta from body: %v", string(data))
 	r := regexp.MustCompile(`"key":\s*"(product_desc|description)",\s*"value":\s*"(.+?)"`)
 	matches := r.FindStringSubmatch(string(data))
 	if len(matches) > 1 {
@@ -133,11 +134,16 @@ func extractResourceTokenFromBody(data []byte) (string, error) {
 func (m *MMGModel) LoadMMGTransactionDetails(merchantNumber int, transactionReference string, resourceToken string) {
 	helpers.Background(
 		func() {
+
+			envStr := getEnvFileString(merchantNumber)
+			envMap := extractEnvMap(envStr)
+			baseUrl := (*envMap)["BASE_URL_MWALLET"] + "/e-merchant-initiated-transactions/lookup?transactionId=" + transactionReference
+
 			var urlBuilder strings.Builder
-			urlBuilder.WriteString("https://uat-api.mmg.gy/transactiondetails/")
+			urlBuilder.WriteString(baseUrl)
 			urlBuilder.WriteString(transactionReference)
 			url := urlBuilder.String()
-			fmt.Printf("Making request to: %s\n", url)
+			// fmt.Printf("Making request to: %s\n", url)
 			method := "GET"
 
 			payload := strings.NewReader("{\"query\":\"\",\"variables\":{}}")
@@ -149,17 +155,15 @@ func (m *MMGModel) LoadMMGTransactionDetails(merchantNumber int, transactionRefe
 				log.Error(err)
 				return
 			}
-			// get merchant environment details
-			pairs, err := getEnvironmentData(merchantNumber)
-			if err != nil {
-				return
-			}
-			req.Header.Add("x-wss-token", "Bearer "+resourceToken)
-			req.Header.Add("x-wss-mid", pairs["merchant_mid"])
-			req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
-			req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
+
+			// send request
+			req.Header.Add("x-wss-token", resourceToken)
+			req.Header.Add("x-wss-mid", (*envMap)["x-wss-mid"])
+			req.Header.Add("x-wss-mkey", (*envMap)["x-wss-mkey"])
+			req.Header.Add("x-wss-msecret", (*envMap)["x-wss-msecret"])
 			req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
-			req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
+			req.Header.Add("x-api-key", (*envMap)["x-api-key"])
+			req.Header.Add("Content-Type", "application/json")
 
 			res, err := client.Do(req)
 			if err != nil {
@@ -282,7 +286,7 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 		)
 		if err != nil {
 			tx.Rollback()
-			log.Errorf("insert error: %v", err)
+			log.Errorf("mmg transaction insert error: %v", err)
 		} else {
 			log.Infof("inserted %s) %s: %s -> %s (%f %s)\n", txn.Reference, txn.Category, txn.From, txn.To, txn.Amount, txn.Currency)
 		}
@@ -364,12 +368,14 @@ func IsMMGSubscribed(db *sql.DB, thresholdAmount float64, userEmail string) bool
 
 func getMMGHistory(merchantNumber int, url string, resourceToken string) (string, *http.Response) {
 
+	log.Infof("loading MMG history for %d...via %s", merchantNumber, url)
+
 	// get merchant environment details
-	pairs, err := getEnvironmentData(merchantNumber)
-	if err != nil {
-		log.Error(err)
-		return "", nil
-	}
+	// get env values
+	envStr := getEnvFileString(merchantNumber)
+	envMap := extractEnvMap(envStr)
+
+	// baseUrl := (*envMap)["BASE_URL_MWALLET"] + "/e-merchant-initiated-transactions/txn-history"
 
 	// set up http client for request
 	method := "GET"
@@ -382,12 +388,12 @@ func getMMGHistory(merchantNumber int, url string, resourceToken string) (string
 	}
 
 	// send request
-	req.Header.Add("x-wss-token", "Bearer "+resourceToken)
-	req.Header.Add("x-wss-mid", pairs["merchant_mid"])
-	req.Header.Add("x-wss-mkey", pairs["merchant_mkey"])
-	req.Header.Add("x-wss-msecret", pairs["merchant_msecret"])
+	req.Header.Add("x-wss-token", resourceToken)
+	req.Header.Add("x-wss-mid", (*envMap)["x-wss-mid"])
+	req.Header.Add("x-wss-mkey", (*envMap)["x-wss-mkey"])
+	req.Header.Add("x-wss-msecret", (*envMap)["x-wss-msecret"])
 	req.Header.Add("x-wss-correlationid", helpers.GetRandomUUID())
-	req.Header.Add("x-api-key", helpers.Getenv("MMG_API_KEY"))
+	req.Header.Add("x-api-key", (*envMap)["x-api-key"])
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
@@ -399,9 +405,10 @@ func getMMGHistory(merchantNumber int, url string, resourceToken string) (string
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Error(err)
+		log.Error("mmg history response body error: %v", err)
 		return "", nil
 	}
+	log.Infof("mmg history response body: %v", string(body))
 	return string(body), res
 }
 
@@ -411,15 +418,22 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 			// build transaction history URL from timestamps
 			now := time.Now()
-			toDate := now.AddDate(0, 0, 0).Format("2006-01-02")
-			fromDate := now.AddDate(0, 0, -30).Format("2006-01-02")
+			toDate := now.AddDate(0, 0, 0).Format("2006-01-02T15:04:05.000Z")
+			fromDate := now.AddDate(0, 0, -30).Format("2006-01-02T15:04:05.000Z")
+
+			// get env values
+			envStr := getEnvFileString(merchantNumber)
+			envMap := extractEnvMap(envStr)
+
+			baseUrl := (*envMap)["BASE_URL_MWALLET"] + "/e-merchant-initiated-transactions/txn-history"
 
 			var urlBuilder strings.Builder
-			urlBuilder.WriteString("https://uat-api.mmg.gy/ministatement/")
-			urlBuilder.WriteString(strconv.Itoa(merchantNumber))
+			urlBuilder.WriteString(baseUrl)
+			// urlBuilder.WriteString(strconv.Itoa(merchantNumber))
 			urlBuilder.WriteString("?offset=1")
 			urlBuilder.WriteString("&fromdate=" + fromDate)
 			urlBuilder.WriteString("&todate=" + toDate)
+			urlBuilder.WriteString("&msisdn=" + strconv.Itoa(merchantNumber))
 			url := urlBuilder.String()
 
 			// retrieve resource token from database
@@ -461,8 +475,8 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			}
 
 			// in case authentication fails
-			if strings.Contains(string(body), "Authentication failed") {
-
+			if strings.Contains(string(body), "Authentication failure") {
+				log.Errorf("authentication failed with token: %s", resourceToken)
 				// notify admin via email
 				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
 				// fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
@@ -580,7 +594,7 @@ func (m *MMGModel) GetMMGBalance(merchantNumber int) {
 			urlBuilder.WriteString("https://uat-api.mmg.gy/balancecheck/")
 			urlBuilder.WriteString(strconv.Itoa(merchantNumber))
 			url := urlBuilder.String()
-			fmt.Printf("Making request to: %s\n", url)
+			// fmt.Printf("Making request to: %s\n", url)
 
 			// set the http method
 			method := "GET"
