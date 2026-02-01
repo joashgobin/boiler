@@ -10,3 +10,4 @@
 - Trying goroutine
 - Revert
 - Move defer mutex unlock
+- Revert

@@ -234,7 +234,6 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 		}
 
 		if FileExists(outputPath) {
-			// log.Info("skipping ", outputPath)
 			return outputPath
 		}
 
