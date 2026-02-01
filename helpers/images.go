@@ -139,102 +139,105 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 	}
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
-
 	hashString := GetFileHash(srcPath)
-
-	intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
-		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
-
-	// use intermediate if present
-	if !FileExists(intermediatePath) {
-		tempPath := GetTempName(intermediatePath)
-
-		log.Infof("generating intermediate file: %s", intermediatePath)
-
-		file, err := os.Open(srcPath)
-		if err != nil {
-			log.Errorf("error converting to avif: %v", err)
-			return ""
-		}
-
-		var img image.Image
-
-		switch filepath.Ext(srcPath) {
-		case ".png":
-			img, err = png.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to avif: %v", err)
-				return ""
-			}
-		case ".jpg", ".jpeg":
-			img, err = jpeg.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to avif: %v", err)
-				return ""
-			}
-		}
-
-		ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
-		height := int(math.Round(float64(intermediateWidth) * ratio))
-
-		// process final intermediate image
-		finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
-		draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
-		safeImage := NewSafeImage(finalImg)
-		switch filepath.Ext(srcPath) {
-		case ".png":
-			safeImage.SavePNG(tempPath, intermediatePath)
-		case ".jpg", ".jpeg":
-			safeImage.SaveJPEG(tempPath, intermediatePath)
-		}
-	}
 
 	outputPath := fmt.Sprintf("%s_%dx.%s.avif",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), width, hashString)
 
-	if FileExists(outputPath) {
-		// log.Info("skipping ", outputPath)
-		return outputPath
+	if !FileExists(outputPath) {
+		go func() {
+			intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
+				strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+					filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
+			// use intermediate if present
+			if !FileExists(intermediatePath) {
+				tempPath := GetTempName(intermediatePath)
+
+				log.Infof("generating intermediate file: %s", intermediatePath)
+
+				file, err := os.Open(srcPath)
+				if err != nil {
+					log.Errorf("error converting to avif: %v", err)
+					return
+				}
+
+				var img image.Image
+
+				switch filepath.Ext(srcPath) {
+				case ".png":
+					img, err = png.Decode(file)
+					if err != nil {
+						log.Errorf("error converting to avif: %v", err)
+						return
+					}
+				case ".jpg", ".jpeg":
+					img, err = jpeg.Decode(file)
+					if err != nil {
+						log.Errorf("error converting to avif: %v", err)
+						return
+					}
+				}
+
+				ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+				height := int(math.Round(float64(intermediateWidth) * ratio))
+
+				// process final intermediate image
+				finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
+				draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+				safeImage := NewSafeImage(finalImg)
+				switch filepath.Ext(srcPath) {
+				case ".png":
+					safeImage.SavePNG(tempPath, intermediatePath)
+				case ".jpg", ".jpeg":
+					safeImage.SaveJPEG(tempPath, intermediatePath)
+				}
+			}
+
+			if FileExists(outputPath) {
+				// log.Info("skipping ", outputPath)
+				return
+			}
+
+			tempPath := GetTempName(outputPath)
+
+			file, err := os.Open(intermediatePath)
+			if err != nil {
+				log.Errorf("error converting to avif: %v", err)
+				return
+			}
+
+			var img image.Image
+
+			switch filepath.Ext(srcPath) {
+			case ".png":
+				img, err = png.Decode(file)
+				if err != nil {
+					log.Errorf("error converting to avif: %v", err)
+					return
+				}
+			case ".jpg", ".jpeg":
+				img, err = jpeg.Decode(file)
+				if err != nil {
+					log.Errorf("error converting to avif: %v", err)
+					return
+				}
+			}
+
+			// resizing attempt on final image
+			ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+			height := int(math.Round(float64(width) * ratio))
+
+			// process final image
+			finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
+			draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+			safeImage := NewSafeImage(finalImg)
+			safeImage.SaveAVIF(tempPath, outputPath)
+			log.Infof("(%v) converted image (%s) to avif: %s", time.Since(start), srcPath, outputPath)
+
+		}()
+		return srcPath
 	}
-
-	tempPath := GetTempName(outputPath)
-
-	file, err := os.Open(intermediatePath)
-	if err != nil {
-		log.Errorf("error converting to avif: %v", err)
-		return ""
-	}
-
-	var img image.Image
-
-	switch filepath.Ext(srcPath) {
-	case ".png":
-		img, err = png.Decode(file)
-		if err != nil {
-			log.Errorf("error converting to avif: %v", err)
-			return ""
-		}
-	case ".jpg", ".jpeg":
-		img, err = jpeg.Decode(file)
-		if err != nil {
-			log.Errorf("error converting to avif: %v", err)
-			return ""
-		}
-	}
-
-	// resizing attempt on final image
-	ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
-	height := int(math.Round(float64(width) * ratio))
-
-	// process final image
-	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
-	safeImage := NewSafeImage(finalImg)
-	safeImage.SaveAVIF(tempPath, outputPath)
-	log.Infof("(%v) converted image (%s) to avif: %s", time.Since(start), srcPath, outputPath)
-
 	return outputPath
 }
 
@@ -251,102 +254,105 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	}
 	fromDir := filepath.Dir(srcPath)
 	start := time.Now()
-
 	hashString := GetFileHash(srcPath)
-
-	intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
-		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
-			filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
-
-	// use intermediate if present
-	if !FileExists(intermediatePath) {
-		tempPath := GetTempName(intermediatePath)
-
-		log.Infof("generating intermediate file: %s", intermediatePath)
-
-		file, err := os.Open(srcPath)
-		if err != nil {
-			log.Errorf("error converting to webp: %v", err)
-			return ""
-		}
-
-		var img image.Image
-
-		switch filepath.Ext(srcPath) {
-		case ".png":
-			img, err = png.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to webp: %v", err)
-				return ""
-			}
-		case ".jpg", ".jpeg":
-			img, err = jpeg.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to webp: %v", err)
-				return ""
-			}
-		}
-
-		ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
-		height := int(math.Round(float64(intermediateWidth) * ratio))
-
-		// process final intermediate image
-		finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
-		draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
-		safeImage := NewSafeImage(finalImg)
-		switch filepath.Ext(srcPath) {
-		case ".png":
-			safeImage.SavePNG(tempPath, intermediatePath)
-		case ".jpg", ".jpeg":
-			safeImage.SaveJPEG(tempPath, intermediatePath)
-		}
-	}
 
 	outputPath := fmt.Sprintf("%s_%dx.%s.webp",
 		strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 			filepath.Ext(srcPath)), width, hashString)
 
-	if FileExists(outputPath) {
-		// log.Info("skipping ", outputPath)
-		return outputPath
+	if !FileExists(outputPath) {
+		go func() {
+			intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
+				strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
+					filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
+			// use intermediate if present
+			if !FileExists(intermediatePath) {
+				tempPath := GetTempName(intermediatePath)
+
+				log.Infof("generating intermediate file: %s", intermediatePath)
+
+				file, err := os.Open(srcPath)
+				if err != nil {
+					log.Errorf("error converting to webp: %v", err)
+					return
+				}
+
+				var img image.Image
+
+				switch filepath.Ext(srcPath) {
+				case ".png":
+					img, err = png.Decode(file)
+					if err != nil {
+						log.Errorf("error converting to webp: %v", err)
+						return
+					}
+				case ".jpg", ".jpeg":
+					img, err = jpeg.Decode(file)
+					if err != nil {
+						log.Errorf("error converting to webp: %v", err)
+						return
+					}
+				}
+
+				ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+				height := int(math.Round(float64(intermediateWidth) * ratio))
+
+				// process final intermediate image
+				finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
+				draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+				safeImage := NewSafeImage(finalImg)
+				switch filepath.Ext(srcPath) {
+				case ".png":
+					safeImage.SavePNG(tempPath, intermediatePath)
+				case ".jpg", ".jpeg":
+					safeImage.SaveJPEG(tempPath, intermediatePath)
+				}
+			}
+
+			if FileExists(outputPath) {
+				// log.Info("skipping ", outputPath)
+				return
+			}
+
+			tempPath := GetTempName(outputPath)
+
+			file, err := os.Open(intermediatePath)
+			if err != nil {
+				log.Errorf("error converting to webp: %v", err)
+				return
+			}
+
+			var img image.Image
+
+			switch filepath.Ext(srcPath) {
+			case ".png":
+				img, err = png.Decode(file)
+				if err != nil {
+					log.Errorf("error converting to webp: %v", err)
+					return
+				}
+			case ".jpg", ".jpeg":
+				img, err = jpeg.Decode(file)
+				if err != nil {
+					log.Errorf("error converting to webp: %v", err)
+					return
+				}
+			}
+
+			// resizing attempt on final image
+			ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
+			height := int(math.Round(float64(width) * ratio))
+
+			// process final image
+			finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
+			draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
+			safeImage := NewSafeImage(finalImg)
+			safeImage.SaveWebp(tempPath, outputPath)
+			log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
+
+		}()
+		return srcPath
 	}
-
-	tempPath := GetTempName(outputPath)
-
-	file, err := os.Open(intermediatePath)
-	if err != nil {
-		log.Errorf("error converting to webp: %v", err)
-		return ""
-	}
-
-	var img image.Image
-
-	switch filepath.Ext(srcPath) {
-	case ".png":
-		img, err = png.Decode(file)
-		if err != nil {
-			log.Errorf("error converting to webp: %v", err)
-			return ""
-		}
-	case ".jpg", ".jpeg":
-		img, err = jpeg.Decode(file)
-		if err != nil {
-			log.Errorf("error converting to webp: %v", err)
-			return ""
-		}
-	}
-
-	// resizing attempt on final image
-	ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
-	height := int(math.Round(float64(width) * ratio))
-
-	// process final image
-	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
-	safeImage := NewSafeImage(finalImg)
-	safeImage.SaveWebp(tempPath, outputPath)
-	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
-
 	return outputPath
 }
 
