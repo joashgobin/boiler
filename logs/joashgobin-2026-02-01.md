@@ -6,3 +6,4 @@
 - Tweaks
 - Use mutex for locking si.diskImage
 - Move conversion out of goroutine
+- Tweak

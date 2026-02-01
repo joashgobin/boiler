@@ -181,6 +181,7 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 		log.Errorf("error opening %s file: %v", toExt, err)
 		return
 	}
+	defer file.Close()
 
 	si.mu.Lock()
 	switch filepath.Ext(fromPath) {
