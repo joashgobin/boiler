@@ -26,9 +26,6 @@ type SafeImage struct {
 }
 
 func (si *SafeImage) SaveAVIF(from, to string) string {
-	si.mu.Lock()
-	defer si.mu.Unlock()
-
 	output, err := os.Create(from)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
@@ -50,9 +47,6 @@ func (si *SafeImage) SaveAVIF(from, to string) string {
 }
 
 func (si *SafeImage) SaveJPEG(from, to string) string {
-	si.mu.Lock()
-	defer si.mu.Unlock()
-
 	output, err := os.Create(from)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
@@ -75,9 +69,6 @@ func (si *SafeImage) SaveJPEG(from, to string) string {
 }
 
 func (si *SafeImage) SavePNG(from, to string) string {
-	si.mu.Lock()
-	defer si.mu.Unlock()
-
 	output, err := os.Create(from)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
@@ -100,9 +91,6 @@ func (si *SafeImage) SavePNG(from, to string) string {
 }
 
 func (si *SafeImage) SaveWebp(from, to string) string {
-	si.mu.Lock()
-	defer si.mu.Unlock()
-
 	output, err := os.Create(from)
 	if err != nil {
 		log.Errorf("error creating output path: %v", err)
@@ -172,6 +160,8 @@ func GetTempName(name string) string {
 
 func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 	si.mu.Lock()
+	defer si.mu.Unlock()
+
 	tempPath := GetTempName(toPath)
 	toExt := filepath.Ext(toPath)
 
@@ -204,7 +194,6 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 
 	si.finalImage = *image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
-	si.mu.Unlock()
 
 	switch filepath.Ext(toPath) {
 	case ".png":
