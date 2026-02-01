@@ -238,24 +238,21 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 			strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 				filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
 
-		go func() {
-			// use intermediate if present
-			if !FileExists(intermediatePath) {
-				var si SafeImage
-				si.SaveImage(srcPath, intermediatePath, intermediateWidth)
-			}
-
-			if FileExists(outputPath) {
-				// log.Info("skipping ", outputPath)
-				return
-			}
-
+		// use intermediate if present
+		if !FileExists(intermediatePath) {
 			var si SafeImage
-			si.SaveImage(intermediatePath, outputPath, width)
+			si.SaveImage(srcPath, intermediatePath, intermediateWidth)
+		}
 
-			log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
-		}()
-		return srcPath
+		if FileExists(outputPath) {
+			// log.Info("skipping ", outputPath)
+			return outputPath
+		}
+
+		var si SafeImage
+		si.SaveImage(intermediatePath, outputPath, width)
+
+		log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
 	}
 	return outputPath
 }

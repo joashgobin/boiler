@@ -8,3 +8,4 @@
 - Move conversion out of goroutine
 - Tweak
 - Trying goroutine
+- Revert
