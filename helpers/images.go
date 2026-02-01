@@ -289,11 +289,11 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 
 		ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
 		height := int(math.Round(float64(intermediateWidth) * ratio))
+
+		// process final intermediate image
 		finalImg := image.NewRGBA(image.Rect(0, 0, intermediateWidth, height))
 		draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
-
 		safeImage := NewSafeImage(finalImg)
-
 		switch filepath.Ext(srcPath) {
 		case ".png":
 			safeImage.SavePNG(tempPath, intermediatePath)
@@ -340,14 +340,13 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 	ratio := (float64)(img.Bounds().Max.Y) / (float64)(img.Bounds().Max.X)
 	height := int(math.Round(float64(width) * ratio))
 
-	// create final image with new size
+	// process final image
 	finalImg := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.CatmullRom.Scale(finalImg, finalImg.Rect, img, img.Bounds(), draw.Over, nil)
-
 	safeImage := NewSafeImage(finalImg)
 	safeImage.SaveWebp(tempPath, outputPath)
-
 	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
+
 	return outputPath
 }
 
