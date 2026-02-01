@@ -171,6 +171,7 @@ func GetTempName(name string) string {
 }
 
 func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
+	si.mu.Lock()
 	tempPath := GetTempName(toPath)
 	toExt := filepath.Ext(toPath)
 
@@ -183,7 +184,6 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 	}
 	defer file.Close()
 
-	si.mu.Lock()
 	switch filepath.Ext(fromPath) {
 	case ".png":
 		si.diskImage, err = png.Decode(file)
@@ -199,13 +199,12 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 		}
 	}
 
-	si.mu.Unlock()
-
 	ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
 	height := int(math.Round(float64(width) * ratio))
 
 	si.finalImage = *image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
+	si.mu.Unlock()
 
 	switch filepath.Ext(toPath) {
 	case ".png":
@@ -239,21 +238,24 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 			strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 				filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
 
-		// use intermediate if present
-		if !FileExists(intermediatePath) {
+		go func() {
+			// use intermediate if present
+			if !FileExists(intermediatePath) {
+				var si SafeImage
+				si.SaveImage(srcPath, intermediatePath, intermediateWidth)
+			}
+
+			if FileExists(outputPath) {
+				// log.Info("skipping ", outputPath)
+				return
+			}
+
 			var si SafeImage
-			si.SaveImage(srcPath, intermediatePath, intermediateWidth)
-		}
+			si.SaveImage(intermediatePath, outputPath, width)
 
-		if FileExists(outputPath) {
-			// log.Info("skipping ", outputPath)
-			return outputPath
-		}
-
-		var si SafeImage
-		si.SaveImage(intermediatePath, outputPath, width)
-
-		log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
+			log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
+		}()
+		return srcPath
 	}
 	return outputPath
 }
