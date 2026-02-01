@@ -150,6 +150,7 @@ func ConvertInlineAVIF(srcPath string, toDir string, dimensions ...int) string {
 			intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
 				strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 					filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
+
 			// use intermediate if present
 			if !FileExists(intermediatePath) {
 				tempPath := GetTempName(intermediatePath)
@@ -265,6 +266,7 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 			intermediatePath := fmt.Sprintf("%s_%dx.%s%s",
 				strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 					filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
+
 			// use intermediate if present
 			if !FileExists(intermediatePath) {
 				tempPath := GetTempName(intermediatePath)
