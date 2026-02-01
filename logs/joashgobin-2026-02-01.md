@@ -5,3 +5,4 @@
 - Use srcPath for Webp and AVIF files when not generated as yet
 - Tweaks
 - Use mutex for locking si.diskImage
+- Move conversion out of goroutine
