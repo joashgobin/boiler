@@ -44,18 +44,20 @@ import (
 
 type Base struct {
 	// public variables
-	Users     models.UserModelInterface
-	DB        *sql.DB
-	Store     *session.Store
-	Shelf     helpers.ShelfModelInterface
-	Flash     helpers.FlashInterface
-	Bank      helpers.BankInterface
-	MMG       payments.MMGInterface
-	Mail      email.MailInterface
-	Anchor    string
-	QR        helpers.QRInterface
-	WaitGroup *sync.WaitGroup
-	SiteMap   helpers.SitemapInterface
+	Users        models.UserModelInterface
+	DB           *sql.DB
+	Store        *session.Store
+	Shelf        helpers.ShelfModelInterface
+	Flash        helpers.FlashInterface
+	Bank         helpers.BankInterface
+	MMG          payments.MMGInterface
+	Mail         email.MailInterface
+	Anchor       string
+	QR           helpers.QRInterface
+	WaitGroup    *sync.WaitGroup
+	SiteMap      helpers.SitemapInterface
+	TestChannel  *chan string
+	ImageChannel *chan *helpers.SafeImage
 
 	// private variables
 	isProd bool
@@ -324,6 +326,22 @@ exec bash
 	}
 	showElapsed("app favicon generation time", start)
 
+	testChannel := make(chan string, 10)
+	imageChannel := make(chan *helpers.SafeImage, 10)
+
+	go func() {
+		for data := range testChannel {
+			log.Infof("received data from test channel: %s", data)
+		}
+	}()
+
+	go func() {
+		for si := range imageChannel {
+			// log.Infof("received safe image from image channel: %v", si)
+			si.ProcessImage()
+		}
+	}()
+
 	// create template engine
 	engine := html.New("./views", ".html")
 	if config.Templates != nil {
@@ -352,13 +370,13 @@ exec bash
 			return ht.HTMLAttr("class='rev' hx-trigger='revealed'")
 		},
 		"intersect": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(`
 <img alt="` + outputPath + `" class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
 			`)
 		},
 		"intersects": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, "static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(`
 <img alt="` + outputPath + `" class="rev-image" hx-trigger="revealed" src="` + outputPath + `">
 			`)
@@ -430,39 +448,39 @@ exec bash
 			`)
 		},
 		"gen": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(outputPath)
 		},
 		"gens": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, "static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML(outputPath)
 		},
 		"preload": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, imgPath, "static/gen/img", dimensions...)
 			return ht.HTML("<link rel='preload' href='" + outputPath + "' as='image' fetchpriority='high'>")
 		},
 		"preloads": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, "static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML("<link rel='preload' href='" + outputPath + "' as='image' fetchpriority='high'>")
 		},
 		"him": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, imgPath, "static/gen/img", dimensions...)
 			htmxString := `<div class="full-w" hx-get="/image?path=` + outputPath + `" hx-trigger="revealed" hx-swap="outerHTML">
 				            </div>`
 			return ht.HTML(htmxString)
 		},
 		"hims": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, "static/img/"+imgPath, "static/gen/img", dimensions...)
 			htmxString := `<div class="full-w" hx-get="/image?path=` + outputPath + `" hx-trigger="revealed" hx-swap="outerHTML">
 				            </div>`
 			return ht.HTML(htmxString)
 		},
 		"lazy": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp(imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, imgPath, "static/gen/img", dimensions...)
 			return ht.HTML("<img loading='lazy' decode='async' alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
 		},
 		"lazys": func(imgPath string, dimensions ...int) ht.HTML {
-			outputPath := "/" + helpers.ConvertInlineWebp("static/img/"+imgPath, "static/gen/img", dimensions...)
+			outputPath := "/" + helpers.ConvertInlineWebp(&imageChannel, "static/img/"+imgPath, "static/gen/img", dimensions...)
 			return ht.HTML("<img loading='lazy' decode='async' alt='" + outputPath + "' style='opacity:0' onload='this.style.opacity=1' class='gen-image' src='" + outputPath + "'>")
 		},
 		"icon": func(iconName ...string) ht.HTML {
@@ -758,18 +776,20 @@ exec bash
 
 	// attaching users to base
 	base := Base{
-		Users:     &models.UserModel{DB: db},
-		DB:        db,
-		Store:     store,
-		Shelf:     &helpers.ShelfModel{DB: db},
-		Flash:     &helpers.FlashModel{Store: store},
-		Bank:      helpers.NewBank(storage, config.AppName),
-		MMG:       payments.NewMMG(db, &wg, config.AppName),
-		Anchor:    ":" + config.Port,
-		QR:        helpers.NewQR(),
-		Mail:      mailModel,
-		WaitGroup: &wg,
-		SiteMap:   helpers.NewSitemap(config.IP),
+		Users:        &models.UserModel{DB: db},
+		DB:           db,
+		Store:        store,
+		Shelf:        &helpers.ShelfModel{DB: db},
+		Flash:        &helpers.FlashModel{Store: store},
+		Bank:         helpers.NewBank(storage, config.AppName),
+		MMG:          payments.NewMMG(db, &wg, config.AppName),
+		Anchor:       ":" + config.Port,
+		QR:           helpers.NewQR(),
+		Mail:         mailModel,
+		WaitGroup:    &wg,
+		SiteMap:      helpers.NewSitemap(config.IP),
+		TestChannel:  &testChannel,
+		ImageChannel: &imageChannel,
 
 		isProd: config.IsProduction,
 		domain: config.IP,

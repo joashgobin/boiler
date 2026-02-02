@@ -20,9 +20,15 @@ import (
 )
 
 type SafeImage struct {
-	mu         sync.Mutex
-	diskImage  image.Image
-	finalImage image.RGBA
+	mu                sync.Mutex
+	diskImage         image.Image
+	finalImage        image.RGBA
+	srcPath           string
+	intermediatePath  string
+	intermediateWidth int
+	outputPath        string
+	outputWidth       int
+	startTime         time.Time
 }
 
 func (si *SafeImage) SaveAVIF(from, to string) string {
@@ -172,7 +178,6 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 		log.Errorf("error opening %s file: %v", toExt, err)
 		return
 	}
-	defer file.Close()
 
 	switch filepath.Ext(fromPath) {
 	case ".png":
@@ -207,7 +212,111 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 	}
 }
 
-func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
+func (si *SafeImage) ProcessImage() {
+	log.Infof("processing image: %s -> %s -> %s", si.srcPath, si.intermediatePath, si.outputPath)
+	// use intermediate if present
+	if !FileExists(si.intermediatePath) {
+		si.mu.Lock()
+
+		tempPath := GetTempName(si.intermediatePath)
+		toExt := filepath.Ext(si.intermediatePath)
+
+		log.Infof("generating target file: %s", si.intermediatePath)
+
+		file, err := os.Open(si.srcPath)
+		if err != nil {
+			log.Errorf("error opening %s file: %v", toExt, err)
+			return
+		}
+
+		switch filepath.Ext(si.srcPath) {
+		case ".png":
+			si.diskImage, err = png.Decode(file)
+			if err != nil {
+				log.Errorf("error converting to %s: %v", toExt, err)
+				return
+			}
+		case ".jpg", ".jpeg":
+			si.diskImage, err = jpeg.Decode(file)
+			if err != nil {
+				log.Errorf("error converting to %s: %v", toExt, err)
+				return
+			}
+		}
+
+		ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
+		height := int(math.Round(float64(si.intermediateWidth) * ratio))
+
+		si.finalImage = *image.NewRGBA(image.Rect(0, 0, si.intermediateWidth, height))
+		draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
+
+		switch filepath.Ext(si.intermediatePath) {
+		case ".png":
+			si.SavePNG(tempPath, si.intermediatePath)
+		case ".jpg", ".jpeg":
+			si.SaveJPEG(tempPath, si.intermediatePath)
+		case ".avif":
+			si.SaveAVIF(tempPath, si.intermediatePath)
+		case ".webp":
+			si.SaveWebp(tempPath, si.intermediatePath)
+		}
+		si.mu.Unlock()
+	}
+
+	if FileExists(si.outputPath) {
+		return
+	}
+
+	si.mu.Lock()
+
+	tempPath := GetTempName(si.outputPath)
+	toExt := filepath.Ext(si.outputPath)
+
+	log.Infof("generating target file: %s", si.outputPath)
+
+	file, err := os.Open(si.intermediatePath)
+	if err != nil {
+		log.Errorf("error opening %s file: %v", toExt, err)
+		return
+	}
+
+	switch filepath.Ext(si.intermediatePath) {
+	case ".png":
+		si.diskImage, err = png.Decode(file)
+		if err != nil {
+			log.Errorf("error converting to %s: %v", toExt, err)
+			return
+		}
+	case ".jpg", ".jpeg":
+		si.diskImage, err = jpeg.Decode(file)
+		if err != nil {
+			log.Errorf("error converting to %s: %v", toExt, err)
+			return
+		}
+	}
+
+	ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
+	height := int(math.Round(float64(si.outputWidth) * ratio))
+
+	si.finalImage = *image.NewRGBA(image.Rect(0, 0, si.outputWidth, height))
+	draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
+
+	switch filepath.Ext(si.outputPath) {
+	case ".png":
+		si.SavePNG(tempPath, si.outputPath)
+	case ".jpg", ".jpeg":
+		si.SaveJPEG(tempPath, si.outputPath)
+	case ".avif":
+		si.SaveAVIF(tempPath, si.outputPath)
+	case ".webp":
+		si.SaveWebp(tempPath, si.outputPath)
+	}
+	si.mu.Unlock()
+
+	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(si.startTime), si.srcPath, si.outputPath)
+}
+
+func ConvertInlineWebp(imageChannel *chan *SafeImage, srcPath string, toDir string, dimensions ...int) string {
 	width := 600
 	intermediateWidth := 1200
 
@@ -227,20 +336,34 @@ func ConvertInlineWebp(srcPath string, toDir string, dimensions ...int) string {
 			strings.TrimSuffix(strings.Replace(srcPath, fromDir, toDir, -1),
 				filepath.Ext(srcPath)), intermediateWidth, hashString, filepath.Ext(srcPath))
 
-		// use intermediate if present
-		if !FileExists(intermediatePath) {
+		si := SafeImage{
+			srcPath:           srcPath,
+			intermediatePath:  intermediatePath,
+			intermediateWidth: intermediateWidth,
+			outputPath:        outputPath,
+			outputWidth:       width,
+			startTime:         start,
+		}
+
+		*imageChannel <- &si
+
+		/*
+			// use intermediate if present
+			if !FileExists(intermediatePath) {
+				var si SafeImage
+				si.SaveImage(srcPath, intermediatePath, intermediateWidth)
+			}
+
+			if FileExists(outputPath) {
+				return outputPath
+			}
+
 			var si SafeImage
-			si.SaveImage(srcPath, intermediatePath, intermediateWidth)
-		}
+			si.SaveImage(intermediatePath, outputPath, width)
 
-		if FileExists(outputPath) {
-			return outputPath
-		}
-
-		var si SafeImage
-		si.SaveImage(intermediatePath, outputPath, width)
-
-		log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
+			log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
+		*/
+		return srcPath
 	}
 	return outputPath
 }

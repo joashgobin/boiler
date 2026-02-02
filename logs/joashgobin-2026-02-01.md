@@ -11,3 +11,4 @@
 - Revert
 - Move defer mutex unlock
 - Revert
+- Switched to channel strategy
