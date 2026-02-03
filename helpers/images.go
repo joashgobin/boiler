@@ -1,14 +1,11 @@
 package helpers
 
 import (
-	"golang.org/x/image/draw"
 	"image"
 
+	"golang.org/x/image/draw"
+
 	"fmt"
-	"github.com/Kagami/go-avif"
-	"github.com/gofiber/fiber/v2/log"
-	"github.com/kolesa-team/go-webp/encoder"
-	"github.com/kolesa-team/go-webp/webp"
 	"image/jpeg"
 	"image/png"
 	"math"
@@ -17,6 +14,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Kagami/go-avif"
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/kolesa-team/go-webp/encoder"
+	"github.com/kolesa-team/go-webp/webp"
 )
 
 type SafeImage struct {
@@ -213,6 +215,16 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 }
 
 func (si *SafeImage) ProcessImage() {
+	lockPath := si.outputPath + ".lock"
+	if FileExists(lockPath) {
+		log.Info("lock file already exists...aborting...")
+		return
+	}
+	err := TouchFile(lockPath)
+	if err != nil {
+		log.Errorf("error creating safe image lock file: %v", err)
+	}
+
 	log.Infof("processing image: %s -> %s -> %s", si.srcPath, si.intermediatePath, si.outputPath)
 	// use intermediate if present
 	if !FileExists(si.intermediatePath) {
@@ -221,7 +233,7 @@ func (si *SafeImage) ProcessImage() {
 		tempPath := GetTempName(si.intermediatePath)
 		toExt := filepath.Ext(si.intermediatePath)
 
-		log.Infof("generating target file: %s", si.intermediatePath)
+		// log.Infof("generating target file: %s", si.intermediatePath)
 
 		file, err := os.Open(si.srcPath)
 		if err != nil {
@@ -272,7 +284,7 @@ func (si *SafeImage) ProcessImage() {
 	tempPath := GetTempName(si.outputPath)
 	toExt := filepath.Ext(si.outputPath)
 
-	log.Infof("generating target file: %s", si.outputPath)
+	// log.Infof("generating target file: %s", si.outputPath)
 
 	file, err := os.Open(si.intermediatePath)
 	if err != nil {
@@ -313,6 +325,10 @@ func (si *SafeImage) ProcessImage() {
 	}
 	si.mu.Unlock()
 
+	err = DeleteFile(lockPath)
+	if err != nil {
+		log.Errorf("error deleting safe image lock file: %v", err)
+	}
 	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(si.startTime), si.srcPath, si.outputPath)
 }
 

@@ -475,6 +475,14 @@ func TouchFile(filePath string) error {
 	return nil
 }
 
+func DeleteFile(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func SaveTextToDirectory(text string, filePath string) error {
 	if text == "" || filePath == "" {
 		return fmt.Errorf("text content and filePath must not be empty")
