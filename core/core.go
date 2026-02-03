@@ -191,6 +191,9 @@ func NewApp(config AppConfig) (*fiber.App, Base) {
 	helpers.CombineAndFingerprint("static/gen/mango-simplified.css", &fingerprints,
 		"static/styles/mango.css", "static/gen/mango-opt.css")
 
+	helpers.CombineAndFingerprint("static/gen/grug.css", &fingerprints,
+		"static/styles/grug.css", "static/styles/grug-utils.css", "static/styles/grug-tokens.css", "static/styles/grug-blocks.css")
+
 	// log.Info("fingerprints:", fingerprints)
 
 	// convert all images to webp
