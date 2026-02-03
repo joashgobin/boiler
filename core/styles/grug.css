@@ -125,6 +125,12 @@ section>div {
     max-width: var(--measure);
 }
 
+img {
+    max-inline-size: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+}
+
 input,
 label,
 textarea,

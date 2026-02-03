@@ -11,3 +11,4 @@
 - Tweaks
 - Updated main
 - Updated grug
+- Updated images style
