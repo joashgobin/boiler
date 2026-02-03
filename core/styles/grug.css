@@ -76,7 +76,8 @@ h6 {
 }
 
 
-header .fixed {
+header .fixed{
+    padding: 0.5rem 1rem;
     margin: 0;
     margin-bottom: 0;
     position: fixed;
