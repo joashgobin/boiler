@@ -301,7 +301,7 @@ exec bash
 		helpers.CreateDirectory("views/layouts")
 		helpers.CreateDirectory("views/partials")
 		helpers.CreateDirectory("static/styles")
-		helpers.CreateDirectory("static/gen")
+		helpers.CreateDirectory("static/gen/img")
 		helpers.CreateDirectory("static/img")
 		helpers.CreateDirectory("static/script")
 	}
