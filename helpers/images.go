@@ -217,7 +217,7 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 func (si *SafeImage) ProcessImage() {
 	lockPath := si.outputPath + ".lock"
 	if FileExists(lockPath) {
-		log.Info("lock file already exists...aborting...")
+		log.Error("lock file already exists...aborting...")
 		return
 	}
 	err := TouchFile(lockPath)

@@ -2,3 +2,4 @@
 
 - Added Grug CSS files
 - Removed some logs
+- Changed lock file message to error
