@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"image"
+	"slices"
 
 	"golang.org/x/image/draw"
 
@@ -226,7 +227,7 @@ func (si *SafeImage) ProcessImage() {
 		log.Errorf("error creating safe image lock file: %v", err)
 	}
 
-	log.Infof("processing image: %s -> %s -> %s", si.srcPath, si.intermediatePath, si.outputPath)
+	// log.Infof("processing image: %s -> %s -> %s", si.srcPath, si.intermediatePath, si.outputPath)
 	// use intermediate if present
 	if !FileExists(si.intermediatePath) {
 		si.mu.Lock()
@@ -277,6 +278,18 @@ func (si *SafeImage) ProcessImage() {
 	}
 
 	if FileExists(si.outputPath) {
+		err = DeleteFile(lockPath)
+		if err != nil {
+			log.Errorf("error deleting safe image lock file: %v", err)
+		}
+		return
+	}
+
+	if si.intermediateWidth == si.outputWidth {
+		err = DeleteFile(lockPath)
+		if err != nil {
+			log.Errorf("error deleting safe image lock file: %v", err)
+		}
 		return
 	}
 
@@ -331,6 +344,19 @@ func (si *SafeImage) ProcessImage() {
 		log.Errorf("error deleting safe image lock file: %v", err)
 	}
 	log.Infof("(%v) converted image (%s) to webp: %s", time.Since(si.startTime), si.srcPath, si.outputPath)
+}
+
+func ConvertInlineWebpFolder(imageChannel *chan *SafeImage, folderPath string, exts ...string) {
+	entries, err := os.ReadDir(folderPath)
+	if err != nil {
+		fmt.Printf("error reading directory (%s): %v\n", folderPath, err)
+		return
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() && slices.Contains(exts, filepath.Ext(entry.Name())) {
+			ConvertInlineWebp(imageChannel, filepath.Join(folderPath, entry.Name()), "static/gen/img", 1200)
+		}
+	}
 }
 
 func ConvertInlineWebp(imageChannel *chan *SafeImage, srcPath string, toDir string, dimensions ...int) string {

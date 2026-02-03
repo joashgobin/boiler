@@ -331,11 +331,11 @@ exec bash
 
 	var wg sync.WaitGroup
 
-	go func() {
+	wg.Go(func() {
 		for data := range testChannel {
 			log.Infof("received data from test channel: %s", data)
 		}
-	}()
+	})
 
 	wg.Go(func() {
 		for si := range imageChannel {
@@ -343,6 +343,12 @@ exec bash
 			si.ProcessImage()
 		}
 	})
+
+	/*
+		wg.Go(func() {
+			helpers.ConvertInlineWebpFolder(&imageChannel, "static/img", ".png", ".jpg", ".jpeg")
+		})
+	*/
 
 	// create template engine
 	engine := html.New("./views", ".html")
