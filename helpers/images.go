@@ -215,9 +215,9 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 	}
 }
 
-func (si *SafeImage) ProcessImage() {
+func (si *SafeImage) ProcessImage(start time.Time) {
 	si.startTime = time.Now()
-	lockPath := si.outputPath + ".lock"
+	lockPath := si.outputPath + "." + start.Format(time.RFC3339) + ".safe.lock"
 	if FileExists(lockPath) {
 		log.Error("lock file already exists...aborting...")
 		return

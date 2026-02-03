@@ -56,7 +56,6 @@ type Base struct {
 	QR           helpers.QRInterface
 	WaitGroup    *sync.WaitGroup
 	SiteMap      helpers.SitemapInterface
-	TestChannel  *chan string
 	ImageChannel *chan *helpers.SafeImage
 
 	// private variables
@@ -137,6 +136,7 @@ func (base Base) Serve(app *fiber.App) {
 	}
 
 	base.Bank.Close()
+	close(*base.ImageChannel)
 
 	log.Info("fiber app was successfully shutdown.")
 }
@@ -326,29 +326,16 @@ exec bash
 	}
 	showElapsed("app favicon generation time", start)
 
-	testChannel := make(chan string, 10)
 	imageChannel := make(chan *helpers.SafeImage, 10)
 
 	var wg sync.WaitGroup
 
-	wg.Go(func() {
-		for data := range testChannel {
-			log.Infof("received data from test channel: %s", data)
-		}
-	})
-
-	wg.Go(func() {
+	go func() {
 		for si := range imageChannel {
 			// log.Infof("received safe image from image channel: %v", si)
-			si.ProcessImage()
+			si.ProcessImage(start)
 		}
-	})
-
-	/*
-		wg.Go(func() {
-			helpers.ConvertInlineWebpFolder(&imageChannel, "static/img", ".png", ".jpg", ".jpeg")
-		})
-	*/
+	}()
 
 	// create template engine
 	engine := html.New("./views", ".html")
@@ -794,7 +781,6 @@ exec bash
 		Mail:         mailModel,
 		WaitGroup:    &wg,
 		SiteMap:      helpers.NewSitemap(config.IP),
-		TestChannel:  &testChannel,
 		ImageChannel: &imageChannel,
 
 		isProd: config.IsProduction,
