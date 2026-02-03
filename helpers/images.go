@@ -215,6 +215,7 @@ func (si *SafeImage) SaveImage(fromPath, toPath string, width int) {
 }
 
 func (si *SafeImage) ProcessImage() {
+	si.startTime = time.Now()
 	lockPath := si.outputPath + ".lock"
 	if FileExists(lockPath) {
 		log.Error("lock file already exists...aborting...")
@@ -340,7 +341,7 @@ func ConvertInlineWebp(imageChannel *chan *SafeImage, srcPath string, toDir stri
 		width = dimensions[0]
 	}
 	fromDir := filepath.Dir(srcPath)
-	start := time.Now()
+	// start := time.Now()
 	hashString := GetFileHash(srcPath)
 
 	outputPath := fmt.Sprintf("%s_%dx.%s.webp",
@@ -358,7 +359,6 @@ func ConvertInlineWebp(imageChannel *chan *SafeImage, srcPath string, toDir stri
 			intermediateWidth: intermediateWidth,
 			outputPath:        outputPath,
 			outputWidth:       width,
-			startTime:         start,
 		}
 
 		*imageChannel <- &si

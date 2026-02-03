@@ -329,18 +329,20 @@ exec bash
 	testChannel := make(chan string, 10)
 	imageChannel := make(chan *helpers.SafeImage, 10)
 
+	var wg sync.WaitGroup
+
 	go func() {
 		for data := range testChannel {
 			log.Infof("received data from test channel: %s", data)
 		}
 	}()
 
-	go func() {
+	wg.Go(func() {
 		for si := range imageChannel {
 			// log.Infof("received safe image from image channel: %v", si)
 			si.ProcessImage()
 		}
-	}()
+	})
 
 	// create template engine
 	engine := html.New("./views", ".html")
@@ -768,8 +770,6 @@ exec bash
 	// set db connections
 	// db.SetMaxIdleConns(2)
 	// db.SetMaxOpenConns(20)
-
-	var wg sync.WaitGroup
 
 	// create email model
 	mailModel := email.NewMailModel(db, &wg, config.AppName)
