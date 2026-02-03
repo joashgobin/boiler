@@ -3,7 +3,7 @@ to="core/styles/"
 
 .PHONY: styles
 styles:
-	cp ${from}/mango* ${to}
+	cp ${from}/*.css ${to}
 
 .PHONY: update
 update:
