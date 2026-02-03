@@ -75,6 +75,40 @@ h6 {
     font-style: italic;
 }
 
+
+header .fixed {
+    margin: 0;
+    margin-bottom: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+header nav ul li {
+    list-style-type: none;
+}
+
+header a {
+    padding: 0.5rem;
+}
+
+header form :is(button, input) {
+    background-color: transparent;
+    color: inherit;
+    border: none;
+    font-size: var(--s0);
+    font-family: var(--body-font);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+a {
+    color: inherit;
+    text-underline-offset: 3px;
+}
+
 section {
     display: grid;
     align-content: center;

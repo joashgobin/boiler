@@ -7,3 +7,4 @@
 - Removed image processing on app startup
 - Close image channel on app shutdown and include app startup time in .safe.lock
 - Added task for grug
+- Updated grug
