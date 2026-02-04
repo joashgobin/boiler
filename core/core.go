@@ -335,8 +335,10 @@ exec bash
 
 	go func() {
 		for si := range imageChannel {
-			// log.Infof("received safe image from image channel: %v", si)
-			si.ProcessImage(start)
+			go func() {
+				// log.Infof("received safe image from image channel: %v", si)
+				si.ProcessImage(start)
+			}()
 		}
 	}()
 

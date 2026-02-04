@@ -80,6 +80,10 @@
     border-width: 4px;
 }
 
+.borderless {
+    border: none;
+}
+
 .sharp {
     border-radius: 0;
 }
