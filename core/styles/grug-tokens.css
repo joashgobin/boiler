@@ -82,6 +82,7 @@
 
 .borderless {
     border: none;
+    border-width: 0;
 }
 
 .sharp {
