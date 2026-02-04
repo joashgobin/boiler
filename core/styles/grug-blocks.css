@@ -10,6 +10,11 @@
     overflow-wrap: break-word;
 }
 
+.card.borderless {
+    border: none;
+    border-width: 0;
+}
+
 .card.no-pad {
     padding-left: 0;
     padding-right: 0;
