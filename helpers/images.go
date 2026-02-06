@@ -5,12 +5,9 @@ import (
 	"os/exec"
 	"slices"
 
-	"golang.org/x/image/draw"
-
 	"fmt"
 	"image/jpeg"
 	"image/png"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
