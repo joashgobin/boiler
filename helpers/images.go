@@ -47,53 +47,6 @@ func (si *SafeImage) ProcessImage(start time.Time) {
 	// log.Infof("processing image: %s -> %s -> %s", si.srcPath, si.intermediatePath, si.outputPath)
 	// use intermediate if present
 	if !FileExists(si.intermediatePath) {
-		/*
-			si.mu.Lock()
-
-					tempPath := GetTempName(si.intermediatePath)
-					toExt := filepath.Ext(si.intermediatePath)
-
-					// log.Infof("generating target file: %s", si.intermediatePath)
-
-					file, err := os.Open(si.srcPath)
-					if err != nil {
-						log.Errorf("error opening %s file: %v", toExt, err)
-						return
-					}
-
-					switch filepath.Ext(si.srcPath) {
-					case ".png":
-						si.diskImage, err = png.Decode(file)
-						if err != nil {
-							log.Errorf("error converting to %s: %v", toExt, err)
-							return
-						}
-					case ".jpg", ".jpeg":
-						si.diskImage, err = jpeg.Decode(file)
-						if err != nil {
-							log.Errorf("error converting to %s: %v", toExt, err)
-							return
-						}
-					}
-
-				ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
-				height := int(math.Round(float64(si.intermediateWidth) * ratio))
-
-				si.finalImage = *image.NewRGBA(image.Rect(0, 0, si.intermediateWidth, height))
-				draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
-
-				switch filepath.Ext(si.intermediatePath) {
-				case ".png":
-					si.SavePNG(tempPath, si.intermediatePath)
-				case ".jpg", ".jpeg":
-					si.SaveJPEG(tempPath, si.intermediatePath)
-				case ".avif":
-					si.SaveAVIF(tempPath, si.intermediatePath)
-				case ".webp":
-					si.SaveWebp(tempPath, si.intermediatePath)
-				}
-				si.mu.Unlock()
-		*/
 		vipsThumbnail(si.srcPath, si.intermediatePath, si.intermediateWidth)
 	}
 
@@ -113,53 +66,6 @@ func (si *SafeImage) ProcessImage(start time.Time) {
 		return
 	}
 
-	/*
-		si.mu.Lock()
-
-		tempPath := GetTempName(si.outputPath)
-		toExt := filepath.Ext(si.outputPath)
-
-		// log.Infof("generating target file: %s", si.outputPath)
-
-		file, err := os.Open(si.intermediatePath)
-		if err != nil {
-			log.Errorf("error opening %s file: %v", toExt, err)
-			return
-		}
-
-		switch filepath.Ext(si.intermediatePath) {
-		case ".png":
-			si.diskImage, err = png.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to %s: %v", toExt, err)
-				return
-			}
-		case ".jpg", ".jpeg":
-			si.diskImage, err = jpeg.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to %s: %v", toExt, err)
-				return
-			}
-		}
-
-		ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
-		height := int(math.Round(float64(si.outputWidth) * ratio))
-
-		si.finalImage = *image.NewRGBA(image.Rect(0, 0, si.outputWidth, height))
-		draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
-
-		switch filepath.Ext(si.outputPath) {
-		case ".png":
-			si.SavePNG(tempPath, si.outputPath)
-		case ".jpg", ".jpeg":
-			si.SaveJPEG(tempPath, si.outputPath)
-		case ".avif":
-			si.SaveAVIF(tempPath, si.outputPath)
-		case ".webp":
-			si.SaveWebp(tempPath, si.outputPath)
-		}
-		si.mu.Unlock()
-	*/
 	vipsThumbnail(si.intermediatePath, si.outputPath, si.outputWidth)
 
 	err = DeleteFile(lockPath)
