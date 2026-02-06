@@ -12,6 +12,7 @@ AVIF and WEBP conversions are done using libaom-dev and libwebp-dev:
 ```sh
 sudo apt-get install libaom-dev
 sudo apt-get install libwebp-dev
+sudo apt install libvips-tools
 ```
 
 ## Basic app

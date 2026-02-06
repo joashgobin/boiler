@@ -231,51 +231,54 @@ func (si *SafeImage) ProcessImage(start time.Time) {
 	// log.Infof("processing image: %s -> %s -> %s", si.srcPath, si.intermediatePath, si.outputPath)
 	// use intermediate if present
 	if !FileExists(si.intermediatePath) {
-		si.mu.Lock()
+		/*
+			si.mu.Lock()
 
-		tempPath := GetTempName(si.intermediatePath)
-		toExt := filepath.Ext(si.intermediatePath)
+					tempPath := GetTempName(si.intermediatePath)
+					toExt := filepath.Ext(si.intermediatePath)
 
-		// log.Infof("generating target file: %s", si.intermediatePath)
+					// log.Infof("generating target file: %s", si.intermediatePath)
 
-		file, err := os.Open(si.srcPath)
-		if err != nil {
-			log.Errorf("error opening %s file: %v", toExt, err)
-			return
-		}
+					file, err := os.Open(si.srcPath)
+					if err != nil {
+						log.Errorf("error opening %s file: %v", toExt, err)
+						return
+					}
 
-		switch filepath.Ext(si.srcPath) {
-		case ".png":
-			si.diskImage, err = png.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to %s: %v", toExt, err)
-				return
-			}
-		case ".jpg", ".jpeg":
-			si.diskImage, err = jpeg.Decode(file)
-			if err != nil {
-				log.Errorf("error converting to %s: %v", toExt, err)
-				return
-			}
-		}
+					switch filepath.Ext(si.srcPath) {
+					case ".png":
+						si.diskImage, err = png.Decode(file)
+						if err != nil {
+							log.Errorf("error converting to %s: %v", toExt, err)
+							return
+						}
+					case ".jpg", ".jpeg":
+						si.diskImage, err = jpeg.Decode(file)
+						if err != nil {
+							log.Errorf("error converting to %s: %v", toExt, err)
+							return
+						}
+					}
 
-		ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
-		height := int(math.Round(float64(si.intermediateWidth) * ratio))
+				ratio := (float64)(si.diskImage.Bounds().Max.Y) / (float64)(si.diskImage.Bounds().Max.X)
+				height := int(math.Round(float64(si.intermediateWidth) * ratio))
 
-		si.finalImage = *image.NewRGBA(image.Rect(0, 0, si.intermediateWidth, height))
-		draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
+				si.finalImage = *image.NewRGBA(image.Rect(0, 0, si.intermediateWidth, height))
+				draw.CatmullRom.Scale(&si.finalImage, si.finalImage.Rect, si.diskImage, si.diskImage.Bounds(), draw.Over, nil)
 
-		switch filepath.Ext(si.intermediatePath) {
-		case ".png":
-			si.SavePNG(tempPath, si.intermediatePath)
-		case ".jpg", ".jpeg":
-			si.SaveJPEG(tempPath, si.intermediatePath)
-		case ".avif":
-			si.SaveAVIF(tempPath, si.intermediatePath)
-		case ".webp":
-			si.SaveWebp(tempPath, si.intermediatePath)
-		}
-		si.mu.Unlock()
+				switch filepath.Ext(si.intermediatePath) {
+				case ".png":
+					si.SavePNG(tempPath, si.intermediatePath)
+				case ".jpg", ".jpeg":
+					si.SaveJPEG(tempPath, si.intermediatePath)
+				case ".avif":
+					si.SaveAVIF(tempPath, si.intermediatePath)
+				case ".webp":
+					si.SaveWebp(tempPath, si.intermediatePath)
+				}
+				si.mu.Unlock()
+		*/
+		vipsThumbnail(si.srcPath, si.intermediatePath, si.intermediateWidth)
 	}
 
 	if FileExists(si.outputPath) {
@@ -572,7 +575,6 @@ func vipsThumbnail(inputPath, outputPath string, dimensions ...int) error {
 	if err != nil {
 		return fmt.Errorf("vips thumbnail error: %v", err)
 	}
-	fmt.Println("moving to", outputFolderPath)
 
 	mvCmd := exec.Command("mv", tempPath, outputFolderPath)
 	_, err = mvCmd.Output()
