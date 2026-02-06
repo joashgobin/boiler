@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"image"
+	"os/exec"
 	"slices"
 
 	"golang.org/x/image/draw"
@@ -552,4 +553,31 @@ func ConvertInFolderToWebp(folderPath string, targetFolder string, ext string, f
 		}
 	}
 
+}
+
+func vipsThumbnail(inputPath, outputPath string, dimensions ...int) error {
+	outputFolderPath := filepath.Dir(outputPath) + "/"
+	outputName := filepath.Base(outputPath)
+	tempPath := filepath.Dir(inputPath) + "/" + outputName
+
+	dimStr := "600x"
+	if len(dimensions) > 0 {
+		dimStr = fmt.Sprintf("%dx", dimensions[0])
+	}
+	if len(dimensions) > 1 {
+		dimStr = fmt.Sprintf("%dx%d", dimensions[0], dimensions[1])
+	}
+	cmd := exec.Command("vipsthumbnail", inputPath, "--size", dimStr, "-o", outputName)
+	_, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("vips thumbnail error: %v", err)
+	}
+	fmt.Println("moving to", outputFolderPath)
+
+	mvCmd := exec.Command("mv", tempPath, outputFolderPath)
+	_, err = mvCmd.Output()
+	if err != nil {
+		return fmt.Errorf("vips move image error: %v", err)
+	}
+	return nil
 }
