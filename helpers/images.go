@@ -118,22 +118,6 @@ func ConvertInlineWebp(imageChannel *chan *SafeImage, srcPath string, toDir stri
 
 		*imageChannel <- &si
 
-		/*
-			// use intermediate if present
-			if !FileExists(intermediatePath) {
-				var si SafeImage
-				si.SaveImage(srcPath, intermediatePath, intermediateWidth)
-			}
-
-			if FileExists(outputPath) {
-				return outputPath
-			}
-
-			var si SafeImage
-			si.SaveImage(intermediatePath, outputPath, width)
-
-			log.Infof("(%v) converted image (%s) to webp: %s", time.Since(start), srcPath, outputPath)
-		*/
 		return srcPath
 	}
 	return outputPath
