@@ -8,3 +8,4 @@
 - Removed comments
 - Skip log call
 - Removed comment
+- Try image reload
