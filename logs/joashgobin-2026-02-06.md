@@ -10,3 +10,4 @@
 - Removed comment
 - Try image reload
 - Remove empty file
+- Tweak go build in air
