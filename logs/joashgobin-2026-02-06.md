@@ -9,3 +9,4 @@
 - Skip log call
 - Removed comment
 - Try image reload
+- Remove empty file
