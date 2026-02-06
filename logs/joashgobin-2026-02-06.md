@@ -6,3 +6,4 @@
 - Remove mutex and image pointers from safe image struct
 - Remove some packages
 - Removed comments
+- Skip log call

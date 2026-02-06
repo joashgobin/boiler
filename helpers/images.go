@@ -36,7 +36,7 @@ func (si *SafeImage) ProcessImage(start time.Time) {
 	si.startTime = time.Now()
 	lockPath := si.outputPath + "." + start.Format(time.RFC3339) + ".safe.lock"
 	if FileExists(lockPath) {
-		log.Error("lock file already exists...aborting...")
+		// log.Error("lock file already exists...aborting...")
 		return
 	}
 	err := TouchFile(lockPath)
