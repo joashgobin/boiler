@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -267,6 +268,14 @@ func SessionLocalsMiddleware(store *session.Store) fiber.Handler {
 			c.Locals("old", sess.Get("old"))
 		} else {
 			c.Locals("old", map[string]string{})
+		}
+
+		// set session expiry to shorter time if the user is not defined
+		if sess.Get("user") == nil {
+			sess.SetExpiry(1 * time.Minute)
+			if err := sess.Save(); err != nil {
+				log.Infof("error updating session expiry: %v", err)
+			}
 		}
 
 		// pass flash message to locals if indicated by Push()
