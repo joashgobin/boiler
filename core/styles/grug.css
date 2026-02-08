@@ -76,7 +76,7 @@ h6 {
 }
 
 
-header .fixed {
+header.fixed {
     margin: 0;
     margin-bottom: 0;
     position: fixed;
@@ -84,6 +84,10 @@ header .fixed {
     left: 0;
     right: 0;
     z-index: 1000;
+}
+
+header.fixed+* {
+    margin-top: 3rem;
 }
 
 header nav ul li {

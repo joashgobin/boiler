@@ -1,3 +1,7 @@
+.center {
+    text-align: center;
+}
+
 .flex {
     --space: 0.5rem;
     display: flex;
