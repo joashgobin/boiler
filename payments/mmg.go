@@ -66,6 +66,7 @@ type Transaction struct {
 	ModificationDate   time.Time `json:"modificationDate"`
 	TransactionRef     string    `json:"transactionReference"`
 	TransactionReceipt string    `json:"transactionReceipt"`
+	ExternalID         string    `json:"external_id"`
 	DebitParty         []Party   `json:"debitParty"`
 	CreditParty        []Party   `json:"creditParty"`
 }
@@ -81,15 +82,16 @@ type TransactionModel struct {
 }
 
 type MMGTransaction struct {
-	Timestamp time.Time
-	Reference string
-	From      string
-	To        string
-	Amount    float64
-	Currency  string
-	Category  string
-	Status    string
-	Metadata  string
+	Timestamp  time.Time
+	Reference  string
+	From       string
+	To         string
+	Amount     float64
+	Currency   string
+	Category   string
+	Status     string
+	Metadata   string
+	ExternalID string
 }
 
 // Config holds application configuration
@@ -117,6 +119,7 @@ func getTransactionMeta(data []byte) (string, error) {
 	r := regexp.MustCompile(`"key":\s*"(product_desc|description)",\s*"value":\s*"(.+?)"`)
 	matches := r.FindStringSubmatch(string(data))
 	if len(matches) > 1 {
+		// log.Infof("found transaction meta: %s", matches[2])
 		return matches[2], nil
 	}
 	return "", errors.New("can't find description in body")
@@ -234,6 +237,7 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 		mmgTransaction.Category = transaction.DisplayType
 		mmgTransaction.Reference = transaction.TransactionRef
 		mmgTransaction.Timestamp = transaction.ModificationDate
+		mmgTransaction.ExternalID = transaction.ExternalID
 
 		for _, party := range transaction.DebitParty {
 			if party.Key == "accountid" {
@@ -287,13 +291,14 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 		)
 		if err != nil {
 			tx.Rollback()
-			log.Errorf("mmg transaction insert error: %v", err)
+			log.Errorf("❌ mmg transaction insert error: %v", err)
 		} else {
-			log.Infof("inserted %s) %s: %s -> %s (%f %s)\n", txn.Reference, txn.Category, txn.From, txn.To, txn.Amount, txn.Currency)
+			log.Infof("✅ inserted %s) %s: %s -> %s (%f %s)\n", txn.Reference, txn.Category, txn.From, txn.To, txn.Amount, txn.Currency)
 		}
 	}
 	tx.Commit()
 	for _, txn := range history {
+		log.Infof("queue load transaction details for transaction: %v", txn)
 		m.LoadMMGTransactionDetails(merchantNumber, txn.Reference, resourceToken)
 	}
 }
@@ -369,7 +374,7 @@ func IsMMGSubscribed(db *sql.DB, thresholdAmount float64, userEmail string) bool
 
 func getMMGHistory(merchantNumber int, url string, resourceToken string) (string, *http.Response) {
 
-	log.Infof("loading MMG history for %d...via %s", merchantNumber, url)
+	// log.Infof("loading MMG history for %d...via %s", merchantNumber, url)
 
 	// get merchant environment details
 	// get env values
@@ -451,7 +456,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 				return
 			}
 
-			log.Infof("resource token: %s", resourceToken)
+			// log.Infof("resource token: %s", resourceToken)
 
 			// send request
 			body, res := getMMGHistory(merchantNumber, url, resourceToken)
