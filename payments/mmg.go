@@ -221,6 +221,7 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 	err := json.Unmarshal([]byte(data), &response)
 	if err != nil {
 		log.Errorf("error unmarshaling JSON: %v\n", err)
+		// log.Infof("JSON: %v\n", data)
 		return
 	}
 	var history []MMGTransaction
@@ -442,8 +443,6 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			// in case resource token is empty
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
-				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Resource Token Returned Empty",
-				// 		fmt.Sprintf("Merchant: %d", merchantNumber), "", m.WaitGroup)
 				m.LoadNewResourceToken(merchantNumber)
 
 				// send request
@@ -462,8 +461,6 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 				// log error and notify admin via email
 				log.Error("failed to use valid resource token: %v", res)
-				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Client Authorization Error",
-				// fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
 
 				// request new resource token
 				m.LoadNewResourceToken(merchantNumber)
@@ -477,9 +474,11 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			// in case authentication fails
 			if strings.Contains(string(body), "Authentication failure") {
 				log.Errorf("authentication failed with token: %s", resourceToken)
-				// notify admin via email
-				// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Authentication Error",
-				// fmt.Sprintf("Response: %v<br>Head: %v<br>Merchant: %d", string(body), res.Header, merchantNumber), "", m.WaitGroup)
+				m.LoadNewResourceToken(merchantNumber)
+
+				// send request
+				body, _ := getMMGHistory(merchantNumber, url, resourceToken)
+				m.getTransactionData(body, merchantNumber, resourceToken)
 				return
 			}
 

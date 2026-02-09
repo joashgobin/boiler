@@ -35,6 +35,7 @@
     text-decoration: none;
     padding: 1rem;
     margin: 0.2rem;
+    margin-top: 1rem;
     box-shadow: var(--shadow);
     transition: transform 240ms;
     transform: translateY(0);

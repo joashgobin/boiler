@@ -36,4 +36,5 @@
     text-decoration: none;
     border: 2px solid var(--text-color);
     padding: 0.5rem 1rem;
+    margin-top: 1rem;
 }
