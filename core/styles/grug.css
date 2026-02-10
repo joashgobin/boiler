@@ -90,10 +90,6 @@ header.fixed {
     z-index: 1000;
 }
 
-header.fixed+* {
-    padding-top: 3rem;
-}
-
 header nav ul li {
     list-style-type: none;
 }
