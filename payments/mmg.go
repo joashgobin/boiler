@@ -448,10 +448,10 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			// in case resource token is empty
 			if resourceToken == "" {
 				log.Error("resource token returned empty")
-				m.LoadNewResourceToken(merchantNumber)
+				newToken := m.LoadNewResourceToken(merchantNumber)
 
 				// send request
-				body, _ := getMMGHistory(merchantNumber, url, resourceToken)
+				body, _ := getMMGHistory(merchantNumber, url, newToken)
 				m.getTransactionData(body, merchantNumber, resourceToken)
 				return
 			}
@@ -468,10 +468,10 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 				log.Error("failed to use valid resource token: %v", res)
 
 				// request new resource token
-				m.LoadNewResourceToken(merchantNumber)
+				newToken := m.LoadNewResourceToken(merchantNumber)
 
 				// resend request
-				body, _ := getMMGHistory(merchantNumber, url, resourceToken)
+				body, _ := getMMGHistory(merchantNumber, url, newToken)
 				m.getTransactionData(body, merchantNumber, resourceToken)
 				return
 			}
@@ -479,10 +479,10 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			// in case authentication fails
 			if strings.Contains(string(body), "Authentication failure") {
 				log.Errorf("authentication failed with token: %s", resourceToken)
-				m.LoadNewResourceToken(merchantNumber)
+				newToken := m.LoadNewResourceToken(merchantNumber)
 
 				// send request
-				body, _ := getMMGHistory(merchantNumber, url, resourceToken)
+				body, _ := getMMGHistory(merchantNumber, url, newToken)
 				m.getTransactionData(body, merchantNumber, resourceToken)
 				return
 			}
@@ -536,7 +536,7 @@ func extractEnvMap(envStr string) *map[string]string {
 	return &envMap
 }
 
-func (m *MMGModel) LoadNewResourceToken(merchantNumber int) {
+func (m *MMGModel) LoadNewResourceToken(merchantNumber int) string {
 	log.Infof("loading new resource token for %d...", merchantNumber)
 	method := "POST"
 
@@ -561,21 +561,21 @@ func (m *MMGModel) LoadNewResourceToken(merchantNumber int) {
 
 	if err != nil {
 		log.Errorf("load new resource token request error: %v", err)
-		return
+		return ""
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	res, err := client.Do(req)
 	if err != nil {
 		log.Errorf("load new resource token request error: %v", err)
-		return
+		return ""
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Errorf("load new resource token read response error: %v", err)
-		return
+		return ""
 	}
 
 	log.Infof("response body: %v", string(body))
@@ -584,10 +584,11 @@ func (m *MMGModel) LoadNewResourceToken(merchantNumber int) {
 	if err != nil {
 		log.Error("failed to extract resource token")
 		// email.SendEmail(helpers.Getenv("ADMIN_EMAIL"), "MMG Failed Token Extraction", fmt.Sprintf("Response: %s<br>Merchant: %d", string(body), merchantNumber), "", m.WaitGroup)
-		return
+		return ""
 	}
 	log.Infof("new resource token: %s", token)
 	helpers.SetShelf(m.DB, "resource-token-"+strconv.Itoa(merchantNumber), token)
+	return token
 }
 
 func (m *MMGModel) GetMMGBalance(merchantNumber int) {

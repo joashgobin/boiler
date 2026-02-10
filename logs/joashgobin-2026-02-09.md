@@ -2,3 +2,4 @@
 
 - Updated mmg code
 - Updated the code 
+- Return new resource token from load new resource token function
