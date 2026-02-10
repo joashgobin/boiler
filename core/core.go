@@ -341,7 +341,7 @@ exec bash
 		helpers.GenerateFavicon("static/img/favicon.png", "static/gen/img/")
 
 		// convert images to Webp
-		helpers.ConvertInlineWebpFolder(&imageChannel, "static/img/", ".jpg", ".png","jpeg")
+		// helpers.ConvertInlineWebpFolder(&imageChannel, "static/img/", ".jpg", ".png","jpeg")
 	}
 	showElapsed("app favicon generation time", start)
 

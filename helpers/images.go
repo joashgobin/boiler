@@ -119,8 +119,9 @@ func ConvertInlineWebp(imageChannel *chan *SafeImage, srcPath string, toDir stri
 		}
 
 		*imageChannel <- &si
-
 		return srcPath
+
+		// si.ProcessImage(time.Now())
 	}
 	return outputPath
 }
