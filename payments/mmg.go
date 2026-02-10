@@ -115,7 +115,7 @@ type TokenParams struct {
 }
 
 func getTransactionMeta(data []byte) (string, error) {
-	log.Infof("get transaction meta from body: %v", string(data))
+	log.Infof("GET META: %v", string(data))
 	r := regexp.MustCompile(`"key":\s*"(product_desc|description)",\s*"value":\s*"(.+?)"`)
 	matches := r.FindStringSubmatch(string(data))
 	if len(matches) > 1 {
@@ -137,6 +137,8 @@ func extractResourceTokenFromBody(data []byte) (string, error) {
 func (m *MMGModel) LoadMMGTransactionDetails(merchantNumber int, transactionReference string, resourceToken string) {
 	helpers.Background(
 		func() {
+
+			log.Infof("LOOKUP: %s", transactionReference)
 
 			envStr := getEnvFileString(merchantNumber)
 			envMap := extractEnvMap(envStr)
@@ -298,7 +300,7 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 	}
 	tx.Commit()
 	for _, txn := range history {
-		log.Infof("queue load transaction details for transaction: %v", txn)
+		log.Infof("QUEUE LOOKUP: %v", txn)
 		m.LoadMMGTransactionDetails(merchantNumber, txn.Reference, resourceToken)
 	}
 }
@@ -452,7 +454,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 				// send request
 				body, _ := getMMGHistory(merchantNumber, url, newToken)
-				m.getTransactionData(body, merchantNumber, resourceToken)
+				m.getTransactionData(body, merchantNumber, newToken)
 				return
 			}
 
@@ -472,7 +474,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 				// resend request
 				body, _ := getMMGHistory(merchantNumber, url, newToken)
-				m.getTransactionData(body, merchantNumber, resourceToken)
+				m.getTransactionData(body, merchantNumber, newToken)
 				return
 			}
 
