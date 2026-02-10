@@ -19,6 +19,7 @@ import (
 
 type UserModelInterface interface {
 	Insert(name, email, password string) error
+	UpdatePassword(email, password string) error
 	Authenticate(email, password string) (User, error)
 	EmailAuthenticate(email string) (User, error)
 	Exists(email string) (bool, error)
@@ -108,8 +109,10 @@ func (m *UserModel) Insert(name, email, password string) error {
 	if err != nil {
 		return err
 	}
-	stmt := `INSERT INTO users (name, email, roles, hashed_password, created)
-    VALUES(?, ?, ?, ?, UTC_TIMESTAMP())`
+	stmt := `
+	INSERT INTO users (name, email, roles, hashed_password, created)
+    VALUES(?, ?, ?, ?, UTC_TIMESTAMP())
+	`
 	_, err = m.DB.Exec(stmt, name, email, "|user|", string(hashedPassword))
 	if err != nil {
 		var mySQLError *mysql.MySQLError
@@ -119,6 +122,23 @@ func (m *UserModel) Insert(name, email, password string) error {
 			}
 		}
 		return err
+	}
+	return nil
+}
+
+func (m *UserModel) UpdatePassword(email, password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("update password generate hash error: %v", err)
+	}
+	query := `
+	UPDATE users
+	SET hashed_password = ?
+	WHERE email = ?
+	`
+	_, err = m.DB.Exec(query, hashedPassword, email)
+	if err != nil {
+		return fmt.Errorf("update password exec error: %v", err)
 	}
 	return nil
 }
