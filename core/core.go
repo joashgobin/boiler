@@ -322,13 +322,6 @@ exec bash
 
 	showElapsed("app resource copy time", start)
 
-	if !fiber.IsChild() {
-		// generate favicon
-		helpers.ConvertJPGToPNG("static/img/favicon.jpg", "static/img/favicon.png")
-		helpers.GenerateFavicon("static/img/favicon.png", "static/gen/img/")
-	}
-	showElapsed("app favicon generation time", start)
-
 	imageChannel := make(chan *helpers.SafeImage, 10)
 
 	var wg sync.WaitGroup
@@ -341,6 +334,16 @@ exec bash
 			}()
 		}
 	}()
+
+	if !fiber.IsChild() {
+		// generate favicon
+		helpers.ConvertJPGToPNG("static/img/favicon.jpg", "static/img/favicon.png")
+		helpers.GenerateFavicon("static/img/favicon.png", "static/gen/img/")
+
+		// convert images to Webp
+		helpers.ConvertInlineWebpFolder(&imageChannel, "static/img/", ".jpg", ".png","jpeg")
+	}
+	showElapsed("app favicon generation time", start)
 
 	// create template engine
 	engine := html.New("./views", ".html")
