@@ -91,7 +91,7 @@ header.fixed {
 }
 
 header.fixed+* {
-    margin-top: 3rem;
+    padding-top: 3rem;
 }
 
 header nav ul li {
