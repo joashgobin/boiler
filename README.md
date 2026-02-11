@@ -18,7 +18,7 @@ sudo apt install libvips-tools
 ## Basic app
 Create a go module and add the following to your **go.mod** file:
 ```
-go 1.25.3
+go 1.26.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
