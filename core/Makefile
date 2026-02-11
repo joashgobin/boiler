@@ -72,8 +72,8 @@ deploy/static:
 build:
 	@-figlet "Build app"
 	@echo "• building binary locally"
-	@GOEXPERIMENT=greenteagc go build -ldflags='-s' -o=./bin/web .
-	@GOEXPERIMENT=greenteagc GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/web .
+	@go build -ldflags='-s' -o=./bin/web .
+	@GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/web .
 
 ## tidy: tidy module dependencies and format all .go files
 .PHONY: tidy

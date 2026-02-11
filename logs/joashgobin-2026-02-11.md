@@ -1,0 +1,3 @@
+# Wednesday (February 11, 2026)
+
+- Update to go 1.26
