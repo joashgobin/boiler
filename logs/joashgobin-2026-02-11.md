@@ -2,3 +2,4 @@
 
 - Update to go 1.26
 - Updated README
+- Tweak small color
