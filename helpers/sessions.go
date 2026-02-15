@@ -270,23 +270,28 @@ func SessionLocalsMiddleware(store *session.Store) fiber.Handler {
 			c.Locals("old", map[string]string{})
 		}
 
+		updatedSession := false
+
 		// set session expiry to shorter time if the user is not defined
 		if sess.Get("user") == nil {
 			sess.SetExpiry(1 * time.Minute)
-			if err := sess.Save(); err != nil {
-				log.Infof("error updating session expiry: %v", err)
-			}
+			updatedSession = true
 		}
 
 		// pass flash message to locals if indicated by Push()
 		if sess.Get("delayFlashClear") != nil {
 			sess.Delete("delayFlashClear")
 			c.Locals("flash", sess.Get("flashMessage"))
-			if err := sess.Save(); err != nil {
-				log.Infof("error resetting flash: %v", err)
-			}
+			updatedSession = true
 		} else {
 			c.Locals("flash", nil)
+		}
+
+		// save session once if any changes were made
+		if updatedSession {
+			if err := sess.Save(); err != nil {
+				log.Infof("error updating session info: %v", err)
+			}
 		}
 
 		return c.Next()
