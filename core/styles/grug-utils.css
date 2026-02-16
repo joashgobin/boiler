@@ -52,6 +52,18 @@
     --item-count: 4;
 }
 
+.fit-5 {
+    --item-count: 5;
+}
+
+.fit-6 {
+    --item-count: 6;
+}
+
+.fit-7 {
+    --item-count: 7;
+}
+
 @supports (width: min(var(--minimum), 100%)) {
     .grid {
         grid-template-columns: repeat(auto-fit, minmax(min(var(--minimum), 100%), 1fr));
