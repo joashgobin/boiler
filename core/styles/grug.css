@@ -150,6 +150,10 @@ button {
     border-radius: 0.5rem;
 }
 
+textarea {
+    field-sizing: content;
+}
+
 label a {
     color: inherit;
 }
