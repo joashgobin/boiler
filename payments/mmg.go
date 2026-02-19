@@ -146,9 +146,7 @@ func (m *MMGModel) LoadMMGTransactionDetails(merchantNumber int, transactionRefe
 
 			var urlBuilder strings.Builder
 			urlBuilder.WriteString(baseUrl)
-			urlBuilder.WriteString(transactionReference)
 			url := urlBuilder.String()
-			// fmt.Printf("Making request to: %s\n", url)
 			method := "GET"
 
 			payload := strings.NewReader("{\"query\":\"\",\"variables\":{}}")
