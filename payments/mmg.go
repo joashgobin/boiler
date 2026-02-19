@@ -415,7 +415,7 @@ func getMMGHistory(merchantNumber int, url string, resourceToken string) (string
 		log.Error("mmg history response body error: %v", err)
 		return "", nil
 	}
-	log.Infof("mmg history response body: %v", string(body))
+	// log.Infof("mmg history response body: %v", string(body))
 	return string(body), res
 }
 
@@ -442,6 +442,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			urlBuilder.WriteString("&todate=" + toDate)
 			urlBuilder.WriteString("&msisdn=" + strconv.Itoa(merchantNumber))
 			url := urlBuilder.String()
+			log.Infof("HISTORY URL: %s", url)
 
 			// retrieve resource token from database
 			resourceToken := getResourceToken(m.DB, merchantNumber)
