@@ -465,9 +465,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 			// in case resource token is invalid
 			if strings.Contains(string(body), "clientAuthorisationError") {
-
-				// log error and notify admin via email
-				log.Error("failed to use valid resource token: %v", res)
+				log.Errorf("failed to use valid resource token: %v", res)
 
 				// request new resource token
 				newToken := m.LoadNewResourceToken(merchantNumber)
@@ -480,8 +478,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 			// in case of multiple user sessions
 			if strings.Contains(string(body), "Multiple user session found") {
-				// log error and notify admin via email
-				log.Error("failed to use valid resource token: %v", res)
+				log.Errorf("failed to use valid resource token: %v", res)
 
 				// request new resource token
 				newToken := m.LoadNewResourceToken(merchantNumber)

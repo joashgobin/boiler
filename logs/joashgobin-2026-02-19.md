@@ -3,3 +3,4 @@
 - Fixed resource tokens and transaction history 
 - Fixed transaction lookup
 - Show URL
+- Tweak
