@@ -229,6 +229,7 @@ func (m *MMGModel) getTransactionData(data string, merchantNumber int, resourceT
 		// log.Infof("JSON: %v\n", data)
 		return
 	}
+	// log.Infof("RESPONSE: %v", response)
 	var history []MMGTransaction
 	for _, transaction := range response.Transactions {
 		var mmgTransaction MMGTransaction
@@ -438,7 +439,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 			var urlBuilder strings.Builder
 			urlBuilder.WriteString(baseUrl)
 			// urlBuilder.WriteString(strconv.Itoa(merchantNumber))
-			urlBuilder.WriteString("?offset=1")
+			urlBuilder.WriteString("?offset=100")
 			urlBuilder.WriteString("&fromdate=" + fromDate)
 			urlBuilder.WriteString("&todate=" + toDate)
 			urlBuilder.WriteString("&msisdn=" + strconv.Itoa(merchantNumber))
@@ -478,6 +479,20 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 				return
 			}
 
+			// in case of multiple user sessions
+			if strings.Contains(string(body), "Multiple user session found") {
+				// log error and notify admin via email
+				log.Error("failed to use valid resource token: %v", res)
+
+				// request new resource token
+				newToken := m.LoadNewResourceToken(merchantNumber)
+
+				// resend request
+				body, _ := getMMGHistory(merchantNumber, url, newToken)
+				m.getTransactionData(body, merchantNumber, newToken)
+				return
+			}
+
 			// in case authentication fails
 			if strings.Contains(string(body), "Authentication failure") {
 				log.Errorf("authentication failed with token: %s", resourceToken)
@@ -485,7 +500,7 @@ func (m *MMGModel) loadMMGTransactionHistory(merchantNumber int) {
 
 				// send request
 				body, _ := getMMGHistory(merchantNumber, url, newToken)
-				m.getTransactionData(body, merchantNumber, resourceToken)
+				m.getTransactionData(body, merchantNumber, newToken)
 				return
 			}
 
